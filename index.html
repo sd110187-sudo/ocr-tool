@@ -3,21 +3,16 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>TKU Western Cataloger v68</title>
+<title>TKU Western Cataloger v69</title>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/tesseract.js/5.0.5/tesseract.min.js"></script>
 <script src="https://cdn.tailwindcss.com"></script>
 
 <style>
-.marc-field{
-  font-family:Courier New,monospace;
-  border:2px solid #e5e7eb;
-  padding:8px;border-radius:10px;min-height:1.5em
-}
+.marc-field{font-family:Courier New,monospace;border:2px solid #e5e7eb;padding:8px;border-radius:10px}
 .conf-high{background:#f0fdf4;border-color:#22c55e}
 .conf-mid{background:#fefce8;border-color:#eab308}
 .conf-low{background:#fef2f2;border-color:#ef4444}
-
 .locked{outline:3px solid #22c55e}
 #video-container{display:none;position:relative;border-radius:24px;overflow:hidden}
 #scanner-line{position:absolute;top:0;width:100%;height:3px;background:#3b82f6;animation:scan 2s linear infinite}
@@ -30,8 +25,8 @@
 <div class="max-w-2xl mx-auto p-4 space-y-4">
 
 <header class="text-center">
-<h1 class="text-2xl font-black">Western MARC v68</h1>
-<p class="text-xs text-slate-400">ROI • Google Books • Confidence UI</p>
+<h1 class="text-2xl font-black">Western MARC v69</h1>
+<p class="text-xs text-slate-400">Fast OCR · Authority · Export</p>
 </header>
 
 <div class="grid grid-cols-3 gap-2">
@@ -65,6 +60,11 @@ SCAN PAGE
 <div>520<div id="f-520" class="marc-field text-xs">$a </div></div>
 </div>
 
+<div class="flex gap-2">
+<button onclick="copyMARC()" class="flex-1 bg-slate-800 text-white py-3 rounded-xl font-bold text-sm">COPY</button>
+<button onclick="exportMRC()" class="flex-1 bg-emerald-600 text-white py-3 rounded-xl font-bold text-sm">EXPORT .MRC</button>
+</div>
+
 </div>
 
 <canvas id="canvas" class="hidden"></canvas>
@@ -75,15 +75,16 @@ const f={};
 
 document.addEventListener('DOMContentLoaded',async()=>{
 ['020','100','245','250','264','700','520'].forEach(t=>f[t]=document.getElementById('f-'+t));
+
 worker=await Tesseract.createWorker({
  logger:m=>{
    if(m.status==='recognizing text'){
-     ocr-bar.style.width=Math.round(m.progress*100)+'%';
+     document.getElementById('ocr-bar').style.width=Math.round(m.progress*100)+'%';
    }
  }
 });
-await worker.loadLanguage('eng+fra+deu+spa+rus');
-await worker.initialize('eng+fra+deu+spa+rus');
+await worker.loadLanguage('eng');
+await worker.initialize('eng');
 
 const stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:'environment'}});
 video.srcObject=stream;
@@ -101,18 +102,18 @@ return c;
 }
 
 async function scanPage(){
-status.innerText='Capturing…';
+status.innerText='Scanning…';
 const ctx=canvas.getContext('2d');
 canvas.width=video.videoWidth;canvas.height=video.videoHeight;
 ctx.filter='grayscale(1) contrast(1.6)';
 ctx.drawImage(video,0,0);
 
-let roi;
-if(mode==='cover') roi=crop(0,canvas.height*0.6);
-if(mode==='verso') roi=crop(canvas.height*0.6,canvas.height);
-if(mode==='back')  roi=canvas;
+let roi,psm;
+if(mode==='cover'){roi=crop(0,canvas.height*0.6);psm=Tesseract.PSM.SPARSE_TEXT;}
+if(mode==='verso'){roi=crop(canvas.height*0.6,canvas.height);psm=Tesseract.PSM.SINGLE_BLOCK;}
+if(mode==='back'){roi=canvas;psm=Tesseract.PSM.AUTO;}
 
-status.innerText='OCR…';
+await worker.setParameters({tessedit_pageseg_mode:psm});
 const {data}=await worker.recognize(roi);
 
 if(mode==='cover') parseCover(data.text);
@@ -125,23 +126,22 @@ status.innerText='Done';
 function setField(tag,val,conf){
 if(locked && ['020','245','264','520'].includes(tag))return;
 f[tag].innerText=val;
-f[tag].classList.remove('conf-high','conf-mid','conf-low');
-f[tag].classList.add(conf);
+f[tag].className='marc-field '+conf;
 }
 
 function parseCover(t){
-const lines=t.split('\n').filter(l=>l.length>3);
+const lines=t.split('\n').map(l=>l.trim()).filter(l=>l.length>3);
 const title=lines.sort((a,b)=>b.length-a.length)[0];
 const author=lines.find(l=>l.split(' ').length<=4);
-if(title) setField('245',`$a ${title} / $c ${author||''}`,'conf-mid');
-if(author) setField('100',`$a ${fmt(author)}, $e author.`,'conf-mid');
+if(title) setField('245',`$a ${title} / $c ${authorityName(author||'')}`,'conf-mid');
+if(author) setField('100',`$a ${authorityName(author)}, $e author.`,'conf-mid');
 }
 
 async function parseVerso(t){
 const isbn=t.match(/97[89]\d{10}/);
 if(isbn){
 setField('020',`$a ${isbn[0]}`,'conf-high');
-await googleBooks(isbn[0]);
+googleBooks(isbn[0]);
 }
 const year=t.match(/\d{4}/);
 if(year) setField('264',`$a  : $b  , $c ${year[0]}`,'conf-mid');
@@ -156,16 +156,44 @@ const r=await fetch(`https://www.googleapis.com/books/v1/volumes?q=isbn:${isbn}`
 const j=await r.json();
 if(j.totalItems>0){
 const i=j.items[0].volumeInfo;
-setField('245',`$a ${i.title} / $c ${(i.authors||[]).join('; ')}`,'conf-high');
+setField('245',`$a ${i.title} / $c ${(i.authors||[]).map(authorityName).join('; ')}`,'conf-high');
 setField('264',`$a  : $b ${i.publisher||''}, $c ${i.publishedDate?.slice(0,4)||''}`,'conf-high');
 setField('520',`$a ${i.description||''}`,'conf-high');
 locked=true;
 }
 }
 
-function fmt(n){
-const p=n.split(' ');
+/* -------- Authority -------- */
+function authorityName(n){
+if(!n)return'';
+n=n.replace(/edited by|translated by|herausgegeben von/ig,'').trim();
+if(n.includes(','))return n;
+const p=n.split(/\s+/);
 return p.length>1?`${p.pop()}, ${p.join(' ')}`:n;
+}
+
+/* -------- Output -------- */
+function copyMARC(){
+let out='';
+Object.keys(f).forEach(k=>{
+const v=f[k].innerText.trim();
+if(v.length>5) out+=`${k}  ${v}\n`;
+});
+navigator.clipboard.writeText(out);
+alert('MARC copied');
+}
+
+function exportMRC(){
+let txt='';
+Object.keys(f).forEach(k=>{
+const v=f[k].innerText.trim();
+if(v.length>5) txt+=`=${k}  ${v}\n`;
+});
+const blob=new Blob([txt],{type:'text/plain'});
+const a=document.createElement('a');
+a.href=URL.createObjectURL(blob);
+a.download='record.mrc';
+a.click();
 }
 </script>
 
