@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OCR Tool for Catalogers</title>
+    <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        #video-container { position: relative; overflow: hidden; border-radius: 24px; border: 4px solid #1e293b; background: #000; }
+        #scanner-line {
+            position: absolute; top: 0; left: 0; width: 100%; height: 3px;
+            background: linear-gradient(to right, transparent, #38bdf8, transparent);
+            box-shadow: 0 0 20px 5px rgba(56, 189, 248, 0.6);
+            animation: scan 2.5s ease-in-out infinite;
+        }
+        @keyframes scan { 0% { top: 5%; } 50% { top: 95%; } 100% { top: 5%; } }
+        .marc-field { font-family: 'Courier New', monospace; outline: none; width: 100%; display: block; padding: 4px; }
+        .marc-field:focus { background: #f0f9ff; border-bottom: 2px solid #3b82f6; }
+        .group-box { border: 1px solid #e2e8f0; border-radius: 16px; padding: 12px; background: #fff; }
+        .tag-num { width: 3rem; font-weight: 900; color: #2563eb; }
+        .tag-ind { width: 1.5rem; font-family: monospace; color: #94a3b8; }
+        footer { font-size: 0.7rem; color: #94a3b8; text-align: center; padding: 30px 10px; line-height: 1.6; letter-spacing: 0.02em; }
+    </style>
+</head>
+<body class="bg-slate-50 min-h-screen pb-10 font-sans text-slate-900">
+
+    <div class="max-w-2xl mx-auto p-4 space-y-4">
+        <header class="text-center py-6">
+            <h1 class="text-3xl font-black tracking-tight text-slate-800">OCR Tool for Catalogers</h1>
+            <p class="text-xs text-blue-600 font-medium mt-1">Smart MARC 21 metadata extractor</p>
+        </header>
+
+        <div class="bg-white rounded-3xl shadow-sm border p-4">
+            <h2 class="text-xs font-bold mb-3 text-slate-400 tracking-wider">Step 1: Cataloging mode</h2>
+            <div class="flex gap-4">
+                <label class="flex-1 flex items-center justify-center gap-2 p-3 border-2 rounded-2xl cursor-pointer hover:border-blue-500 transition has-[:checked]:border-blue-600 has-[:checked]:bg-blue-50">
+                    <input type="radio" name="catalog-mode" value="chi" checked class="w-4 h-4 text-blue-600">
+                    <span class="font-bold text-sm text-slate-700">中文編目</span>
+                </label>
+                <label class="flex-1 flex items-center justify-center gap-2 p-3 border-2 rounded-2xl cursor-pointer hover:border-blue-500 transition has-[:checked]:border-blue-600 has-[:checked]:bg-blue-50">
+                    <input type="radio" name="catalog-mode" value="eng" class="w-4 h-4 text-blue-600">
+                    <span class="font-bold text-sm text-slate-700">西文編目</span>
+                </label>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-3xl shadow-sm border p-5 space-y-4">
+            <h2 class="text-xs font-bold text-slate-400 tracking-wider">Step 2: Language selection</h2>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs">
+                <div class="group-box space-y-2">
+                    <p class="font-bold text-blue-600 border-b pb-1">東方語言</p>
+                    <label class="flex items-center gap-2 font-medium opacity-50"><input type="checkbox" onchange="toggleGroup(this, 'oriental-item')"> [全選]</label>
+                    <label class="flex items-center gap-2"><input type="checkbox" class="lang-opt oriental-item" value="chi_tra" checked> 繁體中文</label>
+                    <label class="flex items-center gap-2"><input type="checkbox" class="lang-opt oriental-item" value="chi_sim"> 簡體中文</label>
+                    <label class="flex items-center gap-2"><input type="checkbox" class="lang-opt oriental-item" value="jpn"> 日文</label>
+                    <label class="flex items-center gap-2"><input type="checkbox" class="lang-opt oriental-item" value="kor"> 韓文</label>
+                </div>
+                <div class="group-box space-y-2">
+                    <p class="font-bold text-emerald-600 border-b pb-1">西方語言</p>
+                    <label class="flex items-center gap-2 font-medium opacity-50"><input type="checkbox" onchange="toggleGroup(this, 'western-item')"> [全選]</label>
+                    <label class="flex items-center gap-2"><input type="checkbox" class="lang-opt western-item" value="eng" checked> 英文</label>
+                    <label class="flex items-center gap-2"><input type="checkbox" class="lang-opt western-item" value="fra"> 法文</label>
+                    <label class="flex items-center gap-2"><input type="checkbox" class="lang-opt western-item" value="spa"> 西班牙文</label>
+                    <label class="flex items-center gap-2"><input type="checkbox" class="lang-opt western-item" value="rus"> 俄文</label>
+                </div>
+                <div class="group-box space-y-2">
+                    <p class="font-bold text-amber-600 border-b pb-1">特殊語言</p>
+                    <label class="flex items-center gap-2 font-medium opacity-50"><input type="checkbox" onchange="toggleGroup(this, 'special-item')"> [全選]</label>
+                    <label class="flex items-center gap-2"><input type="checkbox" class="lang-opt special-item" value="nor"> 挪威文</label>
+                    <label class="flex items-center gap-2"><input type="checkbox" class="lang-opt special-item" value="nld"> 荷蘭文</label>
+                    <label class="flex items-center gap-2"><input type="checkbox" class="lang-opt special-item" value="ita"> 義大利文</label>
+                    <label class="flex items-center gap-2"><input type="checkbox" class="lang-opt special-item" value="ara"> 阿拉伯語</label>
+                    <label class="flex items-center gap-2"><input type="checkbox" class="lang-opt special-item" value="ben"> 孟加拉文</label>
+                </div>
+            </div>
+            <button id="init-btn" class="w-full bg-slate-900 text-white py-4 rounded-2xl font-bold text-sm shadow-xl hover:bg-black transition">Initialize & start camera</button>
+        </div>
+
+        <div id="video-container" class="aspect-video shadow-2xl hidden">
+            <video id="video" class="w-full h-full object-cover" autoplay playsinline></video>
+            <div id="scanner-line"></div>
+        </div>
+
+        <div id="status" class="text-center text-[10px] font-mono text-slate-400 font-bold h-4">Standing by...</div>
+
+        <div class="bg-white rounded-[2rem] shadow-2xl border border-slate-200 overflow-hidden text-sm" id="marc-output-area">
+            <div class="p-6 space-y-5">
+                <div class="flex items-center border-b border-slate-100 pb-1" data-tag="020" data-ind="##"><span class="tag-num">020</span><span class="tag-ind">##</span><span contenteditable="true" id="f-020" class="marc-field">$a </span></div>
+                <div class="flex items-center bg-blue-50/40 p-2 rounded-xl" data-tag="100" data-ind="1#"><span class="tag-num">100</span><span class="tag-ind">1#</span><span contenteditable="true" id="f-100" class="marc-field">$a </span></div>
+                <div class="flex items-start" data-tag="245" data-ind="10"><span class="tag-num">245</span><span class="tag-ind">10</span><span contenteditable="true" id="f-245" class="marc-field">$a  / $c </span></div>
+                <div class="flex items-center" data-tag="264" data-ind="#4"><span class="tag-num">264</span><span class="tag-ind">#4</span><span contenteditable="true" id="f-264" class="marc-field">$a  : $b  , $c </span></div>
+                <div class="flex items-start bg-amber-50/50 rounded-xl p-3" data-tag="520" data-ind="##"><span class="tag-num">520</span><span class="tag-ind">##</span><span contenteditable="true" id="f-520" class="marc-field text-xs leading-relaxed">$a </span></div>
+                <div class="flex items-center bg-emerald-50/40 p-2 rounded-xl" data-tag="700" data-ind="1#"><span class="tag-num">700</span><span class="tag-ind">1#</span><span contenteditable="true" id="f-700" class="marc-field">$a </span></div>
+            </div>
+            
+            <div class="px-6 pb-6 flex gap-3">
+                <button onclick="copyToClipboard(this)" class="flex-1 bg-slate-100 text-slate-700 py-4 rounded-2xl font-bold text-xs tracking-widest hover:bg-slate-200 transition shadow-sm flex items-center justify-center gap-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16v2a2 2 0 002 2h8a2 2 0 002-2v-8a2 2 0 00-2-2h-2M8 16h8M8 16v-2a2 2 0 00-2-2H4a2 2 0 00-2 2v8a2 2 0 002 2h2a2 2 0 002-2v-2" /></svg>
+                    <span>Copy text</span>
+                </button>
+                <button onclick="downloadMRC()" class="flex-[2] bg-blue-600 text-white py-4 rounded-2xl font-bold text-xs tracking-widest hover:bg-blue-700 transition shadow-lg">Download .mrc</button>
+            </div>
+        </div>
+
+        <footer>
+            Tamkang University Chueh-sheng Memorial Library,<br>
+            Acquisitions & Technical Services Section
+        </footer>
+    </div>
+
+    <canvas id="canvas" class="hidden"></canvas>
+
+    <script>
+        const video = document.getElementById('video');
+        const canvas = document.getElementById('canvas');
+        const initBtn = document.getElementById('init-btn');
+        const status = document.getElementById('status');
+        const videoContainer = document.getElementById('video-container');
+
+        let isScanning = false; let worker = null;
+
+        function toggleGroup(master, targetClass) {
+            const checkboxes = document.getElementsByClassName(targetClass);
+            for (let cb of checkboxes) cb.checked = master.checked;
+        }
+
+        const RELATOR_TERMS = {
+            'chi': { 'author': '作者', 'translator': '譯者', 'editor': '編者', 'illustrator': '繪者', 'preface': '', 'intro': '' },
+            'eng': { 'author': 'author', 'translator': 'translator', 'editor': 'editor', 'illustrator': 'illustrator', 'preface': 'writer of preface', 'intro': 'writer of introduction' }
+        };
+
+        const ROLE_MAP = [
+            { id: 'author', regex: /(著|作者|撰|by|author|auteur|autor|av|forfatter|door|autore|লেখক|تأليف)/i },
+            { id: 'translator', regex: /(譯|翻譯|translated|translator|traducteur|traductor|oversetter|vertaler|traduttore|অনুবাদক|ترجم)/i },
+            { id: 'editor', regex: /(編|主編|編著|edited|editor|éditeur|redaktør|redacteur|curatore|সম্পাদক|تحرير)/i },
+            { id: 'illustrator', regex: /(繪|插畫|illustrated|illustrator|ilustrador|illustatør|illustratore|চিত্রশিল্পী|رسام)/i },
+            { id: 'preface', regex: /(序|序言|preface|préface|prefacio|forord|prefazione|ভূমিকা|مقدمة)/i },
+            { id: 'intro', regex: /(導讀|前言|introduction|введение|introducción|innledning|introduzione|উপস্থাপনা|إدخال)/i }
+        ];
+
+        async function initOCR() {
+            const selectedLangs = Array.from(document.querySelectorAll('.lang-opt:checked')).map(cb => cb.value);
+            if (selectedLangs.length === 0) return alert("Please select a language.");
+            initBtn.disabled = true; status.innerText = "Loading AI models...";
+            worker = await Tesseract.createWorker(selectedLangs.join('+'));
+            status.innerText = "Ready to scan"; startCamera();
+        }
+
+        async function startCamera() {
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
+                video.srcObject = stream; videoContainer.classList.remove('hidden'); isScanning = true; scanFrame();
+            } catch (err) { alert("Camera failed."); }
+        }
+
+        function formatName(rawName) {
+            rawName = rawName.trim().replace(/[:：]$/, '');
+            if (/^[\u4e00-\u9fa5\u3040-\u30ff\uac00-\ud7af]{2,4}$/.test(rawName)) return `${rawName[0]}, ${rawName.substring(1)}`;
+            const parts = rawName.split(/\s+/);
+            if (parts.length >= 2) { const last = parts.pop(); return `${last}, ${parts.join(" ")}`; }
+            return rawName;
+        }
+
+        function mapToMARC(text) {
+            const mode = document.querySelector('input[name="catalog-mode"]:checked').value;
+            const lines = text.split('\n').map(l => l.trim()).filter(l => l.length >= 2);
+            let people = []; let summary = "";
+            const isRTL = /[\u0600-\u06FF]/.test(text);
+            [document.getElementById('f-100'), document.getElementById('f-520'), document.getElementById('f-700')].forEach(el => {
+                el.style.direction = isRTL ? 'rtl' : 'ltr'; el.style.textAlign = isRTL ? 'right' : 'left';
+            });
+            lines.forEach(line => {
+                ROLE_MAP.forEach(roleDef => {
+                    const match = line.match(new RegExp(`([^\\n，。:：]{2,20})\\s*${roleDef.regex.source}`, 'i'));
+                    if (match) {
+                        const name = formatName(match[1]);
+                        const relator = RELATOR_TERMS[mode][roleDef.id] || "";
+                        if (!people.some(p => p.name === name)) people.push({ name, relator, rawName: match[1].trim() });
+                    }
+                });
+                if (line.length > 30 && !line.match(/ISBN|978|出版社|書局/)) summary += line + " ";
+            });
+            if (people.length > 0) {
+                const mainAuthor = people.find(p => p.relator.includes('作者') || p.relator.includes('author')) || people[0];
+                const eMain = mainAuthor.relator ? `, $e ${mainAuthor.relator}` : "";
+                document.getElementById('f-100').innerText = `$a ${mainAuthor.name}${eMain}`;
+                
+                const others = people.filter(p => p !== mainAuthor);
+                if (others.length > 0) {
+                    document.getElementById('f-700').innerText = others.map(p => {
+                        const e = p.relator ? `, $e ${p.relator}` : "";
+                        return `$a ${p.name}${e}`;
+                    }).join(' ');
+                }
+
+                const authorStmt = people.map(p => `${p.rawName} ${p.relator}`).join('; ');
+                const currentTitle = document.getElementById('f-245').innerText.split(' / ')[0];
+                document.getElementById('f-245').innerText = `${currentTitle} / $c ${authorStmt}`;
+            }
+            if (summary.length > 30) document.getElementById('f-520').innerText = `$a ${summary.trim()}`;
+            const isbn = text.match(/(978[- ]?\d{1,5}[- ]?\d{1,7}[- ]?\d{1,6}[- ]?\d{1})/);
+            if (isbn) document.getElementById('f-020').innerText = `$a ${isbn[0].replace(/[- ]/g, '')}`;
+            const year = text.match(/(19|20)\d{2}/);
+            if (year) {
+                const f264 = document.getElementById('f-264');
+                if(!f264.innerText.includes(year[0])) f264.innerText = f264.innerText.replace('$c', `$c ${year[0]}`);
+            }
+        }
+
+        async function scanFrame() {
+            if (!isScanning) return;
+            const context = canvas.getContext('2d');
+            canvas.width = video.videoWidth; canvas.height = video.videoHeight;
+            context.drawImage(video, 0, 0, canvas.width, canvas.height);
+            const { data: { text } } = await worker.recognize(canvas);
+            mapToMARC(text);
+            setTimeout(scanFrame, 2000);
+        }
+
+        initBtn.addEventListener('click', initOCR);
+
+        function copyToClipboard(btn) {
+            const rows = document.querySelectorAll('#marc-output-area > div[data-tag]');
+            let copyText = "";
+            rows.forEach(row => {
+                const tag = row.getAttribute('data-tag');
+                const ind = row.getAttribute('data-ind').replace(/#/g, ' ');
+                const content = row.querySelector('.marc-field').innerText.trim();
+                if (content.length > 3) copyText += `${tag} ${ind} ${content}\n`;
+            });
+            navigator.clipboard.writeText(copyText).then(() => {
+                const original = btn.innerHTML;
+                btn.innerHTML = "Copied!";
+                btn.classList.replace('bg-slate-100', 'bg-green-100');
+                setTimeout(() => { btn.innerHTML = original; btn.classList.replace('bg-green-100', 'bg-slate-100'); }, 1500);
+            });
+        }
+
+        function downloadMRC() {
+            const encoder = new TextEncoder();
+            const getVal = (id) => document.getElementById(id).innerText;
+            const fields = [
+                { tag: '020', ind: '  ', data: getVal('f-020') }, { tag: '100', ind: '1 ', data: getVal('f-100') },
+                { tag: '245', ind: '10', data: getVal('f-245') }, { tag: '264', ind: ' 4', data: getVal('f-264') },
+                { tag: '520', ind: '  ', data: getVal('f-520') }, { tag: '700', ind: '1 ', data: getVal('f-700') }
+            ].filter(f => f.data.trim().length > 3).map(f => {
+                const processedData = f.ind + f.data.replace(/\$/g, '\x1f');
+                return { tag: f.tag, data: encoder.encode(processedData + '\x1e') };
+            });
+            let dir = ''; let buf = new Uint8Array(0); let off = 0;
+            fields.forEach(f => {
+                dir += f.tag + f.data.length.toString().padStart(4, '0') + off.toString().padStart(5, '0');
+                let n = new Uint8Array(buf.length + f.data.length); n.set(buf); n.set(f.data, buf.length);
+                buf = n; off += f.data.length;
+            });
+            const ldr = (24 + dir.length + 1 + buf.length + 1).toString().padStart(5, '0') + 'nam a22' + (24 + dir.length + 1).toString().padStart(5, '0') + 'ia 4500';
+            const fin = new Uint8Array(24 + dir.length + 1 + buf.length + 1);
+            let p = 0; fin.set(encoder.encode(ldr), p); p += 24;
+            fin.set(encoder.encode(dir + '\x1e'), p); p += dir.length + 1;
+            fin.set(buf, p); p += buf.length; fin[p] = 0x1d;
+            const b = new Blob([fin], { type: 'application/octet-stream' });
+            const l = document.createElement('a'); l.href = URL.createObjectURL(b); l.download = `catalog_export.mrc`; l.click();
+        }
+    </script>
+</body>
+</html>
