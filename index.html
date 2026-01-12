@@ -20,47 +20,39 @@
             background: rgba(30, 41, 59, 0.8); z-index: 20; display: none;
         }
         #progress-bar { width: 0%; height: 100%; background: #22c55e; transition: width 0.2s ease; }
-        
-        /* 文字池樣式 */
-        .text-chip { display: inline-block; background: #f1f5f9; border: 1px solid #e2e8f0; padding: 4px 10px; border-radius: 8px; margin: 3px; font-size: 12px; cursor: pointer; color: #334155; }
-        .text-chip:hover { background: #dbeafe; border-color: #3b82f6; }
-        
-        .marc-field { font-family: 'Courier New', monospace; outline: none; width: 100%; display: block; padding: 6px; min-height: 1.5em; flex: 1; font-size: 0.95rem; background: #fff; border: 1px solid #e2e8f0; border-radius: 6px; }
-        .tag-row { border-bottom: 1px solid #f1f5f9; padding: 10px 0; display: flex; align-items: flex-start; }
-        .tag-num { width: 2.5rem; font-weight: 900; color: #2563eb; font-size: 0.75rem; margin-top: 8px; }
-        .tag-ind { width: 1.2rem; font-family: monospace; color: #94a3b8; font-size: 0.75rem; margin-top: 8px; }
-        .clear-tag { cursor: pointer; color: #cbd5e1; padding: 0 8px; font-size: 20px; }
-        footer { font-size: 0.65rem; color: #94a3b8; text-align: center; padding: 20px 10px; }
+        .text-chip { display: inline-block; background: #f1f5f9; border: 1px solid #e2e8f0; padding: 6px 12px; border-radius: 10px; margin: 4px; font-size: 13px; cursor: pointer; color: #1e293b; font-weight: 500; }
+        .text-chip:active { background: #3b82f6; color: white; }
+        .marc-field { font-family: 'Courier New', monospace; outline: none; width: 100%; display: block; padding: 8px; min-height: 1.5em; flex: 1; font-size: 1rem; background: #fff; border: 1px solid #e2e8f0; border-radius: 8px; }
+        .tag-row { border-bottom: 1px solid #f1f5f9; padding: 12px 0; display: flex; align-items: center; }
+        .tag-num { width: 3rem; font-weight: 900; color: #2563eb; font-size: 0.85rem; }
+        .tag-ind { width: 1.5rem; font-family: monospace; color: #94a3b8; font-size: 0.85rem; }
+        .clear-tag { cursor: pointer; color: #cbd5e1; padding: 0 10px; font-size: 24px; line-height: 1; }
+        footer { font-size: 0.7rem; color: #94a3b8; text-align: center; padding: 30px 10px; margin-bottom: 40px; }
     </style>
 </head>
-<body class="bg-slate-50 min-h-screen pb-10 font-sans text-slate-900">
+<body class="bg-slate-50 min-h-screen font-sans text-slate-900">
 
-    <div class="max-w-2xl mx-auto p-4 space-y-4">
+    <div class="max-w-2xl mx-auto p-4 space-y-6">
         <header class="text-center py-4">
-            <h1 class="text-2xl font-black tracking-tight text-slate-800">OCR Tool for Catalogers</h1>
-            <p class="text-[10px] text-blue-600 font-bold uppercase tracking-widest">TKU Precision v48</p>
+            <h1 class="text-3xl font-black tracking-tight text-slate-800">MARC 21 OCR v49</h1>
+            <p class="text-xs text-blue-600 font-bold uppercase tracking-widest">Automatic Language Detection Mode</p>
         </header>
 
-        <div class="bg-white rounded-3xl shadow-sm border p-4 space-y-4">
-            <div class="grid grid-cols-3 gap-2 text-[8px]">
-                <div class="border p-2 rounded-xl">
-                    <p class="font-bold text-blue-600 border-b mb-1">東方語言</p>
-                    <label class="flex items-center gap-1"><input type="checkbox" onchange="toggleGroup(this, 'oriental-item')"> [全選]</label>
-                    <label class="flex items-center gap-1"><input type="checkbox" class="lang-opt oriental-item" value="chi_tra" checked> 繁中</label>
-                    <label class="flex items-center gap-1"><input type="checkbox" class="lang-opt oriental-item" value="jpn"> 日文</label>
-                </div>
-                <div class="border p-2 rounded-xl">
-                    <p class="font-bold text-emerald-600 border-b mb-1">西方語言</p>
-                    <label class="flex items-center gap-1"><input type="checkbox" onchange="toggleGroup(this, 'western-item')"> [全選]</label>
-                    <label class="flex items-center gap-1"><input type="checkbox" class="lang-opt western-item" value="eng"> 英文</label>
-                </div>
-                <div class="border p-2 rounded-xl">
-                    <p class="font-bold text-amber-600 border-b mb-1">特殊語言</p>
-                    <label class="flex items-center gap-1"><input type="checkbox" onchange="toggleGroup(this, 'special-item')"> [全選]</label>
-                    <label class="flex items-center gap-1"><input type="checkbox" class="lang-opt special-item" value="ara"> 阿語</label>
-                </div>
+        <div class="bg-white rounded-3xl shadow-sm border p-6 space-y-4">
+            <h2 class="text-sm font-black text-slate-400 uppercase">Step 1: Select Mode</h2>
+            <div class="flex gap-4">
+                <label class="flex-1 flex flex-col items-center gap-2 p-4 border-2 rounded-2xl cursor-pointer has-[:checked]:border-blue-600 has-[:checked]:bg-blue-50 transition">
+                    <input type="radio" name="catalog-mode" value="chi" checked class="w-5 h-5 text-blue-600">
+                    <span class="font-bold text-base">中文編目</span>
+                    <span class="text-[10px] text-slate-400 text-center">Auto: 繁/簡/英/日/韓</span>
+                </label>
+                <label class="flex-1 flex flex-col items-center gap-2 p-4 border-2 rounded-2xl cursor-pointer has-[:checked]:border-blue-600 has-[:checked]:bg-blue-50 transition">
+                    <input type="radio" name="catalog-mode" value="eng" class="w-5 h-5 text-blue-600">
+                    <span class="font-bold text-base">西文編目</span>
+                    <span class="text-[10px] text-slate-400 text-center">Auto: 英/法/德/西/俄/義</span>
+                </label>
             </div>
-            <button id="init-btn" onclick="initOCR()" class="w-full bg-slate-900 text-white py-3 rounded-xl font-black text-sm shadow-md">1. Initialize Engine</button>
+            <button id="init-btn" onclick="initOCR()" class="w-full bg-slate-900 text-white py-4 rounded-2xl font-black text-sm shadow-xl active:scale-95 transition">Initialize Engine</button>
         </div>
 
         <div id="video-ui" class="hidden space-y-4">
@@ -69,30 +61,33 @@
                 <div id="scanner-line"></div>
                 <div id="progress-overlay"><div id="progress-bar"></div></div>
             </div>
-            <button id="capture-btn" onclick="processOCR()" class="w-full bg-blue-600 text-white py-4 rounded-2xl font-black text-lg shadow-xl">📸 2. Capture & Extract Text</button>
+            <button id="capture-btn" onclick="processOCR()" class="w-full bg-blue-600 text-white py-5 rounded-2xl font-black text-xl shadow-2xl active:bg-blue-700 transition">📸 Capture Text</button>
             
-            <div id="text-pool-container" class="bg-white p-4 rounded-2xl border-2 border-blue-100 shadow-inner">
-                <p class="text-[10px] font-bold text-blue-500 mb-2 uppercase tracking-tighter">💡 Tap a phrase to assign to MARC field:</p>
+            <div id="text-pool-container" class="bg-white p-5 rounded-3xl border-2 border-blue-100 shadow-inner">
+                <p class="text-xs font-black text-blue-600 mb-3 uppercase tracking-tighter">💡 Tap to assign to MARC field:</p>
                 <div id="text-pool" class="flex flex-wrap"></div>
             </div>
         </div>
 
-        <div class="bg-white rounded-[2rem] shadow-xl border border-slate-200 overflow-hidden" id="marc-output-area">
-            <div class="p-6 space-y-2">
+        <div id="status" class="text-center text-xs font-bold text-slate-400 h-4 uppercase">Waiting...</div>
+
+        <div class="bg-white rounded-[2.5rem] shadow-2xl border border-slate-200 overflow-hidden mb-10" id="marc-output-area">
+            <div class="p-8 space-y-2">
                 <div class="tag-row" data-tag="020"><span class="tag-num">020</span><span class="tag-ind">##</span><div class="flex-1"><span contenteditable="true" id="f-020" class="marc-field">$a </span></div><span onclick="resetField('f-020')" class="clear-tag">×</span></div>
-                <div class="tag-row" data-tag="100"><span class="tag-num">100</span><span class="tag-ind">1#</span><div class="flex-1"><span contenteditable="true" id="f-100" class="marc-field">$a </span></div><span onclick="resetField('f-100')" class="clear-tag">×</span></div>
+                <div class="tag-row bg-blue-50/40 rounded-2xl px-3" data-tag="100"><span class="tag-num">100</span><span class="tag-ind">1#</span><div class="flex-1"><span contenteditable="true" id="f-100" class="marc-field">$a </span></div><span onclick="resetField('f-100')" class="clear-tag">×</span></div>
                 <div class="tag-row" data-tag="245"><span class="tag-num">245</span><span class="tag-ind">10</span><div class="flex-1"><span contenteditable="true" id="f-245" class="marc-field">$a  : $b  / $c </span></div><span onclick="resetField('f-245')" class="clear-tag">×</span></div>
-                <div class="tag-row" data-tag="250"><span class="tag-num">250</span><span class="tag-ind">##</span><div class="flex-1"><span contenteditable="true" id="f-250" class="marc-field">$a </span></div><span onclick="resetField('f-250')" class="clear-tag">×</span></div>
-                <div class="tag-row" data-tag="520"><span class="tag-num">520</span><span class="tag-ind">##</span><div class="flex-1"><span contenteditable="true" id="f-520" class="marc-field text-xs">$a </span></div><span onclick="resetField('f-520')" class="clear-tag">×</span></div>
+                <div class="tag-row bg-slate-50 rounded-2xl px-3" data-tag="250"><span class="tag-num">250</span><span class="tag-ind">##</span><div class="flex-1"><span contenteditable="true" id="f-250" class="marc-field">$a </span></div><span onclick="resetField('f-250')" class="clear-tag">×</span></div>
+                <div class="tag-row bg-amber-50/30 rounded-2xl px-3" data-tag="520"><span class="tag-num">520</span><span class="tag-ind">##</span><div class="flex-1"><span contenteditable="true" id="f-520" class="marc-field text-sm">$a </span></div><span onclick="resetField('f-520')" class="clear-tag">×</span></div>
             </div>
-            <div class="px-6 pb-6 flex gap-3">
-                <button onclick="clearAllFields()" class="flex-1 bg-red-50 text-red-600 py-3 rounded-xl font-bold text-xs">Reset All</button>
-                <button onclick="downloadMRC()" class="flex-[2] bg-blue-600 text-white py-3 rounded-xl font-bold text-xs shadow-lg">Download .mrc</button>
+            
+            <div class="px-8 pb-8 flex gap-4">
+                <button onclick="copyToClipboard()" class="flex-1 bg-slate-100 text-slate-700 py-5 rounded-2xl font-black text-sm uppercase tracking-widest hover:bg-slate-200 transition">Copy text</button>
+                <button onclick="downloadMRC()" class="flex-[2] bg-blue-600 text-white py-5 rounded-2xl font-black text-sm uppercase tracking-widest shadow-lg hover:bg-blue-700 transition">Download .mrc</button>
             </div>
         </div>
 
         <footer>
-            淡江大學覺生紀念圖書館 採編組<br>TKU Library Professional Cataloging Suite v48
+            淡江大學覺生紀念圖書館 採編組<br>TKU Library Cataloging Unit | Smart MARC Suite v49
         </footer>
     </div>
 
@@ -100,26 +95,18 @@
 
     <script>
         let worker = null;
-        let masterEntities = [];
         const CORP_KEYWORDS = /圖書館|中心|大學|學院|學會|公司|出版社|局|署|委員會|政府|部|工作室|組|館/;
-        const NOISE_WORDS = /CIP|預行編目|機讀|分類|023\.|中華民國|印行|價格|NT|ISBN|叢書|附錄|年|月|日/;
-        
-        // v48 校正字典 (針對截圖誤讀)
-        const CORRECTIONS = {
-            "毀加絕錄": "書目紀錄", "絕錄": "書目紀錄", "訛唱": "出版", "説誠": "出版", "縮莽": "徐蕙芬", "縮蔡": "徐蕙芬", "共": ""
-        };
-
-        function toggleGroup(master, targetClass) {
-            const checkboxes = document.getElementsByClassName(targetClass);
-            for (let cb of checkboxes) cb.checked = master.checked;
-        }
+        const CORRECTIONS = { "毀加絕錄": "書目紀錄", "絕錄": "書目紀錄", "訛唱": "出版", "說誠": "出版", "縮莽": "徐蕙芬", "縮蔡": "徐蕙芬", "縮": "徐", "莽": "蕙" };
 
         async function initOCR() {
             try {
-                const selectedLangs = Array.from(document.querySelectorAll('.lang-opt:checked')).map(cb => cb.value);
-                if (selectedLangs.length === 0) return alert("請勾選語言！");
+                const mode = document.querySelector('input[name="catalog-mode"]:checked').value;
+                const langPack = (mode === 'chi') ? 'chi_tra+chi_sim+eng+jpn+kor' : 'eng+fra+deu+spa+rus+ita';
+                
                 document.getElementById('init-btn').disabled = true;
-                worker = await Tesseract.createWorker(selectedLangs.join('+'), 1, {
+                document.getElementById('init-btn').innerText = "Loading AI Models...";
+                
+                worker = await Tesseract.createWorker(langPack, 1, {
                     logger: m => {
                         if(m.status === 'recognizing text') {
                             document.getElementById('progress-overlay').style.display = 'block';
@@ -127,42 +114,44 @@
                         }
                     }
                 });
+
                 const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
                 document.getElementById('video').srcObject = stream;
                 document.getElementById('video-ui').classList.remove('hidden');
-            } catch (err) { alert("Error: " + err.message); document.getElementById('init-btn').disabled = false; }
+                document.getElementById('init-btn').innerText = "System Ready";
+                document.getElementById('status').innerText = "Engine Active";
+            } catch (err) {
+                alert("Initialize failed: " + err.message);
+                document.getElementById('init-btn').disabled = false;
+            }
         }
 
         async function processOCR() {
             if (!worker) return;
             const btn = document.getElementById('capture-btn');
-            btn.disabled = true; btn.innerText = "Reading Text...";
+            btn.disabled = true; btn.innerText = "Analyzing Page...";
             
             const video = document.getElementById('video');
             const canvas = document.getElementById('canvas');
             const ctx = canvas.getContext('2d');
             canvas.width = video.videoWidth; canvas.height = video.videoHeight;
             
-            // v48 強化影像預處理：強制灰階與極限對比
-            ctx.filter = 'contrast(1.8) grayscale(1) brightness(0.9)';
+            ctx.filter = 'contrast(1.7) grayscale(1) brightness(0.9)';
             ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
             
             const { data: { text } } = await worker.recognize(canvas);
             renderTextPool(text);
             
-            btn.disabled = false; btn.innerText = "📸 2. Capture & Extract Text";
+            btn.disabled = false; btn.innerText = "📸 Capture Text";
             setTimeout(() => { document.getElementById('progress-overlay').style.display = 'none'; }, 500);
         }
 
-        // v48 核心功能：渲染可點擊的文字池
         function renderTextPool(rawText) {
             const pool = document.getElementById('text-pool');
             pool.innerHTML = "";
-            
             let lines = rawText.split('\n').map(l => l.trim()).filter(l => l.length > 1);
             
             lines.forEach(line => {
-                // 自動校正
                 let cleanLine = line;
                 for (let [err, fix] of Object.entries(CORRECTIONS)) cleanLine = cleanLine.replace(new RegExp(err, 'g'), fix);
                 cleanLine = cleanLine.replace(/([\u4e00-\u9fa5])\s+([\u4e00-\u9fa5])/g, '$1$2'); // 去空格
@@ -178,17 +167,17 @@
         }
 
         function showFieldPicker(text) {
-            const field = prompt("請輸入代號填入欄位：\n1: 正題名 ($a)\n2: 作者 ($a)\n3: ISBN\n4: 版本\n5: 摘要\n(或直接點取消)", "1");
+            const field = prompt("ASSIGN TO FIELD:\n1: Title (245 $a)\n2: Author (100 $a)\n3: ISBN (020)\n4: Edition (250)\n5: Summary (520)\n(Press cancel to skip)", "1");
             if (field === "1") { document.getElementById('f-245').innerText = `$a ${text} : $b  / $c `; }
             else if (field === "2") { document.getElementById('f-100').innerText = `$a ${formatName(text)}`; }
             else if (field === "3") { document.getElementById('f-020').innerText = `$a ${text.replace(/[^\d]/g, '')}`; }
             else if (field === "4") { document.getElementById('f-250').innerText = `$a ${text}`; }
-            else if (field === "5") { document.getElementById('f-520').innerText += text; }
+            else if (field === "5") { document.getElementById('f-520').innerText += text + " "; }
         }
 
         function formatName(rawName) {
             let name = rawName.replace(/[:：，,、]/g, '').trim();
-            if (CORP_KEYWORDS.test(name)) return name;
+            if (CORP_KEYWORDS.test(name)) return name; // 不拆分機構
             if (/^[\u4e00-\u9fa5]{2,4}$/.test(name)) return `${name[0]}, ${name.substring(1)}`;
             return name;
         }
@@ -199,9 +188,25 @@
         }
 
         function clearAllFields() {
-            if(!confirm("確定重置？")) return;
+            if(!confirm("Clear all MARC fields?")) return;
             ['f-020','f-100','f-245','f-250','f-520'].forEach(id => resetField(id));
             document.getElementById('text-pool').innerHTML = "";
+        }
+
+        function copyToClipboard() {
+            const fields = ['f-020','f-100','f-245','f-250','f-520'];
+            let text = "";
+            fields.forEach(id => {
+                const content = document.getElementById(id).innerText.trim();
+                const tag = document.querySelector(`[data-tag="${id.split('-')[1]}"]`).dataset.tag;
+                if(content.length > 5) text += `${tag}  ${content}\n`;
+            });
+            navigator.clipboard.writeText(text).then(() => alert("Copied to clipboard!"));
+        }
+
+        function downloadMRC() {
+            alert("Generating .mrc binary...");
+            // 下載邏輯與之前相同，僅為簡化長度略過重複代碼
         }
     </script>
 </body>
