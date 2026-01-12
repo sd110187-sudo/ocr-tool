@@ -3,47 +3,47 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TKU Western Cataloger v61</title>
+    <title>TKU Western Cataloger v62</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/tesseract.js/5.0.5/tesseract.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        #video-container { position: relative; border-radius: 24px; overflow: hidden; border: 4px solid #1e293b; background: #000; }
-        #scanner-line { position: absolute; top: 0; left: 0; width: 100%; height: 3px; background: #3b82f6; animation: scan 2s linear infinite; box-shadow: 0 0 15px #3b82f6; }
-        @keyframes scan { 0% { top: 10%; } 50% { top: 90%; } 100% { top: 10%; } }
-        .marc-field { font-family: 'Courier New', monospace; outline: none; width: 100%; padding: 10px; font-size: 0.95rem; background: #fff; border: 1px solid #e2e8f0; border-radius: 10px; }
+        #video-container { position: relative; border-radius: 28px; overflow: hidden; border: 4px solid #1e293b; background: #000; display: none; }
+        #scanner-line { position: absolute; top: 0; left: 0; width: 100%; height: 4px; background: #3b82f6; animation: scan 2.2s linear infinite; box-shadow: 0 0 15px #3b82f6; }
+        @keyframes scan { 0% { top: 5%; } 50% { top: 95%; } 100% { top: 5%; } }
+        .marc-field { font-family: 'Courier New', monospace; outline: none; width: 100%; padding: 12px; font-size: 1rem; background: #fff; border: 1px solid #e2e8f0; border-radius: 12px; }
         .tag-row { border-bottom: 1px solid #f1f5f9; padding: 10px 0; display: flex; align-items: flex-start; gap: 8px; }
-        .tag-label { width: 4.5rem; font-weight: 900; color: #2563eb; font-size: 0.8rem; margin-top: 10px; }
+        .tag-label { width: 4.5rem; font-weight: 900; color: #2563eb; font-size: 0.85rem; margin-top: 12px; }
         .locked { border: 2px solid #22c55e !important; background: #f0fdf4 !important; }
-        #status { font-family: monospace; font-size: 11px; color: #64748b; text-align: center; height: 1.5em; font-weight: bold; padding: 5px; }
-        footer { font-size: 0.7rem; color: #94a3b8; text-align: center; padding: 40px 10px; }
+        #progress-overlay { position: absolute; bottom: 0; width: 100%; height: 10px; background: rgba(0,0,0,0.2); }
+        #progress-bar { height: 100%; background: #22c55e; transition: width 0.3s; width: 0%; }
+        footer { font-size: 0.7rem; color: #94a3b8; text-align: center; padding: 30px 10px; }
     </style>
 </head>
 <body class="bg-slate-50 min-h-screen text-slate-900">
 
     <div class="max-w-2xl mx-auto p-4 space-y-4">
-        <header class="text-center py-4">
-            <h1 class="text-2xl font-black text-slate-800 tracking-tighter">Western MARC OCR <span class="text-blue-600">v61</span></h1>
-            <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">Specialized for Western Languages (Eng/Rus/Fra/Deu/Spa)</p>
+        <header class="text-center py-6">
+            <h1 class="text-3xl font-black text-slate-800 tracking-tighter">Western MARC <span class="text-blue-600">v62</span></h1>
+            <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">One-Tap Professional Cataloging</p>
         </header>
 
-        <div class="bg-white rounded-3xl shadow-lg p-6 border text-center">
-            <p class="text-xs text-slate-500 mb-4 font-bold uppercase">Ready to load Western Cataloging Models</p>
-            <button id="init-btn" onclick="initOCR()" class="w-full bg-slate-900 text-white py-5 rounded-2xl font-black text-sm active:scale-95 transition shadow-xl">INITIALIZE WESTERN ENGINE</button>
-        </div>
-
-        <div id="video-ui" class="hidden space-y-4">
+        <div class="space-y-4">
             <div id="video-container" class="aspect-[4/5] shadow-2xl relative border-4 border-white">
                 <video id="video" class="w-full h-full object-cover" autoplay playsinline></video>
                 <div id="scanner-line"></div>
-                <div id="progress-overlay" class="absolute bottom-0 w-full h-2 bg-black/20"><div id="progress-bar" class="h-full bg-blue-500 w-0 transition-all"></div></div>
+                <div id="progress-overlay"><div id="progress-bar"></div></div>
             </div>
-            <button id="capture-btn" onclick="processOCR()" class="w-full bg-blue-600 text-white py-6 rounded-2xl font-black text-lg active:bg-blue-700 transition shadow-2xl">📸 START SMART SCAN</button>
+            
+            <button id="main-action-btn" onclick="handleMainAction()" class="w-full bg-blue-600 text-white py-6 rounded-[2rem] font-black text-xl shadow-2xl active:bg-blue-700 transition flex items-center justify-center gap-3">
+                <span id="btn-icon">📸</span>
+                <span id="btn-text">START SMART SCAN</span>
+            </button>
         </div>
 
-        <div id="status">Waiting for initialization...</div>
+        <div id="status" class="text-center font-mono text-[11px] text-slate-500 font-bold h-4">System Ready.</div>
 
         <div class="bg-white rounded-[2.5rem] shadow-xl border border-slate-200 overflow-hidden" id="marc-output-area">
-            <div class="p-6 space-y-1">
+            <div class="p-8 space-y-1">
                 <div class="tag-row" data-tag="020"><span class="tag-label">020 ##</span><span contenteditable="true" id="f-020" class="marc-field">$a </span></div>
                 <div class="tag-row bg-blue-50/40 rounded-2xl px-3" data-tag="100"><span class="tag-label">100 1#</span><span contenteditable="true" id="f-100" class="marc-field">$a </span></div>
                 <div class="tag-row" data-tag="245"><span class="tag-label">245 10</span><span contenteditable="true" id="f-245" class="marc-field">$a  : $b  / $c </span></div>
@@ -51,14 +51,14 @@
                 <div class="tag-row" data-tag="264"><span class="tag-label">264 #1</span><span contenteditable="true" id="f-264" class="marc-field">$a  : $b  , $c </span></div>
             </div>
             
-            <div class="px-8 pb-8 flex gap-3">
-                <button onclick="copyToClipboard()" class="flex-1 bg-slate-800 text-white py-4 rounded-xl font-bold text-xs uppercase transition active:scale-95">Copy Text</button>
-                <button onclick="clearAllFields()" class="flex-1 bg-red-50 text-red-600 py-4 rounded-xl font-bold text-xs uppercase transition active:scale-95">Reset</button>
+            <div class="px-8 pb-8 flex gap-4">
+                <button onclick="copyToClipboard()" class="flex-1 bg-slate-800 text-white py-5 rounded-2xl font-black text-xs uppercase tracking-widest active:scale-95 transition">Copy Text</button>
+                <button onclick="clearAllFields()" class="flex-1 bg-red-50 text-red-600 py-5 rounded-2xl font-black text-xs uppercase tracking-widest active:scale-95 transition">Reset</button>
             </div>
         </div>
 
         <footer>
-            淡江大學覺生紀念圖書館 採編組<br>TKU Library Western Cataloging Expert v61
+            淡江大學覺生紀念圖書館 採編組<br>TKU Library Automated Western MARC Assistant v62
         </footer>
     </div>
 
@@ -69,6 +69,7 @@
         let isCloudLocked = false;
         const CITY_LIST = /Москва|Берлин|Moscow|Berlin|London|New York|Paris|Taipei|台北/i;
 
+        // ISBN 檢查碼修復
         function getCorrectedISBN(isbn) {
             if (!/^\d{13}$/.test(isbn)) return isbn;
             let sum = 0;
@@ -77,48 +78,57 @@
             return isbn.substring(0, 12) + check;
         }
 
-        async function initOCR() {
-            try {
-                // 直接鎖定西文語種包
-                const langPack = 'eng+fra+spa+deu+rus';
-                document.getElementById('init-btn').disabled = true;
-                document.getElementById('init-btn').innerText = "LOADING WESTERN MODELS...";
-                
-                worker = await Tesseract.createWorker(langPack, 1, {
-                    logger: m => { if(m.status === 'recognizing text') document.getElementById('progress-bar').style.width = (m.progress * 100) + "%"; }
-                });
+        // v62: 核心功能合併
+        async function handleMainAction() {
+            const btnText = document.getElementById('btn-text');
+            
+            // 1. 如果引擎尚未初始化
+            if (!worker) {
+                try {
+                    btnText.innerText = "LOADING AI MODELS...";
+                    document.getElementById('main-action-btn').disabled = true;
+                    
+                    worker = await Tesseract.createWorker('eng+fra+spa+deu+rus', 1, {
+                        logger: m => { if(m.status === 'recognizing text') document.getElementById('progress-bar').style.width = (m.progress * 100) + "%"; }
+                    });
 
-                const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
-                document.getElementById('video').srcObject = stream;
-                document.getElementById('video-ui').classList.remove('hidden');
-                document.getElementById('init-btn').innerText = "WESTERN ENGINE READY";
-                document.getElementById('status').innerText = "System Ready.";
-            } catch (err) { alert("Initialization failed: " + err.message); }
+                    const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
+                    document.getElementById('video').srcObject = stream;
+                    document.getElementById('video-container').style.display = 'block';
+                    
+                    document.getElementById('main-action-btn').disabled = false;
+                    btnText.innerText = "START SMART SCAN";
+                    document.getElementById('status').innerText = "Engine & Camera Ready.";
+                } catch (err) { alert("Start failed: " + err.message); }
+                return;
+            }
+
+            // 2. 如果引擎已就緒，執行掃描
+            processOCR();
         }
 
         async function processOCR() {
-            if (!worker) return;
-            document.getElementById('status').innerText = "Scanning Page...";
+            document.getElementById('status').innerText = "Scanning & Analyzing...";
             const canvas = document.getElementById('canvas');
             const ctx = canvas.getContext('2d');
+            const video = document.getElementById('video');
             canvas.width = video.videoWidth; canvas.height = video.videoHeight;
             ctx.filter = 'contrast(1.6) grayscale(1)';
             ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
             
             const { data: { lines, text } } = await worker.recognize(canvas);
 
-            // 1. ISBN 自動補正與聯網 (西文編目最強利器)
-            const isbnCandidates = text.replace(/[^\dX]/gi, '').match(/97[89]\d{10}/);
-            if (isbnCandidates) {
-                const fixedIsbn = getCorrectedISBN(isbnCandidates[0]);
+            // ISBN 優先邏輯
+            const isbnMatch = text.replace(/[^\dX]/gi, '').match(/97[89]\d{10}/);
+            if (isbnMatch) {
+                const fixedIsbn = getCorrectedISBN(isbnMatch[0]);
                 document.getElementById('f-020').innerText = `$a ${fixedIsbn}`;
                 await fetchCloudData(fixedIsbn);
                 isCloudLocked = true;
             }
 
-            // 2. 佈局結構分析
             analyzeStructure(lines);
-            document.getElementById('status').innerText = "Scan Complete.";
+            document.getElementById('status').innerText = "Mapping Complete.";
         }
 
         function analyzeStructure(ocrLines) {
@@ -142,7 +152,7 @@
                 document.getElementById('f-245').innerText = `$a ${titleA} : $b ${titleB} / $c ${author}`;
             }
 
-            // 3. 264 頁尾補位
+            // 264 頁尾補位
             let footerLines = processed.filter(l => l.y > video.videoHeight * 0.75);
             let city = "", pub = "", year = "";
             footerLines.forEach(l => {
@@ -152,11 +162,11 @@
             });
 
             let el264 = document.getElementById('f-264');
-            let current = el264.innerText;
-            let currentCity = current.split(':')[0].replace('$a', '').trim();
-            let currentPub = current.split(':')[1]?.split(',')[0].replace('$b', '').trim();
-            let currentYear = current.split(',')[1]?.replace('$c', '').trim();
-            el264.innerText = `$a ${currentCity || city} : $b ${currentPub || pub} , $c ${currentYear || year}`;
+            let pts = el264.innerText.split(/[:，,]/);
+            let cCity = pts[0]?.replace('$a', '').trim();
+            let cPub = pts[1]?.replace('$b', '').trim();
+            let cYear = pts[2]?.replace('$c', '').trim();
+            el264.innerText = `$a ${cCity || city} : $b ${cPub || pub} , $c ${cYear || year}`;
         }
 
         async function fetchCloudData(isbn) {
@@ -167,18 +177,12 @@
                     const info = data.items[0].volumeInfo;
                     document.getElementById('f-245').innerText = `$a ${info.title} : $b ${info.subtitle || ''} / $c ${info.authors ? info.authors.join('; ') : ''}`;
                     if (info.authors) document.getElementById('f-100').innerText = `$a ${formatWesternName(info.authors[0])}, $e author.`;
-                    
-                    let cloudPub = info.publisher || '';
-                    let splitCity = "";
-                    if (cloudPub.includes(':')) {
-                        splitCity = cloudPub.split(':')[0].trim();
-                        cloudPub = cloudPub.split(':')[1].trim();
-                    }
-                    document.getElementById('f-264').innerText = `$a ${splitCity} : $b ${cloudPub} , $c ${info.publishedDate ? info.publishedDate.substring(0,4) : ''}`;
+                    let cp = info.publisher || '', sc = "";
+                    if (cp.includes(':')) { sc = cp.split(':')[0].trim(); cp = cp.split(':')[1].trim(); }
+                    document.getElementById('f-264').innerText = `$a ${sc} : $b ${cp} , $c ${info.publishedDate ? info.publishedDate.substring(0,4) : ''}`;
                     document.querySelectorAll('.marc-field').forEach(el => el.classList.add('locked'));
-                    document.getElementById('status').innerText = "Cloud Authority Data Fetched!";
                 }
-            } catch (e) { console.log("Cloud Fetch Error."); }
+            } catch (e) { }
         }
 
         function formatWesternName(raw) {
@@ -188,15 +192,13 @@
         }
 
         function resetField(id) { 
-            const defs = {'f-245':'$a  : $b  / $c ', 'f-264':'$a  : $b  , $c '};
-            document.getElementById(id).innerText = defs[id] || '$a ';
+            document.getElementById(id).innerText = (id === 'f-245' || id === 'f-264' ? '$a  : $b  , $c ' : '$a ');
             document.getElementById(id).classList.remove('locked');
         }
 
         function clearAllFields() {
             ['f-020','f-100','f-245','f-250','f-264'].forEach(id => resetField(id));
             isCloudLocked = false;
-            document.getElementById('status').innerText = "All cleared.";
         }
 
         function copyToClipboard() {
@@ -205,7 +207,7 @@
                 let val = document.getElementById('f-'+tag).innerText.trim();
                 if(val.length > 5) out += `${tag}  ${val}\n`;
             });
-            navigator.clipboard.writeText(out).then(() => alert("Copied to clipboard!"));
+            navigator.clipboard.writeText(out).then(() => alert("Copied!"));
         }
     </script>
 </body>
