@@ -3,14 +3,15 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>Western MARC Scanner v70</title>
+<title>Western MARC Stable</title>
 
-<!-- ⚠️ 穩定版（GitHub Pages 可用） -->
+<!-- 穩定版 Tesseract（不使用 worker） -->
 <script src="https://unpkg.com/tesseract.js@4.1.1/dist/tesseract.min.js"></script>
 <script src="https://cdn.tailwindcss.com"></script>
 
 <style>
-.marc{font-family:Courier New,monospace;border:2px solid #e5e7eb;padding:6px;border-radius:10px}
+.marc{font-family:Courier New,monospace;border:2px solid #e5e7eb;
+padding:6px;border-radius:10px;background:#fff}
 #videoBox{display:none;border-radius:24px;overflow:hidden}
 </style>
 </head>
@@ -19,32 +20,27 @@
 
 <div class="max-w-xl mx-auto space-y-4">
 
-<h1 class="text-center font-black text-xl">Western MARC v70</h1>
+<h1 class="text-center font-black text-xl">Western MARC – Stable</h1>
 
 <div id="status" class="text-center text-xs text-slate-500">
-Initializing…
+Waiting for user action
 </div>
 
 <div class="grid grid-cols-3 gap-2">
-<button onclick="mode='cover'" class="bg-blue-600 text-white py-3 rounded-xl">📕 封面</button>
-<button onclick="mode='verso'" class="bg-slate-600 text-white py-3 rounded-xl">📄 版權頁</button>
-<button onclick="mode='back'" class="bg-emerald-600 text-white py-3 rounded-xl">📘 封底</button>
+<button onclick="setMode('cover')" class="bg-blue-600 text-white py-3 rounded-xl">📕 封面</button>
+<button onclick="setMode('verso')" class="bg-slate-600 text-white py-3 rounded-xl">📄 版權頁</button>
+<button onclick="setMode('back')" class="bg-emerald-600 text-white py-3 rounded-xl">📘 封底</button>
 </div>
 
 <div id="videoBox" class="aspect-[4/5] bg-black">
 <video id="video" autoplay playsinline class="w-full h-full object-cover"></video>
 </div>
 
-<div class="w-full bg-slate-200 h-2 rounded-full overflow-hidden">
-<div id="bar" class="bg-blue-600 h-2 w-0"></div>
-</div>
-
-<button id="scanBtn" onclick="scan()" disabled
- class="w-full bg-black text-white py-4 rounded-2xl font-bold">
+<button onclick="scan()" class="w-full bg-black text-white py-4 rounded-2xl font-bold">
 SCAN
 </button>
 
-<div class="bg-white rounded-2xl shadow p-4 space-y-1 text-xs">
+<div class="bg-white rounded-2xl shadow p-4 space-y-2 text-xs">
 <div>020<div id="f020" class="marc"></div></div>
 <div>100<div id="f100" class="marc"></div></div>
 <div>245<div id="f245" class="marc"></div></div>
@@ -56,71 +52,82 @@ SCAN
 <canvas id="c" class="hidden"></canvas>
 
 <script>
-let worker,mode='cover',ready=false;
+let mode=null;
+let stream=null;
 
 const statusEl=document.getElementById('status');
-const bar=document.getElementById('bar');
-const scanBtn=document.getElementById('scanBtn');
+const video=document.getElementById('video');
+const canvas=document.getElementById('c');
 
-(async()=>{
- try{
-  statusEl.innerText='Initializing OCR engine…';
+function setMode(m){
+ mode=m;
+ statusEl.innerText='Starting camera…';
 
-  worker=Tesseract.createWorker({
-   logger:m=>{
-    if(m.status==='recognizing text'){
-     bar.style.width=Math.round(m.progress*100)+'%';
-    }
-   }
-  });
+ if(stream) return;
 
-  await worker.load();
-  statusEl.innerText='Loading language data…';
-  await worker.loadLanguage('eng');
-  await worker.initialize('eng');
-
-  statusEl.innerText='Starting camera…';
-  const stream=await navigator.mediaDevices.getUserMedia({
-   video:{facingMode:'environment'}
-  });
-  video.srcObject=stream;
+ navigator.mediaDevices.getUserMedia({
+  video:{facingMode:'environment'}
+ }).then(s=>{
+  stream=s;
+  video.srcObject=s;
   document.getElementById('videoBox').style.display='block';
-
-  ready=true;
-  scanBtn.disabled=false;
-  statusEl.innerText='Ready to scan';
-
- }catch(e){
-  statusEl.innerText='Initialization failed';
-  console.error(e);
- }
-})();
+  statusEl.innerText='Camera ready – press SCAN';
+ }).catch(e=>{
+  statusEl.innerText='Camera access failed';
+ });
+}
 
 async function scan(){
- if(!ready)return;
- scanBtn.disabled=true;
+ if(!stream || !mode){
+  statusEl.innerText='Select page type first';
+  return;
+ }
+
  statusEl.innerText='Capturing image…';
 
- const ctx=c.getContext('2d');
- c.width=video.videoWidth;
- c.height=video.videoHeight;
+ const ctx=canvas.getContext('2d');
+ canvas.width=video.videoWidth;
+ canvas.height=video.videoHeight;
  ctx.drawImage(video,0,0);
 
  statusEl.innerText='Running OCR…';
- const {data}=await worker.recognize(c);
+
+ const result = await Tesseract.recognize(
+  canvas,
+  'eng',
+  { logger:m=>{
+     if(m.status==='recognizing text'){
+       statusEl.innerText='OCR '+Math.round(m.progress*100)+'%';
+     }
+   }
+  }
+ );
+
+ const text=result.data.text.trim();
 
  if(mode==='cover'){
-  const lines=data.text.split('\n').map(l=>l.trim()).filter(l=>l);
+  const lines=text.split('\n').map(l=>l.trim()).filter(l=>l);
   document.getElementById('f245').innerText='$a '+(lines[0]||'');
-  document.getElementById('f100').innerText='$a '+(lines[1]||'');
+  document.getElementById('f100').innerText=
+   lines[1] ? '$a '+invertName(lines[1])+', $e author.' : '';
+ }
+
+ if(mode==='verso'){
+  const isbn=text.match(/97[89]\d{10}|\d{9}[\dX]/);
+  if(isbn) document.getElementById('f020').innerText='$a '+isbn[0];
  }
 
  if(mode==='back'){
-  document.getElementById('f520').innerText='$a '+data.text.replace(/\n+/g,' ');
+  document.getElementById('f520').innerText=
+   '$a '+text.replace(/\n+/g,' ');
  }
 
  statusEl.innerText='Scan complete';
- scanBtn.disabled=false;
+}
+
+function invertName(n){
+ const p=n.split(' ');
+ return p.length>1 ? p.pop()+', '+p.join(' ') : n;
 }
 </script>
 
