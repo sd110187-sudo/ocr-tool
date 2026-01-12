@@ -21,12 +21,14 @@
         }
         #progress-bar { width: 0%; height: 100%; background: #22c55e; transition: width 0.2s ease; }
         .marc-field { font-family: 'Courier New', monospace; outline: none; width: 100%; display: block; padding: 4px; min-height: 1.5em; flex: 1; font-size: 0.95rem; background: #f8fafc; border-radius: 4px; }
-        .tag-row { border-bottom: 1px solid #f1f5f9; padding: 6px 0; display: flex; align-items: center; }
-        .tag-num { width: 2.5rem; font-weight: 900; color: #2563eb; font-size: 0.75rem; }
-        .tag-ind { width: 1.2rem; font-family: monospace; color: #94a3b8; font-size: 0.75rem; }
+        .tag-row { border-bottom: 1px solid #f1f5f9; padding: 8px 0; display: flex; align-items: flex-start; }
+        .tag-num { width: 2.5rem; font-weight: 900; color: #2563eb; font-size: 0.75rem; margin-top: 4px; }
+        .tag-ind { width: 1.2rem; font-family: monospace; color: #94a3b8; font-size: 0.75rem; margin-top: 4px; }
         .clear-tag { cursor: pointer; color: #cbd5e1; padding: 0 8px; font-size: 18px; }
         .group-box { border: 1px solid #e2e8f0; border-radius: 12px; padding: 8px; background: #fff; }
-        #raw-output-window { background: #0f172a; color: #94a3b8; font-family: monospace; font-size: 9px; padding: 10px; border-radius: 12px; margin-top: 10px; border: 1px solid #334155; }
+        /* 標題建議標籤 */
+        .title-sugg { display: inline-block; background: #eff6ff; color: #1d4ed8; padding: 2px 8px; border-radius: 6px; font-size: 10px; margin-right: 4px; margin-top: 4px; cursor: pointer; border: 1px solid #dbeafe; }
+        .title-sugg:hover { background: #dbeafe; }
         footer { font-size: 0.65rem; color: #94a3b8; text-align: center; padding: 20px 10px; }
     </style>
 </head>
@@ -35,7 +37,7 @@
     <div class="max-w-2xl mx-auto p-4 space-y-4">
         <header class="text-center py-4">
             <h1 class="text-2xl font-black tracking-tight text-slate-800">OCR Tool for Catalogers</h1>
-            <p class="text-[10px] text-blue-600 font-bold uppercase">Tamkang Library Suite v45</p>
+            <p class="text-[10px] text-blue-600 font-bold uppercase tracking-widest">TKU Smart Assistant v47</p>
         </header>
 
         <div class="bg-white rounded-3xl shadow-md p-4 space-y-4">
@@ -63,7 +65,7 @@
                         <label class="flex items-center gap-2"><input type="checkbox" class="lang-opt oriental-item" value="kor"> 韓文</label>
                     </div>
                     <div class="group-box space-y-1">
-                        <p class="font-bold text-emerald-600 border-b border-emerald-100 pb-0.5 mb-1">西方語言</p>
+                        <p class="font-bold text-emerald-600 border-b pb-0.5 mb-1">西方語言</p>
                         <label class="flex items-center gap-2 font-bold text-slate-400"><input type="checkbox" onchange="toggleGroup(this, 'western-item')"> [全選]</label>
                         <label class="flex items-center gap-2"><input type="checkbox" class="lang-opt western-item" value="eng"> 英文</label>
                         <label class="flex items-center gap-2"><input type="checkbox" class="lang-opt western-item" value="fra"> 法文</label>
@@ -72,7 +74,7 @@
                         <label class="flex items-center gap-2"><input type="checkbox" class="lang-opt western-item" value="rus"> 俄文</label>
                     </div>
                     <div class="group-box space-y-1">
-                        <p class="font-bold text-amber-600 border-b border-amber-100 pb-0.5 mb-1">特殊語言</p>
+                        <p class="font-bold text-amber-600 border-b pb-0.5 mb-1">特殊語言</p>
                         <label class="flex items-center gap-2 font-bold text-slate-400"><input type="checkbox" onchange="toggleGroup(this, 'special-item')"> [全選]</label>
                         <label class="flex items-center gap-2"><input type="checkbox" class="lang-opt special-item" value="ita"> 義大利文</label>
                         <label class="flex items-center gap-2"><input type="checkbox" class="lang-opt special-item" value="nld"> 荷蘭文</label>
@@ -81,7 +83,7 @@
                     </div>
                 </div>
             </div>
-            <button id="init-btn" onclick="initOCR()" class="w-full bg-slate-900 text-white py-3 rounded-xl font-black text-sm shadow-md">1. Initialize Engine</button>
+            <button id="init-btn" onclick="initOCR()" class="w-full bg-slate-900 text-white py-3 rounded-xl font-black text-sm shadow-md active:scale-95 transition">1. Initialize Engine</button>
         </div>
 
         <div id="video-ui" class="hidden space-y-4">
@@ -91,25 +93,33 @@
                 <div id="progress-overlay"><div id="progress-bar"></div></div>
             </div>
             <div class="flex gap-2">
-                <button id="capture-btn" onclick="processOCR()" class="flex-[3] bg-blue-600 text-white py-4 rounded-2xl font-black text-lg shadow-xl">📸 2. Capture & Accumulate</button>
-                <button onclick="clearAllFields()" class="flex-1 bg-white text-red-600 py-4 rounded-2xl font-bold text-xs border border-red-200">Clear</button>
-            </div>
-            <div id="raw-output-window">
-                <p class="text-blue-400 font-bold mb-1 border-b border-blue-900 pb-1">AI RAW OUTPUT (Diagnosis)</p>
-                <div id="raw-text-content">Waiting for capture...</div>
+                <button id="capture-btn" onclick="processOCR()" class="flex-[3] bg-blue-600 text-white py-4 rounded-2xl font-black text-lg shadow-xl active:bg-blue-700 transition">📸 2. Capture & Accumulate</button>
+                <button onclick="clearAllFields()" class="flex-1 bg-white text-red-600 py-4 rounded-2xl font-bold text-xs border border-red-200">Clear All</button>
             </div>
         </div>
 
+        <div id="status" class="text-center text-[10px] font-mono text-slate-500 h-4">Standing by...</div>
+
         <div class="bg-white rounded-[2rem] shadow-xl border border-slate-200 overflow-hidden" id="marc-output-area">
-            <div class="p-6 space-y-2">
-                <div class="tag-row" data-tag="020"><span class="tag-num">020</span><span class="tag-ind">##</span><span contenteditable="true" id="f-020" class="marc-field">$a </span><span onclick="resetField('f-020')" class="clear-tag">×</span></div>
-                <div class="tag-row bg-blue-50/50 rounded-xl px-2" data-tag="100"><span class="tag-num">100</span><span class="tag-ind">1#</span><span contenteditable="true" id="f-100" class="marc-field">$a </span><span onclick="resetField('f-100')" class="clear-tag">×</span></div>
-                <div class="tag-row" data-tag="245"><span class="tag-num">245</span><span class="tag-ind">10</span><span contenteditable="true" id="f-245" class="marc-field">$a  : $b  / $c </span><span onclick="resetField('f-245')" class="clear-tag">×</span></div>
-                <div class="tag-row bg-slate-50/50 rounded-xl px-2" data-tag="250"><span class="tag-num">250</span><span class="tag-ind">##</span><span contenteditable="true" id="f-250" class="marc-field">$a </span><span onclick="resetField('f-250')" class="clear-tag">×</span></div>
-                <div class="tag-row" data-tag="264"><span class="tag-num">264</span><span class="tag-ind">#4</span><span contenteditable="true" id="f-264" class="marc-field">$a  : $b  , $c </span><span onclick="resetField('f-264')" class="clear-tag">×</span></div>
-                <div class="tag-row bg-amber-50/30 rounded-xl px-2" data-tag="520"><span class="tag-num">520</span><span class="tag-ind">##</span><span contenteditable="true" id="f-520" class="marc-field text-xs">$a </span><span onclick="resetField('f-520')" class="clear-tag">×</span></div>
-                <div class="tag-row bg-emerald-50/30 rounded-xl px-2" data-tag="700"><span class="tag-num">700</span><span class="tag-ind">1#</span><span contenteditable="true" id="f-700" class="marc-field">$a </span><span onclick="resetField('f-700')" class="clear-tag">×</span></div>
+            <div class="p-6 space-y-3">
+                <div class="tag-row" data-tag="020"><span class="tag-num">020</span><span class="tag-ind">##</span><div class="flex-1"><span contenteditable="true" id="f-020" class="marc-field">$a </span></div><span onclick="resetField('f-020')" class="clear-tag">×</span></div>
+                <div class="tag-row bg-blue-50/50 rounded-xl px-2" data-tag="100"><span class="tag-num">100</span><span class="tag-ind">1#</span><div class="flex-1"><span contenteditable="true" id="f-100" class="marc-field">$a </span></div><span onclick="resetField('f-100')" class="clear-tag">×</span></div>
+                
+                <div class="tag-row flex-col" data-tag="245">
+                    <div class="flex w-full items-start">
+                        <span class="tag-num">245</span><span class="tag-ind">10</span>
+                        <div class="flex-1"><span contenteditable="true" id="f-245" class="marc-field">$a  : $b  / $c </span></div>
+                        <span onclick="resetField('f-245')" class="clear-tag">×</span>
+                    </div>
+                    <div id="title-suggestions" class="ml-10 flex flex-wrap"></div>
+                </div>
+
+                <div class="tag-row bg-slate-50/50 rounded-xl px-2" data-tag="250"><span class="tag-num">250</span><span class="tag-ind">##</span><div class="flex-1"><span contenteditable="true" id="f-250" class="marc-field">$a </span></div><span onclick="resetField('f-250')" class="clear-tag">×</span></div>
+                <div class="tag-row" data-tag="264"><span class="tag-num">264</span><span class="tag-ind">#4</span><div class="flex-1"><span contenteditable="true" id="f-264" class="marc-field">$a  : $b  , $c </span></div><span onclick="resetField('f-264')" class="clear-tag">×</span></div>
+                <div class="tag-row bg-amber-50/30 rounded-xl px-2" data-tag="520"><span class="tag-num">520</span><span class="tag-ind">##</span><div class="flex-1"><span contenteditable="true" id="f-520" class="marc-field text-xs">$a </span></div><span onclick="resetField('f-520')" class="clear-tag">×</span></div>
+                <div class="tag-row bg-emerald-50/30 rounded-xl px-2" data-tag="700"><span class="tag-num">700</span><span class="tag-ind">1#</span><div class="flex-1"><span contenteditable="true" id="f-700" class="marc-field">$a </span></div><span onclick="resetField('f-700')" class="clear-tag">×</span></div>
             </div>
+            
             <div class="px-6 pb-6 flex gap-3">
                 <button onclick="copyToClipboard(this)" class="flex-1 bg-slate-800 text-white py-3 rounded-xl font-bold text-xs">Copy Text</button>
                 <button onclick="downloadMRC()" class="flex-1 bg-blue-600 text-white py-3 rounded-xl font-bold text-xs">Download .mrc</button>
@@ -117,7 +127,7 @@
         </div>
 
         <footer>
-            淡江大學覺生紀念圖書館 採編組<br>TKU Library Cataloging Unit
+            淡江大學覺生紀念圖書館 採編組<br>TKU Library Assistant v47
         </footer>
     </div>
 
@@ -127,22 +137,8 @@
         let worker = null;
         let masterEntities = [];
         const CORP_KEYWORDS = /圖書館|中心|大學|學院|學會|公司|出版社|局|署|委員會|政府|部|工作室|組|館/;
-        // 強力屏蔽關鍵字：排除 CIP 雜訊
-        const CIP_BLOCKERS = /CIP|預行編目|機讀|分類|023\.|10500|1\.|I\.|2\.|3\.|4\./;
-        const NOISE_WORDS = /中華民國|印行|價格|NT|ISBN|系列|叢書|附錄|再版|手冊|說$|説$|絕錄$/;
-        
-        // v45 校正辭典 (更寬鬆的匹配)
-        const FUZZY_RULES = [
-            { raw: /[毀毀]\s*[加加]\s*[絕絕]\s*[錄錄]/g, fix: "書目紀錄" },
-            { raw: /[絕絕]\s*[錄錄]/g, fix: "書目紀錄" },
-            { raw: /[訛訛]\s*[唱唱]/g, fix: "出版" },
-            { raw: /[説說]\s*[誠誠]/g, fix: "出版" },
-            { raw: /[縮縮]\s*[莽莽]/g, fix: "書目" },
-            { raw: /[共共]/g, fix: "蕙" },
-            { raw: /[莽莽]/g, fix: "蕙" },
-            { raw: /[蕹蕹]/g, fix: "蕙" },
-            { raw: /[縮縮]/g, fix: "徐" }
-        ];
+        const CIP_BLOCKERS = /CIP|預行編目|機讀|分類|023\.|10500|1\.|I\.|2\.|3\.|4\.|p\.\s*\d+|cm\./i;
+        const NOISE_WORDS = /中華民國|印行|價格|NT|ISBN|系列|叢書|附錄|再版|手冊|說$|説$|絕錄$|©|\d{4}/;
 
         function toggleGroup(master, targetClass) {
             const checkboxes = document.getElementsByClassName(targetClass);
@@ -160,6 +156,7 @@
                             document.getElementById('progress-overlay').style.display = 'block';
                             document.getElementById('progress-bar').style.width = (m.progress * 100) + "%";
                         }
+                        document.getElementById('status').innerText = m.status + " (" + Math.round(m.progress * 100) + "%)";
                     }
                 });
                 const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
@@ -172,14 +169,14 @@
         async function processOCR() {
             if (!worker) return;
             const captureBtn = document.getElementById('capture-btn');
-            captureBtn.disabled = true; captureBtn.innerText = "OCR...";
+            captureBtn.disabled = true; captureBtn.innerText = "Processing...";
             
             const video = document.getElementById('video');
             const canvas = document.getElementById('canvas');
             const ctx = canvas.getContext('2d');
             canvas.width = video.videoWidth; canvas.height = video.videoHeight;
             
-            // 二值化預處理
+            // 通用影像增益
             ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
             let imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
             let d = imgData.data;
@@ -190,11 +187,7 @@
             ctx.putImageData(imgData, 0, 0);
             
             const { data: { text } } = await worker.recognize(canvas);
-            let processed = text;
-            FUZZY_RULES.forEach(r => { processed = processed.replace(r.raw, r.fix); });
-            
-            document.getElementById('raw-text-content').innerText = processed;
-            parseToMARC(processed);
+            parseToMARC(text);
             
             captureBtn.disabled = false; captureBtn.innerText = "📸 2. Capture & Accumulate";
             setTimeout(() => { document.getElementById('progress-overlay').style.display = 'none'; }, 500);
@@ -202,59 +195,73 @@
 
         function parseToMARC(text) {
             const lines = text.split('\n').map(l => l.replace(/([\u4e00-\u9fa5])\s+([\u4e00-\u9fa5])/g, '$1$2').trim()).filter(l => l.length >= 2);
-            let bestTitle = { line: "", score: -500 };
+            let candidates = [];
 
             lines.forEach((line, index) => {
-                // ISBN (容錯提取數字)
-                let isbnNum = line.replace(/[^\dX]/gi, '');
-                if (isbnNum.startsWith('97') && isbnNum.length >= 10 && document.getElementById('f-020').innerText === "$a ") {
-                    document.getElementById('f-020').innerText = `$a ${isbnNum.substring(0,13)}`;
+                // 1. ISBN 精準捕捉 (找所有 13 位數字)
+                let cleanNum = line.replace(/[^\dX]/gi, '');
+                if (cleanNum.length >= 10 && cleanNum.includes('97')) {
+                    const el020 = document.getElementById('f-020');
+                    if (el020.innerText === "$a ") el020.innerText = `$a ${cleanNum.substring(0, 13)}`;
                 }
 
-                // 版本
+                // 2. 版本
                 const edMatch = line.match(/(初版|再版|[第卷].*[版次]|修訂版|增訂版)/);
                 if (edMatch && document.getElementById('f-250').innerText === "$a ") {
                     document.getElementById('f-250').innerText = `$a ${edMatch[0]}`;
                 }
 
-                // 責任者
-                const nameMatch = line.match(/^([^著編譯印\d]{2,15})[:：\s]*(著|編|譯|印|作者|編者|編著)/);
-                if (nameMatch) {
-                    let cleaned = nameMatch[1].replace(/[書目紀錄手冊]/g, '').trim();
-                    if (cleaned.length >= 2 && !masterEntities.some(e => e.rawName === cleaned)) {
-                        masterEntities.push({ rawName: cleaned, formattedName: formatName(cleaned), relator: nameMatch[2] });
+                // 3. 責任者提取 (忽略 CIP 方框內容)
+                if (!CIP_BLOCKERS.test(line)) {
+                    const nameMatch = line.match(/^([^著編譯印\d]{2,15})[:：\s]*(著|編|譯|印|作者|編者|編著)/);
+                    if (nameMatch) {
+                        let cleaned = nameMatch[1].trim();
+                        if (cleaned.length >= 2 && !masterEntities.some(e => e.rawName === cleaned)) {
+                            masterEntities.push({ rawName: cleaned, formattedName: formatName(cleaned), relator: nameMatch[2] });
+                        }
                     }
                 }
 
-                // 245 權重計分
-                let score = 0;
-                if (line.length >= 4 && line.length <= 50) {
-                    score += 100;
-                    if (line.includes("MARC") || line.includes("書目紀錄")) score += 300;
-                    if (line.includes("手冊")) score += 200;
-                    if (CIP_BLOCKERS.test(line)) score -= 2000; // 絕對屏蔽 CIP 行
-                    if (NOISE_WORDS.test(line)) score -= 300;
-                    if (score > bestTitle.score) bestTitle = { line, score };
+                // 4. 標題候選評分
+                if (line.length >= 4 && line.length <= 50 && !CIP_BLOCKERS.test(line) && !NOISE_WORDS.test(line)) {
+                    candidates.push({ text: line, score: (index < 5 ? 100 : 50) });
                 }
             });
 
-            // 填入 245
+            // 顯示標題候選標籤
+            const suggDiv = document.getElementById('title-suggestions');
+            suggDiv.innerHTML = ""; // 先清空舊的建議
+            candidates.sort((a,b) => b.score - a.score).slice(0, 4).forEach(c => {
+                const span = document.createElement('span');
+                span.className = "title-sugg";
+                span.innerText = "💡 " + c.text;
+                span.onclick = () => {
+                    const el245 = document.getElementById('f-245');
+                    el245.innerText = `$a ${c.text} : $b  / $c `;
+                    updateAuthorStmt(); // 重新觸發責任者更新
+                };
+                suggDiv.appendChild(span);
+            });
+
+            // 自動填入最高分候選 (如果 245 目前是空的)
             const el245 = document.getElementById('f-245');
-            if (bestTitle.line && (el245.innerText === "$a  : $b  / $c " || el245.innerText.length < 10)) {
-                let a = bestTitle.line, b = "";
-                if (a.includes(":") || a.includes("：")) {
-                    let pts = a.split(/[:：]/); a = pts[0]; b = pts[1];
-                }
-                el245.innerText = `$a ${a.trim()} : $b ${b.trim()} / $c `;
+            if (el245.innerText.includes("$a  :") && candidates.length > 0) {
+                el245.innerText = `$a ${candidates[0].text} : $b  / $c `;
             }
 
-            // 更新著者
+            updateAuthorStmt();
+        }
+
+        function updateAuthorStmt() {
             if (masterEntities.length > 0) {
                 const first = masterEntities[0];
-                document.getElementById('f-100').innerText = `$a ${first.formattedName}, $e ${first.relator}`;
+                document.getElementById('f-100').innerText = `$a ${first.formattedName}${first.relator ? ', $e ' + first.relator : ''}`;
                 document.getElementById('f-700').innerText = masterEntities.slice(1).map(e => `$a ${e.formattedName}, $e ${e.relator}`).join(' ');
-                const titlePart = document.getElementById('f-245').innerText.split(' / ')[0];
-                document.getElementById('f-245').innerText = `${titlePart} / $c ${masterEntities.map(e=>e.rawName).join('，')} 編著`;
+                
+                const currentVal = document.getElementById('f-245').innerText;
+                const titlePart = currentVal.split(' / ')[0];
+                const authorString = masterEntities.map(e => e.rawName).join('，');
+                document.getElementById('f-245').innerText = `${titlePart} / $c ${authorString} 編著`;
             }
         }
 
@@ -274,7 +281,7 @@
         function clearAllFields() {
             if(!confirm("確定要清空所有資料嗎？")) return;
             ['f-020','f-100','f-245','f-250','f-264','f-520','f-700'].forEach(id => resetField(id));
-            document.getElementById('raw-text-content').innerText = "Waiting...";
+            document.getElementById('title-suggestions').innerHTML = "";
         }
 
         function copyToClipboard(btn) {
