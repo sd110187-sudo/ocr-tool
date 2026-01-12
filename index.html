@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TKU Smart Cataloger v58</title>
+    <title>TKU Smart Cataloger v59</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/tesseract.js/5.0.5/tesseract.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
@@ -13,6 +13,7 @@
         .marc-field { font-family: 'Courier New', monospace; outline: none; width: 100%; padding: 10px; font-size: 0.95rem; background: #fff; border: 1px solid #e2e8f0; border-radius: 10px; }
         .tag-row { border-bottom: 1px solid #f1f5f9; padding: 10px 0; display: flex; align-items: flex-start; gap: 8px; }
         .tag-label { width: 4.5rem; font-weight: 900; color: #2563eb; font-size: 0.8rem; margin-top: 10px; }
+        .locked { background: #f0fdf4; border: 1px solid #22c55e; }
         #status { font-family: monospace; font-size: 11px; color: #64748b; text-align: center; height: 1.5em; font-weight: bold; padding: 5px; }
         footer { font-size: 0.7rem; color: #94a3b8; text-align: center; padding: 40px 10px; }
     </style>
@@ -21,52 +22,51 @@
 
     <div class="max-w-2xl mx-auto p-4 space-y-4">
         <header class="text-center py-4">
-            <h1 class="text-2xl font-black text-slate-800 tracking-tighter">Smart MARC <span class="text-blue-600">v58</span></h1>
-            <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">Spatial & Authority Hybrid Engine</p>
+            <h1 class="text-2xl font-black text-slate-800 tracking-tighter">Smart MARC <span class="text-blue-600">v59</span></h1>
+            <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">Zonal Analysis & Barcode Correction</p>
         </header>
 
         <div class="bg-white rounded-3xl shadow-lg p-5 border space-y-4">
             <div class="flex gap-3">
                 <label class="flex-1 flex flex-col items-center p-3 border-2 rounded-2xl cursor-pointer has-[:checked]:border-blue-600 has-[:checked]:bg-blue-50 transition">
                     <input type="radio" name="catalog-mode" value="chi" checked class="hidden">
-                    <span class="font-bold text-sm">中文編目</span>
+                    <span class="font-bold text-sm">中文編目模式</span>
                 </label>
                 <label class="flex-1 flex flex-col items-center p-3 border-2 rounded-2xl cursor-pointer has-[:checked]:border-blue-600 has-[:checked]:bg-blue-50 transition">
                     <input type="radio" name="catalog-mode" value="eng" class="hidden">
-                    <span class="font-bold text-sm">西文編目</span>
+                    <span class="font-bold text-sm">西文編目模式</span>
                 </label>
             </div>
-            <button id="init-btn" onclick="initOCR()" class="w-full bg-slate-900 text-white py-4 rounded-xl font-bold text-sm shadow-md active:scale-95 transition">INITIALIZE ENGINE</button>
+            <button id="init-btn" onclick="initOCR()" class="w-full bg-slate-900 text-white py-4 rounded-xl font-bold text-sm active:scale-95 transition">INITIALIZE ENGINE</button>
         </div>
 
         <div id="video-ui" class="hidden space-y-4">
             <div id="video-container" class="aspect-[4/5] shadow-2xl relative border-4 border-white">
                 <video id="video" class="w-full h-full object-cover" autoplay playsinline></video>
                 <div id="scanner-line"></div>
+                <div id="progress-overlay" class="absolute bottom-0 w-full h-2 bg-black/20"><div id="progress-bar" class="h-full bg-blue-500 w-0"></div></div>
             </div>
-            <button id="capture-btn" onclick="processOCR()" class="w-full bg-blue-600 text-white py-5 rounded-2xl font-black text-lg shadow-xl active:bg-blue-700 transition">📸 START HYBRID SCAN</button>
+            <button id="capture-btn" onclick="processOCR()" class="w-full bg-blue-600 text-white py-5 rounded-2xl font-black text-lg shadow-xl active:bg-blue-700 transition">📸 START SMART SCAN</button>
         </div>
 
-        <div id="status">Ready.</div>
+        <div id="status">Ready for scanning.</div>
 
-        <div class="bg-white rounded-[2.5rem] shadow-xl border border-slate-200 overflow-hidden" id="marc-output-area">
+        <div class="bg-white rounded-[2rem] shadow-xl border border-slate-200 overflow-hidden" id="marc-output-area">
             <div class="p-6 space-y-1">
                 <div class="tag-row" data-tag="020"><span class="tag-label">020 ##</span><span contenteditable="true" id="f-020" class="marc-field">$a </span></div>
                 <div class="tag-row bg-blue-50/40 rounded-2xl px-2" data-tag="100"><span class="tag-label">100 1#</span><span contenteditable="true" id="f-100" class="marc-field">$a </span></div>
                 <div class="tag-row" data-tag="245"><span class="tag-label">245 10</span><span contenteditable="true" id="f-245" class="marc-field">$a  : $b  / $c </span></div>
                 <div class="tag-row bg-slate-50 rounded-2xl px-2" data-tag="250"><span class="tag-label">250 ##</span><span contenteditable="true" id="f-250" class="marc-field">$a </span></div>
                 <div class="tag-row" data-tag="264"><span class="tag-label">264 #1</span><span contenteditable="true" id="f-264" class="marc-field">$a  : $b  , $c </span></div>
-                <div class="tag-row bg-amber-50/20 rounded-2xl px-2" data-tag="520"><span class="tag-label">520 ##</span><span contenteditable="true" id="f-520" class="marc-field text-xs">$a </span></div>
             </div>
-            
             <div class="px-8 pb-8 flex gap-3">
-                <button onclick="copyToClipboard()" class="flex-1 bg-slate-800 text-white py-4 rounded-xl font-bold text-xs uppercase active:scale-95 transition">Copy</button>
+                <button onclick="copyToClipboard()" class="flex-1 bg-slate-800 text-white py-4 rounded-xl font-bold text-xs uppercase active:scale-95 transition">Copy Text</button>
                 <button onclick="clearAllFields()" class="flex-1 bg-red-50 text-red-600 py-4 rounded-xl font-bold text-xs uppercase active:scale-95 transition">Reset</button>
             </div>
         </div>
 
         <footer>
-            淡江大學覺生紀念圖書館 採編組<br>TKU Library Hybrid Intelligence Suite v58
+            淡江大學覺生紀念圖書館 採編組<br>TKU Library Expert Mapping Suite v59
         </footer>
     </div>
 
@@ -74,26 +74,39 @@
 
     <script>
         let worker = null;
-        const CITY_DICT = /Москва|Берлин|Moscow|Berlin|London|New York|Taipei|台北|臺北/i;
+        let isCloudLocked = false; // 是否已從雲端鎖定資料
+
+        // ISBN-13 自動補正功能
+        function getCorrectedISBN(isbn) {
+            if (!/^\d{13}$/.test(isbn)) return isbn;
+            let sum = 0;
+            for (let i = 0; i < 12; i++) sum += parseInt(isbn[i]) * (i % 2 === 0 ? 1 : 3);
+            let check = (10 - (sum % 10)) % 10;
+            if (parseInt(isbn[12]) !== check) {
+                console.log(`Detected Checksum Error: ${isbn}. Auto-fixing last digit to ${check}`);
+                return isbn.substring(0, 12) + check;
+            }
+            return isbn;
+        }
 
         async function initOCR() {
             try {
                 const mode = document.querySelector('input[name="catalog-mode"]:checked').value;
-                const langPack = (mode === 'chi') ? 'chi_tra+chi_sim+eng+jpn+kor' : 'eng+fra+spa+deu+rus';
+                const langs = (mode === 'chi') ? 'chi_tra+chi_sim+eng+jpn+kor' : 'eng+fra+spa+deu+rus';
                 document.getElementById('init-btn').disabled = true;
-                worker = await Tesseract.createWorker(langPack, 1, {
-                    logger: m => { if(m.status === 'recognizing text') document.getElementById('status').innerText = `Identifying... ${Math.round(m.progress * 100)}%`; }
+                worker = await Tesseract.createWorker(langs, 1, {
+                    logger: m => { if(m.status === 'recognizing text') document.getElementById('status').innerText = `Smart Decoding... ${Math.round(m.progress * 100)}%`; }
                 });
                 const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
                 document.getElementById('video').srcObject = stream;
                 document.getElementById('video-ui').classList.remove('hidden');
-                document.getElementById('init-btn').innerText = "SYSTEM ACTIVE";
+                document.getElementById('init-btn').innerText = "ENGINE READY";
             } catch (err) { alert("Init Error: " + err.message); }
         }
 
         async function processOCR() {
             if (!worker) return;
-            document.getElementById('status').innerText = "Analyzing Spatial Layout...";
+            document.getElementById('status').innerText = "Analyzing Page Layout...";
             const canvas = document.getElementById('canvas');
             const ctx = canvas.getContext('2d');
             canvas.width = video.videoWidth; canvas.height = video.videoHeight;
@@ -102,60 +115,62 @@
             
             const { data: { lines, text } } = await worker.recognize(canvas);
 
-            // 1. 優先找 ISBN 並進行聯網
-            const isbnMatch = text.replace(/[^\dX]/gi, '').match(/97[89]\d{10}/);
-            if (isbnMatch) {
-                const isbn = isbnMatch[0];
-                document.getElementById('f-020').innerText = `$a ${isbn}`;
-                await fetchAuthorityData(isbn);
-            } else {
-                // 2. 若無 ISBN，啟動視覺佈局分析 (Spatial Analysis)
+            // 1. 條碼與 ISBN 強力鎖定邏輯
+            const isbnCandidates = text.replace(/[^\dX]/gi, '').match(/97[89]\d{10}/);
+            if (isbnCandidates) {
+                const rawIsbn = isbnCandidates[0];
+                const fixedIsbn = getCorrectedISBN(rawIsbn); // 自動修復最後一碼
+                document.getElementById('f-020').innerText = `$a ${fixedIsbn}`;
+                document.getElementById('status').innerText = "ISBN Verified! Fetching Cloud Data...";
+                await fetchCloudData(fixedIsbn);
+                isCloudLocked = true; // 鎖定欄位，防止 OCR 亂碼覆蓋
+            }
+
+            // 2. 若雲端沒鎖定，執行結構化對應 (針對題名頁)
+            if (!isCloudLocked) {
                 runSpatialMapping(lines);
             }
-            document.getElementById('status').innerText = "Mapping Complete.";
         }
 
-        // v58 核心：視覺空間對應演算法
         function runSpatialMapping(ocrLines) {
             let processed = ocrLines.map(l => ({
-                text: l.text.trim().replace(/([\u4e00-\u9fa5])\s+([\u4e00-\u9fa5])/g, '$1$2'),
+                text: l.text.trim(),
                 y: l.bbox.y0,
                 h: l.bbox.y1 - l.bbox.y0
             })).filter(l => l.text.length > 2);
 
             if (processed.length === 0) return;
 
-            // 排序找書名：高度(h)最大的通常是標題
+            // 找出正題名：字體最大的區塊
             let titleCandidates = [...processed].sort((a,b) => b.h - a.h);
             let titleA = titleCandidates[0].text;
             
-            // 找著者：位於頁面頂端 25% 的區域，且字體適中的行
-            let topLines = processed.filter(l => l.y < video.videoHeight * 0.25);
-            let author = topLines.length > 0 ? topLines[0].text : "";
-
-            // 找副題名：在標題下方且高度較小的行
+            // 找出副題名：正題名下方的第一行
             let titleIdx = processed.findIndex(l => l.text === titleA);
             let titleB = "";
             if (titleIdx !== -1 && processed[titleIdx + 1] && processed[titleIdx + 1].y > processed[titleIdx].y) {
                 titleB = processed[titleIdx + 1].text;
             }
 
-            // 找出版資訊：底端 20%
-            let bottomPart = processed.filter(l => l.y > video.videoHeight * 0.7);
+            // 找出著者：頁面頂部文字
+            let topLines = processed.filter(l => l.y < video.videoHeight * 0.25);
+            let author = topLines.length > 0 ? topLines[0].text : "";
+
+            // 找出出版資訊：底端文字 (含年份、城市辨識)
             let city = "", pub = "", year = "";
-            bottomPart.forEach(l => {
+            processed.filter(l => l.y > video.videoHeight * 0.7).forEach(l => {
                 if (l.text.match(/\d{4}/)) year = l.text.match(/\d{4}/)[0];
-                if (CITY_DICT.test(l.text)) city = l.text.match(CITY_DICT)[0];
-                if (l.text.includes("«") || l.text.match(/Press|印行|出版|Way/i)) pub = l.text.replace(/[«»]/g, '').trim();
+                if (l.text.match(/Москва|Берлин|Taipei|台北|臺北/i)) city = l.text.match(/Москва|Берлин|Taipei|台北|臺北/i)[0];
+                if (l.text.match(/出版社|印行|«|Press/i)) pub = l.text.replace(/[«»]/g, '').trim();
             });
 
-            // 填入欄位 (自動轉換姓名格式)
-            if (author) document.getElementById('f-100').innerText = `$a ${formatWesternName(author)}, $e author.`;
+            // 帶入欄位
+            document.getElementById('f-100').innerText = `$a ${formatWesternName(author)}, $e author.`;
             document.getElementById('f-245').innerText = `$a ${titleA} : $b ${titleB} / $c ${author}`;
             document.getElementById('f-264').innerText = `$a ${city} : $b ${pub} , $c ${year}`;
         }
 
-        async function fetchAuthorityData(isbn) {
+        async function fetchCloudData(isbn) {
             try {
                 const res = await fetch(`https://www.googleapis.com/books/v1/volumes?q=isbn:${isbn}`);
                 const data = await res.json();
@@ -164,10 +179,11 @@
                     document.getElementById('f-245').innerText = `$a ${info.title} : $b ${info.subtitle || ''} / $c ${info.authors ? info.authors.join('; ') : ''}`;
                     if (info.authors) document.getElementById('f-100').innerText = `$a ${formatWesternName(info.authors[0])}, $e author.`;
                     document.getElementById('f-264').innerText = `$a  : $b ${info.publisher || ''} , $c ${info.publishedDate ? info.publishedDate.substring(0,4) : ''}`;
-                    document.getElementById('f-520').innerText = `$a ${info.description || ''}`;
-                    document.getElementById('status').innerText = "Cloud Authority Data Fetched!";
+                    document.getElementById('status').innerText = "Cloud Authority Success!";
+                    // 標記為鎖定狀態
+                    document.querySelectorAll('.marc-field').forEach(el => el.classList.add('locked'));
                 }
-            } catch (e) { document.getElementById('status').innerText = "Cloud failed, using Spatial OCR."; }
+            } catch (e) { document.getElementById('status').innerText = "Cloud Fail. Using OCR."; }
         }
 
         function formatWesternName(raw) {
@@ -176,16 +192,19 @@
             return parts.length >= 2 ? `${parts.pop()}, ${parts.join(' ')}` : name;
         }
 
-        function resetField(id) { document.getElementById(id).innerText = (id === 'f-245' ? '$a  : $b  / $c ' : (id === 'f-264' ? '$a  : $b  , $c ' : '$a ')); }
-        function clearAllFields() { ['f-020','f-100','f-245','f-250','f-264','f-520'].forEach(id => resetField(id)); }
-        
+        function clearAllFields() {
+            ['f-020','f-100','f-245','f-250','f-264'].forEach(id => document.getElementById(id).innerText = (id === 'f-245' || id === 'f-264' ? '$a  : $b  / $c ' : '$a '));
+            isCloudLocked = false;
+            document.querySelectorAll('.marc-field').forEach(el => el.classList.remove('locked'));
+        }
+
         function copyToClipboard() {
-            let text = "";
-            ['020','100','245','250','264','520'].forEach(tag => {
+            let out = "";
+            ['020','100','245','250','264'].forEach(tag => {
                 let val = document.getElementById('f-'+tag).innerText.trim();
-                if(val.length > 5) text += `${tag}  ${val}\n`;
+                if(val.length > 5) out += `${tag}  ${val}\n`;
             });
-            navigator.clipboard.writeText(text).then(() => alert("COPIED!"));
+            navigator.clipboard.writeText(out).then(() => alert("COPIED!"));
         }
     </script>
 </body>
