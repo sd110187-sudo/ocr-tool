@@ -3,197 +3,124 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>TKU Western Cataloger v69</title>
+<title>Western MARC Scanner v70</title>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/tesseract.js/5.0.5/tesseract.min.js"></script>
+<!-- ⚠️ 穩定版（GitHub Pages 可用） -->
+<script src="https://unpkg.com/tesseract.js@4.1.1/dist/tesseract.min.js"></script>
 <script src="https://cdn.tailwindcss.com"></script>
 
 <style>
-.marc-field{font-family:Courier New,monospace;border:2px solid #e5e7eb;padding:8px;border-radius:10px}
-.conf-high{background:#f0fdf4;border-color:#22c55e}
-.conf-mid{background:#fefce8;border-color:#eab308}
-.conf-low{background:#fef2f2;border-color:#ef4444}
-.locked{outline:3px solid #22c55e}
-#video-container{display:none;position:relative;border-radius:24px;overflow:hidden}
-#scanner-line{position:absolute;top:0;width:100%;height:3px;background:#3b82f6;animation:scan 2s linear infinite}
-@keyframes scan{0%{top:5%}50%{top:95%}100%{top:5%}}
+.marc{font-family:Courier New,monospace;border:2px solid #e5e7eb;padding:6px;border-radius:10px}
+#videoBox{display:none;border-radius:24px;overflow:hidden}
 </style>
 </head>
 
-<body class="bg-slate-50">
+<body class="bg-slate-50 p-4">
 
-<div class="max-w-2xl mx-auto p-4 space-y-4">
+<div class="max-w-xl mx-auto space-y-4">
 
-<header class="text-center">
-<h1 class="text-2xl font-black">Western MARC v69</h1>
-<p class="text-xs text-slate-400">Fast OCR · Authority · Export</p>
-</header>
+<h1 class="text-center font-black text-xl">Western MARC v70</h1>
 
-<div class="grid grid-cols-3 gap-2">
-<button onclick="setMode('cover')" class="bg-blue-600 text-white py-3 rounded-xl">📕 封面</button>
-<button onclick="setMode('verso')" class="bg-slate-600 text-white py-3 rounded-xl">📄 版權頁</button>
-<button onclick="setMode('back')"  class="bg-emerald-600 text-white py-3 rounded-xl">📘 封底</button>
+<div id="status" class="text-center text-xs text-slate-500">
+Initializing…
 </div>
 
-<div id="status" class="text-center text-xs text-slate-500">Initializing…</div>
+<div class="grid grid-cols-3 gap-2">
+<button onclick="mode='cover'" class="bg-blue-600 text-white py-3 rounded-xl">📕 封面</button>
+<button onclick="mode='verso'" class="bg-slate-600 text-white py-3 rounded-xl">📄 版權頁</button>
+<button onclick="mode='back'" class="bg-emerald-600 text-white py-3 rounded-xl">📘 封底</button>
+</div>
 
-<div id="video-container" class="aspect-[4/5] bg-black">
+<div id="videoBox" class="aspect-[4/5] bg-black">
 <video id="video" autoplay playsinline class="w-full h-full object-cover"></video>
-<div id="scanner-line"></div>
 </div>
 
 <div class="w-full bg-slate-200 h-2 rounded-full overflow-hidden">
-<div id="ocr-bar" class="bg-blue-600 h-2 w-0"></div>
+<div id="bar" class="bg-blue-600 h-2 w-0"></div>
 </div>
 
-<button onclick="scanPage()" class="w-full bg-black text-white py-5 rounded-2xl font-black">
-SCAN PAGE
+<button id="scanBtn" onclick="scan()" disabled
+ class="w-full bg-black text-white py-4 rounded-2xl font-bold">
+SCAN
 </button>
 
-<div class="bg-white rounded-3xl shadow p-6 space-y-2">
-<div>020<div id="f-020" class="marc-field">$a </div></div>
-<div>100<div id="f-100" class="marc-field">$a </div></div>
-<div>245<div id="f-245" class="marc-field">$a  : $b  / $c </div></div>
-<div>250<div id="f-250" class="marc-field">$a </div></div>
-<div>264<div id="f-264" class="marc-field">$a  : $b , $c </div></div>
-<div>700<div id="f-700" class="marc-field">$a </div></div>
-<div>520<div id="f-520" class="marc-field text-xs">$a </div></div>
-</div>
-
-<div class="flex gap-2">
-<button onclick="copyMARC()" class="flex-1 bg-slate-800 text-white py-3 rounded-xl font-bold text-sm">COPY</button>
-<button onclick="exportMRC()" class="flex-1 bg-emerald-600 text-white py-3 rounded-xl font-bold text-sm">EXPORT .MRC</button>
+<div class="bg-white rounded-2xl shadow p-4 space-y-1 text-xs">
+<div>020<div id="f020" class="marc"></div></div>
+<div>100<div id="f100" class="marc"></div></div>
+<div>245<div id="f245" class="marc"></div></div>
+<div>520<div id="f520" class="marc"></div></div>
 </div>
 
 </div>
 
-<canvas id="canvas" class="hidden"></canvas>
+<canvas id="c" class="hidden"></canvas>
 
 <script>
-let worker,mode='cover',locked=false;
-const f={};
+let worker,mode='cover',ready=false;
 
-document.addEventListener('DOMContentLoaded',async()=>{
-['020','100','245','250','264','700','520'].forEach(t=>f[t]=document.getElementById('f-'+t));
+const statusEl=document.getElementById('status');
+const bar=document.getElementById('bar');
+const scanBtn=document.getElementById('scanBtn');
 
-worker=await Tesseract.createWorker({
- logger:m=>{
-   if(m.status==='recognizing text'){
-     document.getElementById('ocr-bar').style.width=Math.round(m.progress*100)+'%';
+(async()=>{
+ try{
+  statusEl.innerText='Initializing OCR engine…';
+
+  worker=Tesseract.createWorker({
+   logger:m=>{
+    if(m.status==='recognizing text'){
+     bar.style.width=Math.round(m.progress*100)+'%';
+    }
    }
+  });
+
+  await worker.load();
+  statusEl.innerText='Loading language data…';
+  await worker.loadLanguage('eng');
+  await worker.initialize('eng');
+
+  statusEl.innerText='Starting camera…';
+  const stream=await navigator.mediaDevices.getUserMedia({
+   video:{facingMode:'environment'}
+  });
+  video.srcObject=stream;
+  document.getElementById('videoBox').style.display='block';
+
+  ready=true;
+  scanBtn.disabled=false;
+  statusEl.innerText='Ready to scan';
+
+ }catch(e){
+  statusEl.innerText='Initialization failed';
+  console.error(e);
  }
-});
-await worker.loadLanguage('eng');
-await worker.initialize('eng');
+})();
 
-const stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:'environment'}});
-video.srcObject=stream;
-video-container.style.display='block';
-status.innerText='Ready';
-});
+async function scan(){
+ if(!ready)return;
+ scanBtn.disabled=true;
+ statusEl.innerText='Capturing image…';
 
-function setMode(m){mode=m;status.innerText='Mode: '+m;}
+ const ctx=c.getContext('2d');
+ c.width=video.videoWidth;
+ c.height=video.videoHeight;
+ ctx.drawImage(video,0,0);
 
-function crop(y1,y2){
-const c=document.createElement('canvas');
-c.width=canvas.width;c.height=y2-y1;
-c.getContext('2d').drawImage(canvas,0,y1,canvas.width,y2-y1,0,0,canvas.width,y2-y1);
-return c;
-}
+ statusEl.innerText='Running OCR…';
+ const {data}=await worker.recognize(c);
 
-async function scanPage(){
-status.innerText='Scanning…';
-const ctx=canvas.getContext('2d');
-canvas.width=video.videoWidth;canvas.height=video.videoHeight;
-ctx.filter='grayscale(1) contrast(1.6)';
-ctx.drawImage(video,0,0);
+ if(mode==='cover'){
+  const lines=data.text.split('\n').map(l=>l.trim()).filter(l=>l);
+  document.getElementById('f245').innerText='$a '+(lines[0]||'');
+  document.getElementById('f100').innerText='$a '+(lines[1]||'');
+ }
 
-let roi,psm;
-if(mode==='cover'){roi=crop(0,canvas.height*0.6);psm=Tesseract.PSM.SPARSE_TEXT;}
-if(mode==='verso'){roi=crop(canvas.height*0.6,canvas.height);psm=Tesseract.PSM.SINGLE_BLOCK;}
-if(mode==='back'){roi=canvas;psm=Tesseract.PSM.AUTO;}
+ if(mode==='back'){
+  document.getElementById('f520').innerText='$a '+data.text.replace(/\n+/g,' ');
+ }
 
-await worker.setParameters({tessedit_pageseg_mode:psm});
-const {data}=await worker.recognize(roi);
-
-if(mode==='cover') parseCover(data.text);
-if(mode==='verso') parseVerso(data.text);
-if(mode==='back')  parseBack(data.text);
-
-status.innerText='Done';
-}
-
-function setField(tag,val,conf){
-if(locked && ['020','245','264','520'].includes(tag))return;
-f[tag].innerText=val;
-f[tag].className='marc-field '+conf;
-}
-
-function parseCover(t){
-const lines=t.split('\n').map(l=>l.trim()).filter(l=>l.length>3);
-const title=lines.sort((a,b)=>b.length-a.length)[0];
-const author=lines.find(l=>l.split(' ').length<=4);
-if(title) setField('245',`$a ${title} / $c ${authorityName(author||'')}`,'conf-mid');
-if(author) setField('100',`$a ${authorityName(author)}, $e author.`,'conf-mid');
-}
-
-async function parseVerso(t){
-const isbn=t.match(/97[89]\d{10}/);
-if(isbn){
-setField('020',`$a ${isbn[0]}`,'conf-high');
-googleBooks(isbn[0]);
-}
-const year=t.match(/\d{4}/);
-if(year) setField('264',`$a  : $b  , $c ${year[0]}`,'conf-mid');
-}
-
-function parseBack(t){
-setField('520',`$a ${t.replace(/\n+/g,' ')}`,'conf-mid');
-}
-
-async function googleBooks(isbn){
-const r=await fetch(`https://www.googleapis.com/books/v1/volumes?q=isbn:${isbn}`);
-const j=await r.json();
-if(j.totalItems>0){
-const i=j.items[0].volumeInfo;
-setField('245',`$a ${i.title} / $c ${(i.authors||[]).map(authorityName).join('; ')}`,'conf-high');
-setField('264',`$a  : $b ${i.publisher||''}, $c ${i.publishedDate?.slice(0,4)||''}`,'conf-high');
-setField('520',`$a ${i.description||''}`,'conf-high');
-locked=true;
-}
-}
-
-/* -------- Authority -------- */
-function authorityName(n){
-if(!n)return'';
-n=n.replace(/edited by|translated by|herausgegeben von/ig,'').trim();
-if(n.includes(','))return n;
-const p=n.split(/\s+/);
-return p.length>1?`${p.pop()}, ${p.join(' ')}`:n;
-}
-
-/* -------- Output -------- */
-function copyMARC(){
-let out='';
-Object.keys(f).forEach(k=>{
-const v=f[k].innerText.trim();
-if(v.length>5) out+=`${k}  ${v}\n`;
-});
-navigator.clipboard.writeText(out);
-alert('MARC copied');
-}
-
-function exportMRC(){
-let txt='';
-Object.keys(f).forEach(k=>{
-const v=f[k].innerText.trim();
-if(v.length>5) txt+=`=${k}  ${v}\n`;
-});
-const blob=new Blob([txt],{type:'text/plain'});
-const a=document.createElement('a');
-a.href=URL.createObjectURL(blob);
-a.download='record.mrc';
-a.click();
+ statusEl.innerText='Scan complete';
+ scanBtn.disabled=false;
 }
 </script>
 
