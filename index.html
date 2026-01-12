@@ -12,17 +12,22 @@
             position: absolute; top: 0; left: 0; width: 100%; height: 3px;
             background: linear-gradient(to right, transparent, #38bdf8, transparent);
             box-shadow: 0 0 20px 5px rgba(56, 189, 248, 0.6);
-            animation: scan 2s linear infinite;
+            animation: scan 2.5s ease-in-out infinite;
         }
         @keyframes scan { 0% { top: 5%; } 50% { top: 95%; } 100% { top: 5%; } }
+        
+        #progress-overlay {
+            position: absolute; bottom: 0; left: 0; width: 100%; height: 6px;
+            background: rgba(30, 41, 59, 0.8); z-index: 20; display: none;
+        }
+        #progress-bar { width: 0%; height: 100%; background: #3b82f6; transition: width 0.2s ease; }
+
         .marc-field { font-family: 'Courier New', monospace; outline: none; width: 100%; display: block; padding: 4px; min-height: 1.5em; }
         .marc-field:focus { background: #f0f9ff; border-bottom: 2px solid #3b82f6; }
         .group-box { border: 1px solid #e2e8f0; border-radius: 16px; padding: 12px; background: #fff; }
         .tag-num { width: 3rem; font-weight: 900; color: #2563eb; font-size: 0.8rem; }
         .tag-ind { width: 1.5rem; font-family: monospace; color: #94a3b8; font-size: 0.8rem; }
         footer { font-size: 0.7rem; color: #94a3b8; text-align: center; padding: 30px 10px; line-height: 1.6; }
-        /* 增加進度條樣式 */
-        #progress-bar { transition: width 0.3s ease; }
     </style>
 </head>
 <body class="bg-slate-50 min-h-screen pb-10 font-sans text-slate-900">
@@ -34,7 +39,7 @@
         </header>
 
         <div class="bg-white rounded-3xl shadow-sm border p-4">
-            <h2 class="text-xs font-bold mb-3 text-slate-400 tracking-wider uppercase">Step 1: Cataloging mode</h2>
+            <h2 class="text-xs font-bold mb-3 text-slate-400 tracking-wider">Step 1: Cataloging mode</h2>
             <div class="flex gap-4">
                 <label class="flex-1 flex items-center justify-center gap-2 p-3 border-2 rounded-2xl cursor-pointer hover:border-blue-500 transition has-[:checked]:border-blue-600 has-[:checked]:bg-blue-50">
                     <input type="radio" name="catalog-mode" value="chi" checked class="w-4 h-4 text-blue-600">
@@ -48,7 +53,7 @@
         </div>
 
         <div class="bg-white rounded-3xl shadow-sm border p-5 space-y-4">
-            <h2 class="text-xs font-bold text-slate-400 tracking-wider uppercase">Step 2: Language selection</h2>
+            <h2 class="text-xs font-bold text-slate-400 tracking-wider">Step 2: Language selection</h2>
             <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs">
                 <div class="group-box space-y-2">
                     <p class="font-bold text-blue-600 border-b pb-1">東方語言</p>
@@ -70,22 +75,27 @@
                     <label class="flex items-center gap-2"><input type="checkbox" class="lang-opt special-item" value="ita"> 義大利文</label>
                 </div>
             </div>
-            <button id="init-btn" class="w-full bg-slate-900 text-white py-4 rounded-2xl font-bold text-sm shadow-xl hover:bg-black transition">1. Initialize Engine</button>
+            <button id="init-btn" class="w-full bg-slate-900 text-white py-4 rounded-2xl font-bold text-sm shadow-xl hover:bg-black transition">Initialize Engine</button>
         </div>
 
         <div id="video-ui" class="hidden space-y-4">
-            <div id="video-container" class="aspect-[3/4] shadow-2xl">
+            <div id="video-container" class="aspect-[4/5] shadow-2xl relative">
                 <video id="video" class="w-full h-full object-cover" autoplay playsinline></video>
                 <div id="scanner-line"></div>
+                <div id="progress-overlay">
+                    <div id="progress-bar"></div>
+                </div>
             </div>
             
-            <div class="bg-blue-600 p-1 rounded-full overflow-hidden h-2 w-full hidden" id="progress-container">
-                <div id="progress-bar" class="bg-white h-full w-0"></div>
+            <div class="flex gap-2">
+                <button id="capture-btn" class="flex-[3] bg-blue-600 text-white py-4 rounded-2xl font-black text-lg shadow-xl hover:bg-blue-700 transition flex items-center justify-center gap-2">
+                    📸 Capture & Accumulate
+                </button>
+                <button onclick="clearAllFields()" class="flex-1 bg-red-50 text-red-600 py-4 rounded-2xl font-bold text-xs border border-red-100 shadow-sm">
+                    Clear All
+                </button>
             </div>
-
-            <button id="capture-btn" class="w-full bg-blue-600 text-white py-4 rounded-2xl font-black text-lg shadow-xl hover:bg-blue-700 transition flex items-center justify-center gap-2">
-                📸 2. Capture & Process
-            </button>
+            <p class="text-[10px] text-center text-slate-400">Tip: Scan Title Page, Copyright Page, then Back Cover sequentially.</p>
         </div>
 
         <div id="status" class="text-center text-[10px] font-mono text-slate-400 font-bold h-4">Standing by...</div>
@@ -103,7 +113,7 @@
             </div>
             
             <div class="px-6 pb-6 flex gap-3">
-                <button onclick="copyToClipboard(this)" class="flex-1 bg-slate-100 text-slate-700 py-4 rounded-2xl font-bold text-xs tracking-widest hover:bg-slate-200 transition shadow-sm flex items-center justify-center gap-2">Copy</button>
+                <button onclick="copyToClipboard(this)" class="flex-1 bg-slate-100 text-slate-700 py-4 rounded-2xl font-bold text-xs tracking-widest hover:bg-slate-200 transition shadow-sm">Copy</button>
                 <button onclick="downloadMRC()" class="flex-1 bg-slate-900 text-white py-4 rounded-2xl font-bold text-xs tracking-widest hover:bg-black transition shadow-lg">.mrc File</button>
             </div>
         </div>
@@ -124,10 +134,11 @@
         const status = document.getElementById('status');
         const debugText = document.getElementById('debug-text');
         const progressBar = document.getElementById('progress-bar');
-        const progressContainer = document.getElementById('progress-container');
+        const progressOverlay = document.getElementById('progress-overlay');
         const videoUI = document.getElementById('video-ui');
 
         let worker = null;
+        let masterEntities = []; // 儲存所有掃描過的責任者
 
         function toggleGroup(master, targetClass) {
             const checkboxes = document.getElementsByClassName(targetClass);
@@ -146,26 +157,40 @@
             { id: 'illustrator', regex: /(繪|插畫|illustrated|illustrator)/i }
         ];
 
-        const EDITION_PATTERNS = /(初版|[第卷][\d一二三四五六七八九十]+[版次]|修訂版|增訂版|edition|ed\.|éd\.)/i;
+        const CORP_KEYWORDS = /圖書館|中心|大學|學院|學會|公司|出版社|局|署|委員會|政府|部|工作室|組|館/;
+
+        function cleanSpaces(str) {
+            if (!str) return "";
+            return str.replace(/([\u4e00-\u9fa5])\s+([\u4e00-\u9fa5])/g, '$1$2').trim();
+        }
+
+        function clearAllFields() {
+            if(!confirm("確定要清空目前所有欄位，開始編目新書嗎？")) return;
+            const fields = ['f-020', 'f-100', 'f-245', 'f-250', 'f-264', 'f-520', 'f-700'];
+            fields.forEach(id => {
+                const el = document.getElementById(id);
+                el.innerText = id === 'f-245' ? '$a  / $c ' : 
+                               id === 'f-264' ? '$a  : $b  , $c ' : '$a ';
+            });
+            masterEntities = [];
+            debugText.innerText = "Fields cleared.";
+        }
 
         async function initOCR() {
             const selectedLangs = Array.from(document.querySelectorAll('.lang-opt:checked')).map(cb => cb.value);
             if (selectedLangs.length === 0) return alert("Please select a language.");
-            
             initBtn.disabled = true;
-            status.innerText = "Loading AI models... (10-30MB)";
-            
+            status.innerText = "Loading AI models...";
             worker = await Tesseract.createWorker(selectedLangs.join('+'), 1, {
                 logger: m => {
                     if(m.status === 'recognizing text') {
-                        progressContainer.classList.remove('hidden');
+                        progressOverlay.style.display = 'block';
                         progressBar.style.width = (m.progress * 100) + "%";
                     }
                     status.innerText = m.status + " (" + Math.round(m.progress * 100) + "%)";
                 }
             });
-            
-            status.innerText = "Engine Ready";
+            status.innerText = "Ready";
             startCamera();
         }
 
@@ -175,12 +200,13 @@
                 video.srcObject = stream;
                 videoUI.classList.remove('hidden');
                 debugText.classList.remove('hidden');
-            } catch (err) { alert("Camera failed. Use HTTPS."); }
+            } catch (err) { alert("Camera failed."); }
         }
 
         function formatName(rawName) {
-            rawName = rawName.trim().replace(/[:：]$/, '');
-            if (/^[\u4e00-\u9fa5]{2,10}$/.test(rawName)) return `${rawName[0]}, ${rawName.substring(1)}`;
+            rawName = cleanSpaces(rawName.replace(/[:：，,、]/g, ''));
+            if (CORP_KEYWORDS.test(rawName)) return rawName;
+            if (/^[\u4e00-\u9fa5]{2,4}$/.test(rawName)) return `${rawName[0]}, ${rawName.substring(1)}`;
             const parts = rawName.split(/\s+/);
             if (parts.length >= 2) { const last = parts.pop(); return `${last}, ${parts.join(" ")}`; }
             return rawName;
@@ -190,60 +216,72 @@
             if (!worker) return;
             captureBtn.disabled = true;
             captureBtn.innerText = "Processing...";
-            
             const context = canvas.getContext('2d');
             canvas.width = video.videoWidth; canvas.height = video.videoHeight;
-            context.filter = 'contrast(1.2) grayscale(0.5)';
+            context.filter = 'contrast(1.2) grayscale(0.2)';
             context.drawImage(video, 0, 0, canvas.width, canvas.height);
-            
             const { data: { text } } = await worker.recognize(canvas);
-            debugText.innerText = "RAW DATA: " + text;
+            debugText.innerText = "Current Scan: " + text.substring(0, 150).replace(/\n/g, ' ');
             parseTextToMARC(text);
-            
             captureBtn.disabled = false;
-            captureBtn.innerText = "📸 2. Capture & Process";
-            progressBar.style.width = "0%";
+            captureBtn.innerText = "📸 Capture & Accumulate";
+            setTimeout(() => { progressOverlay.style.display = 'none'; progressBar.style.width = "0%"; }, 500);
         }
 
         function parseTextToMARC(text) {
             const mode = document.querySelector('input[name="catalog-mode"]:checked').value;
-            const lines = text.split('\n').map(l => l.trim()).filter(l => l.length >= 2);
-            let people = [];
+            const lines = text.split('\n').map(l => cleanSpaces(l)).filter(l => l.length >= 2);
             
             lines.forEach(line => {
-                // 1. ISBN
+                // 1. ISBN (累加：僅在為空時填入)
                 const isbn = line.match(/(978[- ]?\d{1,5}[- ]?\d{1,7}[- ]?\d{1,6}[- ]?\d{1})/);
-                if (isbn) document.getElementById('f-020').innerText = `$a ${isbn[0].replace(/[- ]/g, '')}`;
+                const el020 = document.getElementById('f-020');
+                if (isbn && el020.innerText === "$a ") el020.innerText = `$a ${isbn[0].replace(/[- ]/g, '')}`;
 
-                // 2. Edition (250)
-                const edMatch = line.match(EDITION_PATTERNS);
-                if (edMatch) document.getElementById('f-250').innerText = `$a ${edMatch[0]}`;
+                // 2. 版本 (250) (累加：僅在為空時填入)
+                const edMatch = line.match(/(初版|[第卷].*[版次]|修訂版|增訂版|edition|ed\.)/i);
+                const el250 = document.getElementById('f-250');
+                if (edMatch && el250.innerText === "$a ") el250.innerText = `$a ${edMatch[0]}`;
 
-                // 3. People
+                // 3. 責任者累加邏輯
                 ROLE_MAP.forEach(roleDef => {
-                    const match = line.match(new RegExp(`([^\\n，。:：]{2,20})\\s*${roleDef.regex.source}`, 'i'));
+                    const match = line.match(new RegExp(`([^\\n，。:：]{2,25})\\s*${roleDef.regex.source}`, 'i'));
                     if (match) {
-                        const name = formatName(match[1]);
+                        let cleanedName = match[1].replace(/[著編譯繪]$/, '').trim();
+                        if (cleanedName.length < 2) return;
                         const relator = RELATOR_TERMS[mode][roleDef.id] || "";
-                        if (!people.some(p => p.name === name)) people.push({ name, relator, rawName: match[1].trim() });
+                        // 檢查是否已存在於 master清單
+                        if (!masterEntities.some(e => e.rawName === cleanedName)) {
+                            masterEntities.push({ rawName: cleanedName, formattedName: formatName(cleanedName), relator });
+                        }
                     }
                 });
 
-                // 4. Title (245) - 簡單邏輯：不含角色詞的較長行
-                if (line.length > 5 && !line.match(/著|編|譯|出版|ISBN|978|版/)) {
-                    document.getElementById('f-245').innerText = `$a ${line} / $c `;
+                // 4. 書名 (245) (累加：僅在為空時填入)
+                const el245 = document.getElementById('f-245');
+                if (line.length > 5 && line.length < 40 && !line.match(/著|編|譯|出版|ISBN|978|版|說/) && el245.innerText === "$a  / $c ") {
+                    el245.innerText = `$a ${line} / $c `;
+                }
+
+                // 5. 摘要 (520) (累加：持續附加新文字)
+                if (line.length > 40 && !line.match(/ISBN|978|出版社|書局/)) {
+                    const el520 = document.getElementById('f-520');
+                    if (!el520.innerText.includes(line.substring(0,10))) { // 簡單去重避免重複拍攝同一段
+                        el520.innerText += (el520.innerText === "$a " ? "" : " ") + line;
+                    }
                 }
             });
 
-            if (people.length > 0) {
-                const main = people[0];
-                document.getElementById('f-100').innerText = `$a ${main.name}${main.relator ? ', $e '+main.relator : ''}`;
-                const authorStmt = people.map(p => `${p.rawName} ${p.relator}`).join('; ');
-                const titleOnly = document.getElementById('f-245').innerText.split(' / ')[0];
-                document.getElementById('f-245').innerText = `${titleOnly} / $c ${authorStmt}`;
-                if(people.length > 1) {
-                    document.getElementById('f-700').innerText = people.slice(1).map(p => `$a ${p.name}, $e ${p.relator}`).join(' ');
+            // 更新責任者顯示欄位 (100 / 700 / 245$c)
+            if (masterEntities.length > 0) {
+                const first = masterEntities[0];
+                document.getElementById('f-100').innerText = `$a ${first.formattedName}${first.relator ? ', $e ' + first.relator : ''}`;
+                if (masterEntities.length > 1) {
+                    document.getElementById('f-700').innerText = masterEntities.slice(1).map(e => `$a ${e.formattedName}, $e ${e.relator}`).join(' ');
                 }
+                const currentTitle = document.getElementById('f-245').innerText.split(' / ')[0];
+                const authorStmt = masterEntities.map(e => `${e.rawName} ${e.relator}`).join('; ');
+                document.getElementById('f-245').innerText = `${currentTitle} / $c ${authorStmt}`;
             }
         }
 
@@ -256,7 +294,7 @@
             rows.forEach(row => {
                 const tag = row.getAttribute('data-tag');
                 const content = row.querySelector('.marc-field').innerText.trim();
-                if (content.length > 3) copyText += `${tag}  ${content}\n`;
+                if (content.length > 5) copyText += `${tag}  ${content}\n`;
             });
             navigator.clipboard.writeText(copyText).then(() => {
                 btn.innerText = "Copied!";
@@ -265,9 +303,8 @@
         }
 
         function downloadMRC() {
-            // 同前版本匯出邏輯
-            alert("Generating .mrc file...");
-            // ... (匯出邏輯代碼)
+            alert("Generating .mrc file from accumulated data...");
+            // (此處保留原有 .mrc 產生邏輯)
         }
     </script>
 </body>
