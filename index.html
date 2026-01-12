@@ -3,14 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TKU Western Cataloger v65</title>
+    <title>TKU Western Cataloger v66</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/tesseract.js/5.0.5/tesseract.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         #video-container { position: relative; border-radius: 28px; overflow: hidden; border: 4px solid #1e293b; background: #000; display: none; }
         #scanner-line { position: absolute; top: 0; left: 0; width: 100%; height: 4px; background: #3b82f6; animation: scan 2.2s linear infinite; box-shadow: 0 0 15px #3b82f6; }
         @keyframes scan { 0% { top: 5%; } 50% { top: 95%; } 100% { top: 5%; } }
-        .marc-field { font-family: 'Courier New', monospace; outline: none; width: 100%; padding: 12px; font-size: 1rem; background: #fff; border: 1px solid #e2e8f0; border-radius: 12px; transition: all 0.2s; }
+        .marc-field { font-family: 'Courier New', monospace; outline: none; width: 100%; padding: 10px; font-size: 0.95rem; background: #fff; border: 1px solid #e2e8f0; border-radius: 10px; min-height: 1.5em; }
         .tag-row { border-bottom: 1px solid #f1f5f9; padding: 10px 0; display: flex; align-items: flex-start; gap: 8px; }
         .tag-label { width: 4.5rem; font-weight: 900; color: #2563eb; font-size: 0.85rem; margin-top: 12px; }
         .locked { border: 2px solid #22c55e !important; background: #f0fdf4 !important; }
@@ -22,8 +22,8 @@
 
     <div class="max-w-2xl mx-auto p-4 space-y-4">
         <header class="text-center py-4">
-            <h1 class="text-3xl font-black text-slate-800 tracking-tighter">Western MARC <span class="text-blue-600">v65</span></h1>
-            <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">Full-Field Russian & Western Expert Suite</p>
+            <h1 class="text-2xl font-black text-slate-800 tracking-tighter">Western MARC <span class="text-blue-600">v66</span></h1>
+            <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">Noise Filtering & Hybrid Mapping</p>
         </header>
 
         <div class="space-y-4">
@@ -32,7 +32,7 @@
                 <div id="scanner-line"></div>
                 <div id="progress-overlay" class="absolute bottom-0 w-full h-2 bg-black/20"><div id="progress-bar"></div></div>
             </div>
-            <button id="main-action-btn" onclick="handleMainAction()" class="w-full bg-blue-600 text-white py-6 rounded-[2rem] font-black text-xl shadow-2xl active:bg-blue-700 transition flex items-center justify-center gap-3">
+            <button id="main-action-btn" onclick="handleMainAction()" class="w-full bg-blue-600 text-white py-5 rounded-[2rem] font-black text-lg shadow-xl active:bg-blue-700 transition">
                 <span id="btn-text">START SMART SCAN</span>
             </button>
         </div>
@@ -40,23 +40,23 @@
         <div id="status" class="text-center font-mono text-[11px] text-slate-500 font-bold h-4 uppercase">System Ready</div>
 
         <div class="bg-white rounded-[2.5rem] shadow-xl border border-slate-200 overflow-hidden" id="marc-output-area">
-            <div class="p-8 space-y-1">
+            <div class="p-6 space-y-1">
                 <div class="tag-row" data-tag="020"><span class="tag-label">020 ##</span><span contenteditable="true" id="f-020" class="marc-field">$a </span></div>
-                <div class="tag-row bg-blue-50/40 rounded-2xl px-3" data-tag="100"><span class="tag-label">100 1#</span><span contenteditable="true" id="f-100" class="marc-field">$a </span></div>
-                <div class="tag-row bg-emerald-50/40 rounded-2xl px-3" data-tag="110"><span class="tag-label">110 2#</span><span contenteditable="true" id="f-110" class="marc-field">$a </span></div>
+                <div class="tag-row bg-blue-50/40 rounded-xl px-2" data-tag="100"><span class="tag-label">100 1#</span><span contenteditable="true" id="f-100" class="marc-field">$a </span></div>
+                <div class="tag-row bg-emerald-50/40 rounded-xl px-2" data-tag="110"><span class="tag-label">110 2#</span><span contenteditable="true" id="f-110" class="marc-field">$a </span></div>
                 <div class="tag-row" data-tag="245"><span class="tag-label">245 10</span><span contenteditable="true" id="f-245" class="marc-field">$a  : $b  / $c </span></div>
-                <div class="tag-row bg-amber-50/40 rounded-2xl px-3" data-tag="700"><span class="tag-label">700 1#</span><span contenteditable="true" id="f-700" class="marc-field">$a </span></div>
+                <div class="tag-row bg-amber-50/30 rounded-xl px-2" data-tag="700"><span class="tag-label">700 1#</span><span contenteditable="true" id="f-700" class="marc-field">$a </span></div>
                 <div class="tag-row" data-tag="264"><span class="tag-label">264 #1</span><span contenteditable="true" id="f-264" class="marc-field">$a  : $b  , $c </span></div>
-                <div class="tag-row bg-slate-50 rounded-2xl px-3" data-tag="520"><span class="tag-label">520 ##</span><span contenteditable="true" id="f-520" class="marc-field text-xs">$a </span></div>
+                <div class="tag-row bg-slate-50 rounded-xl px-2" data-tag="520"><span class="tag-label">520 ##</span><span contenteditable="true" id="f-520" class="marc-field text-xs">$a </span></div>
             </div>
             
             <div class="px-8 pb-8 flex gap-4">
-                <button onclick="copyToClipboard()" class="flex-1 bg-slate-800 text-white py-5 rounded-2xl font-black text-xs uppercase tracking-widest active:scale-95 transition">Copy Text</button>
-                <button onclick="clearAllFields()" class="flex-1 bg-red-50 text-red-600 py-5 rounded-2xl font-black text-xs uppercase tracking-widest active:scale-95 transition">Reset</button>
+                <button onclick="copyToClipboard()" class="flex-1 bg-slate-800 text-white py-4 rounded-xl font-bold text-xs uppercase">Copy Text</button>
+                <button onclick="clearAllFields()" class="flex-1 bg-red-50 text-red-600 py-4 rounded-xl font-bold text-xs uppercase">Reset</button>
             </div>
         </div>
 
-        <footer>淡江大學覺生紀念圖書館 採編組<br>Professional Cataloging Suite v65</footer>
+        <footer>TKU Library Professional Cataloging Engine v66</footer>
     </div>
 
     <canvas id="canvas" class="hidden"></canvas>
@@ -64,30 +64,21 @@
     <script>
         let worker = null;
         let isCloudLocked = false;
-        const CITY_DICT = /Москва|Берлин|Moscow|Berlin|London|Taipei|Paris|СПб|SPb/i;
-        const CORP_KEYWORDS = /Library|University|Foundation|Библиотека|Университет|圖書館|大學|協會|公司|出版社|фонд/i;
-        const ROLE_REGEX = /editor|translator|illustrator|ред\.|пер\.|худож\.|編|譯|繪/i;
-
-        function getCorrectedISBN(isbn) {
-            if (!/^\d{13}$/.test(isbn)) return isbn;
-            let sum = 0;
-            for (let i = 0; i < 12; i++) sum += parseInt(isbn[i]) * (i % 2 === 0 ? 1 : 3);
-            let check = (10 - (sum % 10)) % 10;
-            return isbn.substring(0, 12) + check;
-        }
+        const CITY_LIST = /Москва|Берлин|СПб|Moscow|Berlin|Taipei|New York/i;
+        const CORP_KEYWORDS = /Library|University|Foundation|Библиотека|Университет|圖書館|大學|出版社|фонд/i;
+        const NAME_SUFFIXES = /skaya|ova|vitch|ov|ina|кая|ова|ов|вич/i;
 
         async function handleMainAction() {
             if (!worker) {
                 try {
-                    document.getElementById('btn-text').innerText = "LOADING AI...";
+                    document.getElementById('btn-text').innerText = "BOOTING AI...";
                     worker = await Tesseract.createWorker('eng+fra+spa+deu+rus', 1, {
                         logger: m => { if(m.status === 'recognizing text') document.getElementById('progress-bar').style.width = (m.progress * 100) + "%"; }
                     });
                     const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
                     document.getElementById('video').srcObject = stream;
                     document.getElementById('video-container').style.display = 'block';
-                    document.getElementById('btn-text').innerText = "SCAN & CAPTURE";
-                    document.getElementById('status').innerText = "Ready.";
+                    document.getElementById('btn-text').innerText = "START SMART SCAN";
                 } catch (err) { alert(err.message); }
                 return;
             }
@@ -95,7 +86,7 @@
         }
 
         async function processOCR() {
-            document.getElementById('status').innerText = "Decoding Page Structure...";
+            document.getElementById('status').innerText = "Analyzing Layout & Cleaning Noise...";
             const canvas = document.getElementById('canvas');
             const video = document.getElementById('video');
             const ctx = canvas.getContext('2d');
@@ -103,72 +94,69 @@
             ctx.filter = 'contrast(1.6) grayscale(1)';
             ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
             
-            const { data: { lines, text } } = await worker.recognize(canvas);
-
-            // 1. ISBN & API Logic
-            const isbnMatch = text.replace(/[^\dX]/gi, '').match(/97[89]\d{10}/);
+            // 請求結構化數據與字元信心值
+            const { data } = await worker.recognize(canvas);
+            
+            // 1. 優先檢查 ISBN
+            const isbnMatch = data.text.replace(/[^\dX]/gi, '').match(/97[89]\d{10}/);
             if (isbnMatch) {
-                const isbn = getCorrectedISBN(isbnMatch[0]);
-                document.getElementById('f-020').innerText = `$a ${isbn}`;
-                await fetchCloudData(isbn);
+                await fetchCloudData(isbnMatch[0]);
                 isCloudLocked = true;
             }
 
-            // 2. Spatial Layout Logic
-            analyzeStructure(lines);
-            document.getElementById('status').innerText = "Process Finished.";
+            // 2. 佈局結構分析
+            analyzeLayout(data.lines);
+            document.getElementById('status').innerText = "Done.";
         }
 
-        function analyzeStructure(ocrLines) {
-            let processed = ocrLines.map(l => ({
-                text: l.text.trim(),
+        function analyzeLayout(lines) {
+            // 過濾低信心值與極短雜訊
+            let processed = lines.map(l => ({
+                text: l.text.trim().replace(/[|@()\[\]]/g, ''), // 移除常見雜訊符號
                 y: l.bbox.y0,
-                h: l.bbox.y1 - l.bbox.y0
-            })).filter(l => l.text.length > 2);
+                h: l.bbox.y1 - l.bbox.y0,
+                conf: l.confidence
+            })).filter(l => l.text.length > 2 && l.conf > 30); // 信心值低於 30% 視為雜訊
 
             if (processed.length === 0) return;
 
-            // 分離頁尾 20%
-            let footerLines = processed.filter(l => l.y > video.videoHeight * 0.8);
-            let city = "", pub = "", year = "";
-            footerLines.forEach(l => {
+            let author = "", titleA = "", titleB = "", city = "", pub = "", year = "";
+
+            // 尋找出版資訊 (264)：偏向底部且包含城市、年份或出版社關鍵字
+            processed.filter(l => l.y > video.videoHeight * 0.7).forEach(l => {
                 if (l.text.match(/\d{4}/)) year = l.text.match(/\d{4}/)[0];
-                if (CITY_DICT.test(l.text)) city = l.text.match(CITY_DICT)[0];
-                if (l.text.includes("«") || l.text.match(/путь|Press|Way|изд/i)) pub = l.text.replace(/[«»]/g, '').trim();
+                if (CITY_LIST.test(l.text)) city = l.text.match(CITY_LIST)[0];
+                if (CORP_KEYWORDS.test(l.text) || l.text.includes("«")) pub = l.text.replace(/[«»]/g, '').trim();
             });
 
             if (!isCloudLocked) {
-                // 找出最大的字 (題名)
-                let sortedByH = [...processed].filter(l => l.y > video.videoHeight * 0.1).sort((a,b) => b.h - a.h);
-                let titleA = sortedByH[0]?.text || "";
+                // 找出最大的字 (題名 245 $a)
+                let sortedByH = [...processed].filter(l => l.y > video.videoHeight * 0.1 && l.y < video.videoHeight * 0.7).sort((a,b) => b.h - a.h);
+                titleA = sortedByH[0]?.text || "";
+                
+                // 尋找副題名 (緊接在標題下方的一行)
                 let titleIdx = processed.findIndex(l => l.text === titleA);
-                let titleB = (processed[titleIdx + 1] && processed[titleIdx + 1].y > processed[titleIdx].y) ? processed[titleIdx + 1].text : "";
-                
-                // 找出最頂端的字 (可能為著者)
-                let topLines = processed.filter(l => l.y < video.videoHeight * 0.25 && l.text !== titleA);
-                
-                topLines.forEach(l => assignToRoleField(l.text));
-                document.getElementById('f-245').innerText = `$a ${titleA} : $b ${titleB} / $c ${topLines.map(t=>t.text).join('; ')}`;
+                if (titleIdx !== -1 && processed[titleIdx + 1] && processed[titleIdx + 1].y > processed[titleIdx].y) {
+                    titleB = processed[titleIdx + 1].text;
+                }
+
+                // 尋找責任者 (頂端且符合姓名後綴特徵)
+                let topLines = processed.filter(l => l.y < video.videoHeight * 0.3 && l.text !== titleA);
+                topLines.forEach(l => {
+                    if (CORP_KEYWORDS.test(l.text)) {
+                        document.getElementById('f-110').innerText = `$a ${l.text}`;
+                    } else if (NAME_SUFFIXES.test(l.text) || l.text.split(' ').length <= 3) {
+                        author = l.text;
+                    }
+                });
+
+                document.getElementById('f-100').innerText = author ? `$a ${formatName(author)}, $e author.` : "$a ";
+                document.getElementById('f-245').innerText = `$a ${titleA} : $b ${titleB} / $c ${author}`;
             }
 
-            // 更新 264
-            update264(city, pub, year);
-        }
-
-        function assignToRoleField(name) {
-            const isCorp = CORP_KEYWORDS.test(name);
-            const hasRole = ROLE_REGEX.test(name);
-            
-            if (isCorp) {
-                const el = document.getElementById('f-110');
-                if (el.innerText === "$a ") el.innerText = `$a ${name}`;
-            } else if (hasRole) {
-                const el = document.getElementById('f-700');
-                if (el.innerText === "$a ") el.innerText = `$a ${formatName(name)}`;
-            } else {
-                const el = document.getElementById('f-100');
-                if (el.innerText === "$a ") el.innerText = `$a ${formatName(name)}, $e author.`;
-            }
+            // 補完 264
+            let el264 = document.getElementById('f-264');
+            el264.innerText = `$a ${city} : $b ${pub} , $c ${year}`;
         }
 
         async function fetchCloudData(isbn) {
@@ -177,36 +165,27 @@
                 const data = await res.json();
                 if (data.totalItems > 0) {
                     const info = data.items[0].volumeInfo;
+                    document.getElementById('f-020').innerText = `$a ${isbn}`;
                     document.getElementById('f-245').innerText = `$a ${info.title} : $b ${info.subtitle || ''} / $c ${info.authors ? info.authors.join('; ') : ''}`;
                     if (info.authors) document.getElementById('f-100').innerText = `$a ${formatName(info.authors[0])}, $e author.`;
-                    if (info.authors && info.authors.length > 1) document.getElementById('f-700').innerText = info.authors.slice(1).map(a => `$a ${formatName(a)}, $e author.`).join(' ');
+                    document.getElementById('f-264').innerText = `$a  : $b ${info.publisher || ''} , $c ${info.publishedDate ? info.publishedDate.substring(0,4) : ''}`;
                     document.getElementById('f-520').innerText = `$a ${info.description || ''}`;
                     document.querySelectorAll('.marc-field').forEach(el => el.classList.add('locked'));
                 }
             } catch (e) {}
         }
 
-        function update264(c, p, y) {
-            let el = document.getElementById('f-264');
-            let pts = el.innerText.split(/[:，,]/);
-            let sc = pts[0]?.replace('$a', '').trim(), sp = pts[1]?.replace('$b', '').trim(), sy = pts[2]?.replace('$c', '').trim();
-            el.innerText = `$a ${sc || c} : $b ${sp || p} , $c ${sy || y}`;
-        }
-
         function formatName(raw) {
             let n = raw.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(' ');
             let p = n.split(/\s+/);
-            return p.length >= 2 ? `${p.pop()}, ${p.join(' ')}` : n;
-        }
-
-        function resetField(id) { 
-            const defs = {'f-245':'$a  : $b  / $c ', 'f-264':'$a  : $b  , $c '};
-            document.getElementById(id).innerText = defs[id] || '$a ';
-            document.getElementById(id).classList.remove('locked');
+            return p.length >= 2 ? `${p.pop()}, ${parts = p.join(' ')}` : n;
         }
 
         function clearAllFields() {
-            ['f-020','f-100','f-110','f-245','f-700','f-264','f-520'].forEach(id => resetField(id));
+            ['f-020','f-100','f-110','f-245','f-700','f-264','f-520'].forEach(id => {
+                document.getElementById(id).innerText = (id === 'f-245' || id === 'f-264' ? '$a  : $b  , $c ' : '$a ');
+                document.getElementById(id).classList.remove('locked');
+            });
             isCloudLocked = false;
         }
 
@@ -216,7 +195,7 @@
                 let val = document.getElementById('f-'+tag).innerText.trim();
                 if(val.length > 5) out += `${tag.substring(0,3)}  ${val}\n`;
             });
-            navigator.clipboard.writeText(out).then(() => alert("COPIED!"));
+            navigator.clipboard.writeText(out).then(() => alert("Copied!"));
         }
     </script>
 </body>
