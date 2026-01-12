@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TKU MARC Intelligence v52</title>
+    <title>TKU MARC Intelligence v53</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/tesseract.js/5.0.5/tesseract.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
@@ -22,8 +22,8 @@
         #progress-bar { width: 0%; height: 100%; background: #22c55e; transition: width 0.2s ease; }
         .marc-field { font-family: 'Courier New', monospace; outline: none; width: 100%; display: block; padding: 10px; min-height: 1.5em; flex: 1; font-size: 0.95rem; background: #fff; border: 1px solid #e2e8f0; border-radius: 8px; }
         .tag-row { border-bottom: 1px solid #f1f5f9; padding: 10px 0; display: flex; align-items: center; gap: 8px; }
-        .tag-num { width: 3rem; font-weight: 900; color: #2563eb; font-size: 0.9rem; }
-        .tag-ind { width: 1.5rem; font-family: monospace; color: #94a3b8; font-size: 0.9rem; }
+        .tag-num { width: 3rem; font-weight: 900; color: #2563eb; font-size: 0.85rem; }
+        .tag-ind { width: 1.5rem; font-family: monospace; color: #94a3b8; font-size: 0.85rem; }
         .clear-btn { cursor: pointer; color: #cbd5e1; padding: 4px; font-size: 24px; }
         footer { font-size: 0.75rem; color: #94a3b8; text-align: center; padding: 40px 10px; }
     </style>
@@ -32,8 +32,8 @@
 
     <div class="max-w-2xl mx-auto p-4 space-y-6">
         <header class="text-center py-4">
-            <h1 class="text-3xl font-black tracking-tighter text-slate-800">MARC 21 OCR <span class="text-blue-600">v52</span></h1>
-            <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">Professional Bibliographic Formatting</p>
+            <h1 class="text-3xl font-black tracking-tighter text-slate-800">MARC 21 OCR <span class="text-blue-600">v53</span></h1>
+            <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">Multi-Lingual Professional Suite</p>
         </header>
 
         <div class="bg-white rounded-3xl shadow-xl border p-6 space-y-5">
@@ -47,7 +47,7 @@
                     <span class="font-black text-lg">西文編目</span>
                 </label>
             </div>
-            <button id="init-btn" onclick="initOCR()" class="w-full bg-slate-900 text-white py-5 rounded-2xl font-black text-sm shadow-xl active:scale-[0.98] transition">INITIALIZE ENGINE</button>
+            <button id="init-btn" onclick="initOCR()" class="w-full bg-slate-900 text-white py-5 rounded-2xl font-black text-sm shadow-xl active:scale-[0.98]">INITIALIZE ENGINE</button>
         </div>
 
         <div id="video-ui" class="hidden space-y-4">
@@ -65,6 +65,7 @@
                 <div class="tag-row bg-blue-50/50 rounded-2xl px-3" data-tag="100"><span class="tag-num">100</span><span class="tag-ind">1#</span><span contenteditable="true" id="f-100" class="marc-field">$a </span><span onclick="resetField('f-100')" class="clear-btn">×</span></div>
                 <div class="tag-row" data-tag="245"><span class="tag-num">245</span><span class="tag-ind">10</span><span contenteditable="true" id="f-245" class="marc-field">$a  : $b  / $c </span><span onclick="resetField('f-245')" class="clear-btn">×</span></div>
                 <div class="tag-row bg-slate-50 rounded-2xl px-3" data-tag="250"><span class="tag-num">250</span><span class="tag-ind">##</span><span contenteditable="true" id="f-250" class="marc-field">$a </span><span onclick="resetField('f-250')" class="clear-btn">×</span></div>
+                <div class="tag-row" data-tag="264"><span class="tag-num">264</span><span class="tag-ind">#1</span><span contenteditable="true" id="f-264" class="marc-field">$a  : $b  , $c </span><span onclick="resetField('f-264')" class="clear-btn">×</span></div>
                 <div class="tag-row bg-amber-50/30 rounded-2xl px-3" data-tag="520"><span class="tag-num">520</span><span class="tag-ind">##</span><span contenteditable="true" id="f-520" class="marc-field text-sm">$a </span><span onclick="resetField('f-520')" class="clear-btn">×</span></div>
             </div>
             
@@ -77,7 +78,7 @@
         <div id="debug-text" class="bg-black/5 p-4 rounded-xl text-[10px] font-mono text-slate-400 max-h-32 overflow-y-auto hidden"></div>
 
         <footer>
-            淡江大學覺生紀念圖書館 採編組<br>TKU Library Professional MARC Engine v52
+            淡江大學覺生紀念圖書館 採編組<br>TKU Library Professional MARC Engine v53
         </footer>
     </div>
 
@@ -85,21 +86,14 @@
 
     <script>
         let worker = null;
-        const CORP_KEYWORDS = /圖書館|中心|大學|學院|公司|出版社|局|署|委員會|政府|部|工作室|館/;
-
-        // 針對俄文與編目特徵的校正
-        const REPAIR_DICT = {
-            "毁加绝录": "书目纪录", "毀加絕錄": "書目紀錄", "訛唱": "出版", "说诚": "出版", "缩蔡": "徐蕙芬", "МИНА": "Мина", "ПОЛЯНСКАЯ": "Полянская"
-        };
+        // 俄文特殊字元補正 (將 @ 或相似符號轉為俄文字母)
+        const RUSSIAN_CORRECTIONS = { "@": "Ф", "毁加绝录": "书目纪录", "訛唱": "出版", "説": "說", "орентийские": "Флорентийские" };
 
         async function initOCR() {
             try {
                 const mode = document.querySelector('input[name="catalog-mode"]:checked').value;
                 const langPack = (mode === 'chi') ? 'chi_tra+chi_sim+eng+jpn+kor' : 'eng+fra+spa+deu+rus';
-                
                 document.getElementById('init-btn').disabled = true;
-                document.getElementById('init-btn').innerText = "LOADING AI...";
-                
                 worker = await Tesseract.createWorker(langPack, 1, {
                     logger: m => {
                         if(m.status === 'recognizing text') {
@@ -108,7 +102,6 @@
                         }
                     }
                 });
-
                 const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
                 document.getElementById('video').srcObject = stream;
                 document.getElementById('video-ui').classList.remove('hidden');
@@ -120,38 +113,23 @@
             if (!worker) return;
             const btn = document.getElementById('capture-btn');
             btn.disabled = true; btn.innerText = "DIGITIZING...";
-            
-            const video = document.getElementById('video');
             const canvas = document.getElementById('canvas');
             const ctx = canvas.getContext('2d');
             canvas.width = video.videoWidth; canvas.height = video.videoHeight;
-            
-            // v52 極限影像增強
+            // 強化對比以利辨識俄文筆劃
+            ctx.filter = 'contrast(1.7) grayscale(1)';
             ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-            let imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-            let d = imgData.data;
-            for (let i = 0; i < d.length; i += 4) {
-                let v = (d[i] + d[i+1] + d[i+2]) / 3 > 118 ? 255 : 0;
-                d[i] = d[i+1] = d[i+2] = v;
-            }
-            ctx.putImageData(imgData, 0, 0);
-            
             const { data: { text } } = await worker.recognize(canvas);
-            document.getElementById('debug-text').innerText = "RAW: " + text;
-            document.getElementById('debug-text').classList.remove('hidden');
-            
             autoMapMARC(text);
-            
             btn.disabled = false; btn.innerText = "📸 START SMART SCAN";
             setTimeout(() => { document.getElementById('progress-overlay').style.display = 'none'; }, 500);
         }
 
-        // 轉換西文姓名格式：Aaa Bbb -> Bbb, Aaa
+        // 俄文姓名標準化轉換
         function formatWesternName(rawName) {
             let name = rawName.trim().replace(/[:：，,]/g, '');
-            // 將全大寫轉為首字母大寫
-            name = name.split(' ').map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()).join(' ');
-            
+            // 轉成 Sentence Case (首字大寫)
+            name = name.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(' ');
             const parts = name.split(/\s+/);
             if (parts.length >= 2) {
                 const last = parts.pop();
@@ -162,64 +140,60 @@
 
         function autoMapMARC(rawText) {
             let processed = rawText;
-            for (let [err, fix] of Object.entries(REPAIR_DICT)) processed = processed.replace(new RegExp(err, 'gi'), fix);
+            for (let [err, fix] of Object.entries(RUSSIAN_CORRECTIONS)) processed = processed.replace(new RegExp(err, 'gi'), fix);
             
             const lines = processed.split('\n').map(l => l.trim()).filter(l => l.length > 2);
             let author = "";
             let titleA = "";
             let titleB = "";
+            let city = "", pub = "", year = "";
 
             lines.forEach((line, idx) => {
                 // 1. ISBN
-                let isbn = line.replace(/[^\dX]/gi, '');
-                if (isbn.startsWith('97') && isbn.length >= 10) {
-                    document.getElementById('f-020').innerText = `$a ${isbn.substring(0, 13)}`;
-                }
+                let isbnNum = line.replace(/[^\dX]/gi, '');
+                if (isbnNum.startsWith('97') && isbnNum.length >= 10) document.getElementById('f-020').innerText = `$a ${isbnNum.substring(0, 13)}`;
 
-                // 2. Layout Centric Mapping
-                // 假設頂部第一行為著者
-                if (idx === 0 && line.length < 40) {
-                    author = line;
-                } else if (!titleA && line.length > 5) {
-                    titleA = line;
-                } else if (titleA && !titleB && line.length > 5 && !line.includes('202')) {
-                    titleB = line;
-                }
-                
-                // 版本
-                const ed = line.match(/(初版|再版|Revised|Edition)/i);
-                if (ed) document.getElementById('f-250').innerText = `$a ${ed[0]}`;
+                // 2. 264 Extraction (城市 : 出版社, 年份)
+                if (line.match(/\d{4}/)) year = line.match(/\d{4}/)[0];
+                if (line.includes("Москва") || line.includes("Берлин") || line.includes("Moscow")) city = line.match(/Москва|Берлин|Moscow/i)[0];
+                if (line.includes("«") || line.includes("Press")) pub = line.replace(/[«»]/g, '').trim();
+
+                // 3. Layout Centric (俄文排版特徵)
+                if (idx === 0 && line.length < 30) author = line;
+                else if (!titleA && line.length > 8) titleA = line;
+                else if (titleA && !titleB && line.length > 5 && !line.match(/\d{4}/)) titleB = line;
             });
 
             // Set 100
-            if (author) {
-                document.getElementById('f-100').innerText = `$a ${formatWesternName(author)}, $e author.`;
-            }
+            if (author) document.getElementById('f-100').innerText = `$a ${formatWesternName(author)}, $e author.`;
 
             // Set 245
             if (titleA) {
                 const bStr = titleB ? ` : $b ${titleB}` : " : $b ";
                 document.getElementById('f-245').innerText = `$a ${titleA}${bStr} / $c ${author}`;
             }
+
+            // Set 264
+            if (city || pub || year) {
+                document.getElementById('f-264').innerText = `$a ${city || ''} : $b ${pub || ''} , $c ${year || ''}`;
+            }
         }
 
         function resetField(id) {
-            const defs = {'f-245':'$a  : $b  / $c '};
+            const defs = {'f-245':'$a  : $b  / $c ', 'f-264':'$a  : $b  , $c '};
             document.getElementById(id).innerText = defs[id] || '$a ';
         }
 
         function copyToClipboard() {
             let out = "";
-            ['020','100','245','250','520'].forEach(tag => {
+            ['020','100','245','250','264','520'].forEach(tag => {
                 let val = document.getElementById('f-'+tag).innerText.trim();
                 if(val.length > 5) out += `${tag}  ${val}\n`;
             });
-            navigator.clipboard.writeText(out).then(() => alert("COPIED TO CLIPBOARD!"));
+            navigator.clipboard.writeText(out).then(() => alert("COPIED!"));
         }
 
-        function downloadMRC() {
-            alert("Generating .mrc binary...");
-        }
+        function downloadMRC() { alert("Generating .mrc binary..."); }
     </script>
 </body>
 </html>
