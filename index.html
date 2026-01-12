@@ -1,202 +1,141 @@
 <!DOCTYPE html>
 <html lang="zh-TW">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TKU Western Cataloger v66</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/tesseract.js/5.0.5/tesseract.min.js"></script>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <style>
-        #video-container { position: relative; border-radius: 28px; overflow: hidden; border: 4px solid #1e293b; background: #000; display: none; }
-        #scanner-line { position: absolute; top: 0; left: 0; width: 100%; height: 4px; background: #3b82f6; animation: scan 2.2s linear infinite; box-shadow: 0 0 15px #3b82f6; }
-        @keyframes scan { 0% { top: 5%; } 50% { top: 95%; } 100% { top: 5%; } }
-        .marc-field { font-family: 'Courier New', monospace; outline: none; width: 100%; padding: 10px; font-size: 0.95rem; background: #fff; border: 1px solid #e2e8f0; border-radius: 10px; min-height: 1.5em; }
-        .tag-row { border-bottom: 1px solid #f1f5f9; padding: 10px 0; display: flex; align-items: flex-start; gap: 8px; }
-        .tag-label { width: 4.5rem; font-weight: 900; color: #2563eb; font-size: 0.85rem; margin-top: 12px; }
-        .locked { border: 2px solid #22c55e !important; background: #f0fdf4 !important; }
-        #progress-bar { height: 100%; background: #22c55e; transition: width 0.3s; width: 0%; }
-        footer { font-size: 0.7rem; color: #94a3b8; text-align: center; padding: 30px 10px; }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>TKU Western Cataloger v67</title>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/tesseract.js/5.0.5/tesseract.min.js"></script>
+<script src="https://cdn.tailwindcss.com"></script>
+
+<style>
+#video-container{display:none;position:relative;border-radius:28px;overflow:hidden}
+#scanner-line{position:absolute;top:0;width:100%;height:3px;background:#3b82f6;animation:scan 2s linear infinite}
+@keyframes scan{0%{top:5%}50%{top:95%}100%{top:5%}}
+.marc-field{font-family:Courier New,monospace;border:1px solid #e5e7eb;padding:8px;border-radius:10px}
+.locked{background:#f0fdf4;border-color:#22c55e}
+</style>
 </head>
-<body class="bg-slate-50 min-h-screen text-slate-900">
 
-    <div class="max-w-2xl mx-auto p-4 space-y-4">
-        <header class="text-center py-4">
-            <h1 class="text-2xl font-black text-slate-800 tracking-tighter">Western MARC <span class="text-blue-600">v66</span></h1>
-            <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">Noise Filtering & Hybrid Mapping</p>
-        </header>
+<body class="bg-slate-50">
 
-        <div class="space-y-4">
-            <div id="video-container" class="aspect-[4/5] shadow-2xl relative border-4 border-white">
-                <video id="video" class="w-full h-full object-cover" autoplay playsinline></video>
-                <div id="scanner-line"></div>
-                <div id="progress-overlay" class="absolute bottom-0 w-full h-2 bg-black/20"><div id="progress-bar"></div></div>
-            </div>
-            <button id="main-action-btn" onclick="handleMainAction()" class="w-full bg-blue-600 text-white py-5 rounded-[2rem] font-black text-lg shadow-xl active:bg-blue-700 transition">
-                <span id="btn-text">START SMART SCAN</span>
-            </button>
-        </div>
+<div class="max-w-2xl mx-auto p-4 space-y-4">
 
-        <div id="status" class="text-center font-mono text-[11px] text-slate-500 font-bold h-4 uppercase">System Ready</div>
+<header class="text-center">
+<h1 class="text-2xl font-black">Western MARC v67</h1>
+<p class="text-xs text-slate-400">Three-page Smart Cataloging</p>
+</header>
 
-        <div class="bg-white rounded-[2.5rem] shadow-xl border border-slate-200 overflow-hidden" id="marc-output-area">
-            <div class="p-6 space-y-1">
-                <div class="tag-row" data-tag="020"><span class="tag-label">020 ##</span><span contenteditable="true" id="f-020" class="marc-field">$a </span></div>
-                <div class="tag-row bg-blue-50/40 rounded-xl px-2" data-tag="100"><span class="tag-label">100 1#</span><span contenteditable="true" id="f-100" class="marc-field">$a </span></div>
-                <div class="tag-row bg-emerald-50/40 rounded-xl px-2" data-tag="110"><span class="tag-label">110 2#</span><span contenteditable="true" id="f-110" class="marc-field">$a </span></div>
-                <div class="tag-row" data-tag="245"><span class="tag-label">245 10</span><span contenteditable="true" id="f-245" class="marc-field">$a  : $b  / $c </span></div>
-                <div class="tag-row bg-amber-50/30 rounded-xl px-2" data-tag="700"><span class="tag-label">700 1#</span><span contenteditable="true" id="f-700" class="marc-field">$a </span></div>
-                <div class="tag-row" data-tag="264"><span class="tag-label">264 #1</span><span contenteditable="true" id="f-264" class="marc-field">$a  : $b  , $c </span></div>
-                <div class="tag-row bg-slate-50 rounded-xl px-2" data-tag="520"><span class="tag-label">520 ##</span><span contenteditable="true" id="f-520" class="marc-field text-xs">$a </span></div>
-            </div>
-            
-            <div class="px-8 pb-8 flex gap-4">
-                <button onclick="copyToClipboard()" class="flex-1 bg-slate-800 text-white py-4 rounded-xl font-bold text-xs uppercase">Copy Text</button>
-                <button onclick="clearAllFields()" class="flex-1 bg-red-50 text-red-600 py-4 rounded-xl font-bold text-xs uppercase">Reset</button>
-            </div>
-        </div>
+<!-- MODE SELECT -->
+<div class="grid grid-cols-3 gap-2">
+<button onclick="setMode('cover')" class="mode-btn bg-blue-600 text-white py-3 rounded-xl">📕 封面</button>
+<button onclick="setMode('verso')" class="mode-btn bg-slate-600 text-white py-3 rounded-xl">📄 版權頁</button>
+<button onclick="setMode('back')" class="mode-btn bg-emerald-600 text-white py-3 rounded-xl">📘 封底</button>
+</div>
 
-        <footer>TKU Library Professional Cataloging Engine v66</footer>
-    </div>
+<div id="status" class="text-center text-xs text-slate-500">Ready</div>
 
-    <canvas id="canvas" class="hidden"></canvas>
+<!-- CAMERA -->
+<div id="video-container" class="aspect-[4/5] bg-black">
+<video id="video" autoplay playsinline class="w-full h-full object-cover"></video>
+<div id="scanner-line"></div>
+</div>
 
-    <script>
-        let worker = null;
-        let isCloudLocked = false;
-        const CITY_LIST = /Москва|Берлин|СПб|Moscow|Berlin|Taipei|New York/i;
-        const CORP_KEYWORDS = /Library|University|Foundation|Библиотека|Университет|圖書館|大學|出版社|фонд/i;
-        const NAME_SUFFIXES = /skaya|ova|vitch|ov|ina|кая|ова|ов|вич/i;
+<button onclick="scanPage()" class="w-full bg-black text-white py-5 rounded-2xl font-black">
+SCAN PAGE
+</button>
 
-        async function handleMainAction() {
-            if (!worker) {
-                try {
-                    document.getElementById('btn-text').innerText = "BOOTING AI...";
-                    worker = await Tesseract.createWorker('eng+fra+spa+deu+rus', 1, {
-                        logger: m => { if(m.status === 'recognizing text') document.getElementById('progress-bar').style.width = (m.progress * 100) + "%"; }
-                    });
-                    const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
-                    document.getElementById('video').srcObject = stream;
-                    document.getElementById('video-container').style.display = 'block';
-                    document.getElementById('btn-text').innerText = "START SMART SCAN";
-                } catch (err) { alert(err.message); }
-                return;
-            }
-            processOCR();
-        }
+<!-- MARC OUTPUT -->
+<div class="bg-white rounded-3xl shadow p-6 space-y-2">
 
-        async function processOCR() {
-            document.getElementById('status').innerText = "Analyzing Layout & Cleaning Noise...";
-            const canvas = document.getElementById('canvas');
-            const video = document.getElementById('video');
-            const ctx = canvas.getContext('2d');
-            canvas.width = video.videoWidth; canvas.height = video.videoHeight;
-            ctx.filter = 'contrast(1.6) grayscale(1)';
-            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-            
-            // 請求結構化數據與字元信心值
-            const { data } = await worker.recognize(canvas);
-            
-            // 1. 優先檢查 ISBN
-            const isbnMatch = data.text.replace(/[^\dX]/gi, '').match(/97[89]\d{10}/);
-            if (isbnMatch) {
-                await fetchCloudData(isbnMatch[0]);
-                isCloudLocked = true;
-            }
+<div><b>020</b> <div id="f-020" class="marc-field">$a </div></div>
+<div><b>100</b> <div id="f-100" class="marc-field">$a </div></div>
+<div><b>245</b> <div id="f-245" class="marc-field">$a  : $b  / $c </div></div>
+<div><b>250</b> <div id="f-250" class="marc-field">$a </div></div>
+<div><b>264</b> <div id="f-264" class="marc-field">$a  : $b , $c </div></div>
+<div><b>520</b> <div id="f-520" class="marc-field text-xs">$a </div></div>
 
-            // 2. 佈局結構分析
-            analyzeLayout(data.lines);
-            document.getElementById('status').innerText = "Done.";
-        }
+</div>
 
-        function analyzeLayout(lines) {
-            // 過濾低信心值與極短雜訊
-            let processed = lines.map(l => ({
-                text: l.text.trim().replace(/[|@()\[\]]/g, ''), // 移除常見雜訊符號
-                y: l.bbox.y0,
-                h: l.bbox.y1 - l.bbox.y0,
-                conf: l.confidence
-            })).filter(l => l.text.length > 2 && l.conf > 30); // 信心值低於 30% 視為雜訊
+</div>
 
-            if (processed.length === 0) return;
+<canvas id="canvas" class="hidden"></canvas>
 
-            let author = "", titleA = "", titleB = "", city = "", pub = "", year = "";
+<script>
+let worker=null;
+let currentMode='cover';
 
-            // 尋找出版資訊 (264)：偏向底部且包含城市、年份或出版社關鍵字
-            processed.filter(l => l.y > video.videoHeight * 0.7).forEach(l => {
-                if (l.text.match(/\d{4}/)) year = l.text.match(/\d{4}/)[0];
-                if (CITY_LIST.test(l.text)) city = l.text.match(CITY_LIST)[0];
-                if (CORP_KEYWORDS.test(l.text) || l.text.includes("«")) pub = l.text.replace(/[«»]/g, '').trim();
-            });
+const LANGS=['eng','fra','deu','spa','rus'];
 
-            if (!isCloudLocked) {
-                // 找出最大的字 (題名 245 $a)
-                let sortedByH = [...processed].filter(l => l.y > video.videoHeight * 0.1 && l.y < video.videoHeight * 0.7).sort((a,b) => b.h - a.h);
-                titleA = sortedByH[0]?.text || "";
-                
-                // 尋找副題名 (緊接在標題下方的一行)
-                let titleIdx = processed.findIndex(l => l.text === titleA);
-                if (titleIdx !== -1 && processed[titleIdx + 1] && processed[titleIdx + 1].y > processed[titleIdx].y) {
-                    titleB = processed[titleIdx + 1].text;
-                }
+async function boot(){
+worker=await Tesseract.createWorker(LANGS.join('+'));
+const stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:'environment'}});
+video.srcObject=stream;
+videoContainer.style.display='block';
+}
+boot();
 
-                // 尋找責任者 (頂端且符合姓名後綴特徵)
-                let topLines = processed.filter(l => l.y < video.videoHeight * 0.3 && l.text !== titleA);
-                topLines.forEach(l => {
-                    if (CORP_KEYWORDS.test(l.text)) {
-                        document.getElementById('f-110').innerText = `$a ${l.text}`;
-                    } else if (NAME_SUFFIXES.test(l.text) || l.text.split(' ').length <= 3) {
-                        author = l.text;
-                    }
-                });
+function setMode(m){
+currentMode=m;
+status.innerText=`Mode: ${m}`;
+}
 
-                document.getElementById('f-100').innerText = author ? `$a ${formatName(author)}, $e author.` : "$a ";
-                document.getElementById('f-245').innerText = `$a ${titleA} : $b ${titleB} / $c ${author}`;
-            }
+function detectLang(t){
+if(/[А-Яа-яЁё]/.test(t))return'rus';
+if(/[äöüß]/i.test(t))return'deu';
+if(/[éèêàç]/i.test(t))return'fra';
+if(/[ñáéíóú]/i.test(t))return'spa';
+return'eng';
+}
 
-            // 補完 264
-            let el264 = document.getElementById('f-264');
-            el264.innerText = `$a ${city} : $b ${pub} , $c ${year}`;
-        }
+async function scanPage(){
+status.innerText='Scanning...';
+const c=canvas,ctx=c.getContext('2d');
+c.width=video.videoWidth;
+c.height=video.videoHeight;
+ctx.filter='grayscale(1) contrast(1.5)';
+ctx.drawImage(video,0,0,c.width,c.height);
 
-        async function fetchCloudData(isbn) {
-            try {
-                const res = await fetch(`https://www.googleapis.com/books/v1/volumes?q=isbn:${isbn}`);
-                const data = await res.json();
-                if (data.totalItems > 0) {
-                    const info = data.items[0].volumeInfo;
-                    document.getElementById('f-020').innerText = `$a ${isbn}`;
-                    document.getElementById('f-245').innerText = `$a ${info.title} : $b ${info.subtitle || ''} / $c ${info.authors ? info.authors.join('; ') : ''}`;
-                    if (info.authors) document.getElementById('f-100').innerText = `$a ${formatName(info.authors[0])}, $e author.`;
-                    document.getElementById('f-264').innerText = `$a  : $b ${info.publisher || ''} , $c ${info.publishedDate ? info.publishedDate.substring(0,4) : ''}`;
-                    document.getElementById('f-520').innerText = `$a ${info.description || ''}`;
-                    document.querySelectorAll('.marc-field').forEach(el => el.classList.add('locked'));
-                }
-            } catch (e) {}
-        }
+const {data}=await worker.recognize(c);
+const lang=detectLang(data.text);
 
-        function formatName(raw) {
-            let n = raw.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(' ');
-            let p = n.split(/\s+/);
-            return p.length >= 2 ? `${p.pop()}, ${parts = p.join(' ')}` : n;
-        }
+await worker.terminate();
+worker=await Tesseract.createWorker(lang);
 
-        function clearAllFields() {
-            ['f-020','f-100','f-110','f-245','f-700','f-264','f-520'].forEach(id => {
-                document.getElementById(id).innerText = (id === 'f-245' || id === 'f-264' ? '$a  : $b  , $c ' : '$a ');
-                document.getElementById(id).classList.remove('locked');
-            });
-            isCloudLocked = false;
-        }
+if(currentMode==='cover') parseCover(data.text,lang);
+if(currentMode==='verso') parseVerso(data.text);
+if(currentMode==='back') parseBack(data.text);
 
-        function copyToClipboard() {
-            let out = "";
-            ['020','100','110','245','700','264','520'].forEach(tag => {
-                let val = document.getElementById('f-'+tag).innerText.trim();
-                if(val.length > 5) out += `${tag.substring(0,3)}  ${val}\n`;
-            });
-            navigator.clipboard.writeText(out).then(() => alert("Copied!"));
-        }
-    </script>
+status.innerText='Done';
+}
+
+function parseCover(t,lang){
+const lines=t.split('\n').map(l=>l.trim()).filter(l=>l.length>3);
+const title=lines.sort((a,b)=>b.length-a.length)[0]||'';
+const author=lines.find(l=>l.split(' ').length<=3&&/[A-Za-z]/.test(l));
+
+f245.innerText=`$a ${title} / $c ${author||''}`;
+if(author) f100.innerText=`$a ${formatName(author)}, $e author.`;
+}
+
+function parseVerso(t){
+const isbn=t.match(/97[89]\d{10}/);
+if(isbn) f020.innerText=`$a ${isbn[0]}`;
+
+const year=t.match(/\d{4}/);
+const pub=t.match(/Press|Verlag|Éditions|Editorial|Издательство/i);
+f264.innerText=`$a  : $b ${pub?pub[0]:''}, $c ${year?year[0]:''}`;
+}
+
+function parseBack(t){
+f520.innerText=`$a ${t.replace(/\n+/g,' ')}`;
+}
+
+function formatName(n){
+const p=n.split(' ');
+return p.length>1?`${p.pop()}, ${p.join(' ')}`:n;
+}
+</script>
+
 </body>
 </html>
