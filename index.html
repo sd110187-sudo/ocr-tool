@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TKU Smart Cataloger v59</title>
+    <title>TKU Western Cataloger v61</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/tesseract.js/5.0.5/tesseract.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
@@ -13,7 +13,7 @@
         .marc-field { font-family: 'Courier New', monospace; outline: none; width: 100%; padding: 10px; font-size: 0.95rem; background: #fff; border: 1px solid #e2e8f0; border-radius: 10px; }
         .tag-row { border-bottom: 1px solid #f1f5f9; padding: 10px 0; display: flex; align-items: flex-start; gap: 8px; }
         .tag-label { width: 4.5rem; font-weight: 900; color: #2563eb; font-size: 0.8rem; margin-top: 10px; }
-        .locked { background: #f0fdf4; border: 1px solid #22c55e; }
+        .locked { border: 2px solid #22c55e !important; background: #f0fdf4 !important; }
         #status { font-family: monospace; font-size: 11px; color: #64748b; text-align: center; height: 1.5em; font-weight: bold; padding: 5px; }
         footer { font-size: 0.7rem; color: #94a3b8; text-align: center; padding: 40px 10px; }
     </style>
@@ -22,51 +22,43 @@
 
     <div class="max-w-2xl mx-auto p-4 space-y-4">
         <header class="text-center py-4">
-            <h1 class="text-2xl font-black text-slate-800 tracking-tighter">Smart MARC <span class="text-blue-600">v59</span></h1>
-            <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">Zonal Analysis & Barcode Correction</p>
+            <h1 class="text-2xl font-black text-slate-800 tracking-tighter">Western MARC OCR <span class="text-blue-600">v61</span></h1>
+            <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">Specialized for Western Languages (Eng/Rus/Fra/Deu/Spa)</p>
         </header>
 
-        <div class="bg-white rounded-3xl shadow-lg p-5 border space-y-4">
-            <div class="flex gap-3">
-                <label class="flex-1 flex flex-col items-center p-3 border-2 rounded-2xl cursor-pointer has-[:checked]:border-blue-600 has-[:checked]:bg-blue-50 transition">
-                    <input type="radio" name="catalog-mode" value="chi" checked class="hidden">
-                    <span class="font-bold text-sm">中文編目模式</span>
-                </label>
-                <label class="flex-1 flex flex-col items-center p-3 border-2 rounded-2xl cursor-pointer has-[:checked]:border-blue-600 has-[:checked]:bg-blue-50 transition">
-                    <input type="radio" name="catalog-mode" value="eng" class="hidden">
-                    <span class="font-bold text-sm">西文編目模式</span>
-                </label>
-            </div>
-            <button id="init-btn" onclick="initOCR()" class="w-full bg-slate-900 text-white py-4 rounded-xl font-bold text-sm active:scale-95 transition">INITIALIZE ENGINE</button>
+        <div class="bg-white rounded-3xl shadow-lg p-6 border text-center">
+            <p class="text-xs text-slate-500 mb-4 font-bold uppercase">Ready to load Western Cataloging Models</p>
+            <button id="init-btn" onclick="initOCR()" class="w-full bg-slate-900 text-white py-5 rounded-2xl font-black text-sm active:scale-95 transition shadow-xl">INITIALIZE WESTERN ENGINE</button>
         </div>
 
         <div id="video-ui" class="hidden space-y-4">
             <div id="video-container" class="aspect-[4/5] shadow-2xl relative border-4 border-white">
                 <video id="video" class="w-full h-full object-cover" autoplay playsinline></video>
                 <div id="scanner-line"></div>
-                <div id="progress-overlay" class="absolute bottom-0 w-full h-2 bg-black/20"><div id="progress-bar" class="h-full bg-blue-500 w-0"></div></div>
+                <div id="progress-overlay" class="absolute bottom-0 w-full h-2 bg-black/20"><div id="progress-bar" class="h-full bg-blue-500 w-0 transition-all"></div></div>
             </div>
-            <button id="capture-btn" onclick="processOCR()" class="w-full bg-blue-600 text-white py-5 rounded-2xl font-black text-lg shadow-xl active:bg-blue-700 transition">📸 START SMART SCAN</button>
+            <button id="capture-btn" onclick="processOCR()" class="w-full bg-blue-600 text-white py-6 rounded-2xl font-black text-lg active:bg-blue-700 transition shadow-2xl">📸 START SMART SCAN</button>
         </div>
 
-        <div id="status">Ready for scanning.</div>
+        <div id="status">Waiting for initialization...</div>
 
-        <div class="bg-white rounded-[2rem] shadow-xl border border-slate-200 overflow-hidden" id="marc-output-area">
+        <div class="bg-white rounded-[2.5rem] shadow-xl border border-slate-200 overflow-hidden" id="marc-output-area">
             <div class="p-6 space-y-1">
                 <div class="tag-row" data-tag="020"><span class="tag-label">020 ##</span><span contenteditable="true" id="f-020" class="marc-field">$a </span></div>
-                <div class="tag-row bg-blue-50/40 rounded-2xl px-2" data-tag="100"><span class="tag-label">100 1#</span><span contenteditable="true" id="f-100" class="marc-field">$a </span></div>
+                <div class="tag-row bg-blue-50/40 rounded-2xl px-3" data-tag="100"><span class="tag-label">100 1#</span><span contenteditable="true" id="f-100" class="marc-field">$a </span></div>
                 <div class="tag-row" data-tag="245"><span class="tag-label">245 10</span><span contenteditable="true" id="f-245" class="marc-field">$a  : $b  / $c </span></div>
-                <div class="tag-row bg-slate-50 rounded-2xl px-2" data-tag="250"><span class="tag-label">250 ##</span><span contenteditable="true" id="f-250" class="marc-field">$a </span></div>
+                <div class="tag-row bg-slate-50 rounded-2xl px-3" data-tag="250"><span class="tag-label">250 ##</span><span contenteditable="true" id="f-250" class="marc-field">$a </span></div>
                 <div class="tag-row" data-tag="264"><span class="tag-label">264 #1</span><span contenteditable="true" id="f-264" class="marc-field">$a  : $b  , $c </span></div>
             </div>
+            
             <div class="px-8 pb-8 flex gap-3">
-                <button onclick="copyToClipboard()" class="flex-1 bg-slate-800 text-white py-4 rounded-xl font-bold text-xs uppercase active:scale-95 transition">Copy Text</button>
-                <button onclick="clearAllFields()" class="flex-1 bg-red-50 text-red-600 py-4 rounded-xl font-bold text-xs uppercase active:scale-95 transition">Reset</button>
+                <button onclick="copyToClipboard()" class="flex-1 bg-slate-800 text-white py-4 rounded-xl font-bold text-xs uppercase transition active:scale-95">Copy Text</button>
+                <button onclick="clearAllFields()" class="flex-1 bg-red-50 text-red-600 py-4 rounded-xl font-bold text-xs uppercase transition active:scale-95">Reset</button>
             </div>
         </div>
 
         <footer>
-            淡江大學覺生紀念圖書館 採編組<br>TKU Library Expert Mapping Suite v59
+            淡江大學覺生紀念圖書館 採編組<br>TKU Library Western Cataloging Expert v61
         </footer>
     </div>
 
@@ -74,39 +66,39 @@
 
     <script>
         let worker = null;
-        let isCloudLocked = false; // 是否已從雲端鎖定資料
+        let isCloudLocked = false;
+        const CITY_LIST = /Москва|Берлин|Moscow|Berlin|London|New York|Paris|Taipei|台北/i;
 
-        // ISBN-13 自動補正功能
         function getCorrectedISBN(isbn) {
             if (!/^\d{13}$/.test(isbn)) return isbn;
             let sum = 0;
             for (let i = 0; i < 12; i++) sum += parseInt(isbn[i]) * (i % 2 === 0 ? 1 : 3);
             let check = (10 - (sum % 10)) % 10;
-            if (parseInt(isbn[12]) !== check) {
-                console.log(`Detected Checksum Error: ${isbn}. Auto-fixing last digit to ${check}`);
-                return isbn.substring(0, 12) + check;
-            }
-            return isbn;
+            return isbn.substring(0, 12) + check;
         }
 
         async function initOCR() {
             try {
-                const mode = document.querySelector('input[name="catalog-mode"]:checked').value;
-                const langs = (mode === 'chi') ? 'chi_tra+chi_sim+eng+jpn+kor' : 'eng+fra+spa+deu+rus';
+                // 直接鎖定西文語種包
+                const langPack = 'eng+fra+spa+deu+rus';
                 document.getElementById('init-btn').disabled = true;
-                worker = await Tesseract.createWorker(langs, 1, {
-                    logger: m => { if(m.status === 'recognizing text') document.getElementById('status').innerText = `Smart Decoding... ${Math.round(m.progress * 100)}%`; }
+                document.getElementById('init-btn').innerText = "LOADING WESTERN MODELS...";
+                
+                worker = await Tesseract.createWorker(langPack, 1, {
+                    logger: m => { if(m.status === 'recognizing text') document.getElementById('progress-bar').style.width = (m.progress * 100) + "%"; }
                 });
+
                 const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
                 document.getElementById('video').srcObject = stream;
                 document.getElementById('video-ui').classList.remove('hidden');
-                document.getElementById('init-btn').innerText = "ENGINE READY";
-            } catch (err) { alert("Init Error: " + err.message); }
+                document.getElementById('init-btn').innerText = "WESTERN ENGINE READY";
+                document.getElementById('status').innerText = "System Ready.";
+            } catch (err) { alert("Initialization failed: " + err.message); }
         }
 
         async function processOCR() {
             if (!worker) return;
-            document.getElementById('status').innerText = "Analyzing Page Layout...";
+            document.getElementById('status').innerText = "Scanning Page...";
             const canvas = document.getElementById('canvas');
             const ctx = canvas.getContext('2d');
             canvas.width = video.videoWidth; canvas.height = video.videoHeight;
@@ -115,24 +107,21 @@
             
             const { data: { lines, text } } = await worker.recognize(canvas);
 
-            // 1. 條碼與 ISBN 強力鎖定邏輯
+            // 1. ISBN 自動補正與聯網 (西文編目最強利器)
             const isbnCandidates = text.replace(/[^\dX]/gi, '').match(/97[89]\d{10}/);
             if (isbnCandidates) {
-                const rawIsbn = isbnCandidates[0];
-                const fixedIsbn = getCorrectedISBN(rawIsbn); // 自動修復最後一碼
+                const fixedIsbn = getCorrectedISBN(isbnCandidates[0]);
                 document.getElementById('f-020').innerText = `$a ${fixedIsbn}`;
-                document.getElementById('status').innerText = "ISBN Verified! Fetching Cloud Data...";
                 await fetchCloudData(fixedIsbn);
-                isCloudLocked = true; // 鎖定欄位，防止 OCR 亂碼覆蓋
+                isCloudLocked = true;
             }
 
-            // 2. 若雲端沒鎖定，執行結構化對應 (針對題名頁)
-            if (!isCloudLocked) {
-                runSpatialMapping(lines);
-            }
+            // 2. 佈局結構分析
+            analyzeStructure(lines);
+            document.getElementById('status').innerText = "Scan Complete.";
         }
 
-        function runSpatialMapping(ocrLines) {
+        function analyzeStructure(ocrLines) {
             let processed = ocrLines.map(l => ({
                 text: l.text.trim(),
                 y: l.bbox.y0,
@@ -141,33 +130,33 @@
 
             if (processed.length === 0) return;
 
-            // 找出正題名：字體最大的區塊
-            let titleCandidates = [...processed].sort((a,b) => b.h - a.h);
-            let titleA = titleCandidates[0].text;
-            
-            // 找出副題名：正題名下方的第一行
-            let titleIdx = processed.findIndex(l => l.text === titleA);
-            let titleB = "";
-            if (titleIdx !== -1 && processed[titleIdx + 1] && processed[titleIdx + 1].y > processed[titleIdx].y) {
-                titleB = processed[titleIdx + 1].text;
+            if (!isCloudLocked) {
+                let sortedByH = [...processed].sort((a,b) => b.h - a.h);
+                let titleA = sortedByH[0].text;
+                let titleIdx = processed.findIndex(l => l.text === titleA);
+                let titleB = (processed[titleIdx + 1] && processed[titleIdx + 1].y > processed[titleIdx].y) ? processed[titleIdx + 1].text : "";
+                let topLines = processed.filter(l => l.y < video.videoHeight * 0.25);
+                let author = topLines.length > 0 ? topLines[0].text : "";
+                
+                document.getElementById('f-100').innerText = `$a ${formatWesternName(author)}, $e author.`;
+                document.getElementById('f-245').innerText = `$a ${titleA} : $b ${titleB} / $c ${author}`;
             }
 
-            // 找出著者：頁面頂部文字
-            let topLines = processed.filter(l => l.y < video.videoHeight * 0.25);
-            let author = topLines.length > 0 ? topLines[0].text : "";
-
-            // 找出出版資訊：底端文字 (含年份、城市辨識)
+            // 3. 264 頁尾補位
+            let footerLines = processed.filter(l => l.y > video.videoHeight * 0.75);
             let city = "", pub = "", year = "";
-            processed.filter(l => l.y > video.videoHeight * 0.7).forEach(l => {
+            footerLines.forEach(l => {
                 if (l.text.match(/\d{4}/)) year = l.text.match(/\d{4}/)[0];
-                if (l.text.match(/Москва|Берлин|Taipei|台北|臺北/i)) city = l.text.match(/Москва|Берлин|Taipei|台北|臺北/i)[0];
-                if (l.text.match(/出版社|印行|«|Press/i)) pub = l.text.replace(/[«»]/g, '').trim();
+                if (CITY_LIST.test(l.text)) city = l.text.match(CITY_LIST)[0];
+                if (l.text.match(/Press|印行|«/i)) pub = l.text.replace(/[«»]/g, '').trim();
             });
 
-            // 帶入欄位
-            document.getElementById('f-100').innerText = `$a ${formatWesternName(author)}, $e author.`;
-            document.getElementById('f-245').innerText = `$a ${titleA} : $b ${titleB} / $c ${author}`;
-            document.getElementById('f-264').innerText = `$a ${city} : $b ${pub} , $c ${year}`;
+            let el264 = document.getElementById('f-264');
+            let current = el264.innerText;
+            let currentCity = current.split(':')[0].replace('$a', '').trim();
+            let currentPub = current.split(':')[1]?.split(',')[0].replace('$b', '').trim();
+            let currentYear = current.split(',')[1]?.replace('$c', '').trim();
+            el264.innerText = `$a ${currentCity || city} : $b ${currentPub || pub} , $c ${currentYear || year}`;
         }
 
         async function fetchCloudData(isbn) {
@@ -178,12 +167,18 @@
                     const info = data.items[0].volumeInfo;
                     document.getElementById('f-245').innerText = `$a ${info.title} : $b ${info.subtitle || ''} / $c ${info.authors ? info.authors.join('; ') : ''}`;
                     if (info.authors) document.getElementById('f-100').innerText = `$a ${formatWesternName(info.authors[0])}, $e author.`;
-                    document.getElementById('f-264').innerText = `$a  : $b ${info.publisher || ''} , $c ${info.publishedDate ? info.publishedDate.substring(0,4) : ''}`;
-                    document.getElementById('status').innerText = "Cloud Authority Success!";
-                    // 標記為鎖定狀態
+                    
+                    let cloudPub = info.publisher || '';
+                    let splitCity = "";
+                    if (cloudPub.includes(':')) {
+                        splitCity = cloudPub.split(':')[0].trim();
+                        cloudPub = cloudPub.split(':')[1].trim();
+                    }
+                    document.getElementById('f-264').innerText = `$a ${splitCity} : $b ${cloudPub} , $c ${info.publishedDate ? info.publishedDate.substring(0,4) : ''}`;
                     document.querySelectorAll('.marc-field').forEach(el => el.classList.add('locked'));
+                    document.getElementById('status').innerText = "Cloud Authority Data Fetched!";
                 }
-            } catch (e) { document.getElementById('status').innerText = "Cloud Fail. Using OCR."; }
+            } catch (e) { console.log("Cloud Fetch Error."); }
         }
 
         function formatWesternName(raw) {
@@ -192,10 +187,16 @@
             return parts.length >= 2 ? `${parts.pop()}, ${parts.join(' ')}` : name;
         }
 
+        function resetField(id) { 
+            const defs = {'f-245':'$a  : $b  / $c ', 'f-264':'$a  : $b  , $c '};
+            document.getElementById(id).innerText = defs[id] || '$a ';
+            document.getElementById(id).classList.remove('locked');
+        }
+
         function clearAllFields() {
-            ['f-020','f-100','f-245','f-250','f-264'].forEach(id => document.getElementById(id).innerText = (id === 'f-245' || id === 'f-264' ? '$a  : $b  / $c ' : '$a '));
+            ['f-020','f-100','f-245','f-250','f-264'].forEach(id => resetField(id));
             isCloudLocked = false;
-            document.querySelectorAll('.marc-field').forEach(el => el.classList.remove('locked'));
+            document.getElementById('status').innerText = "All cleared.";
         }
 
         function copyToClipboard() {
@@ -204,7 +205,7 @@
                 let val = document.getElementById('f-'+tag).innerText.trim();
                 if(val.length > 5) out += `${tag}  ${val}\n`;
             });
-            navigator.clipboard.writeText(out).then(() => alert("COPIED!"));
+            navigator.clipboard.writeText(out).then(() => alert("Copied to clipboard!"));
         }
     </script>
 </body>
