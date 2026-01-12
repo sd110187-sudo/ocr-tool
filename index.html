@@ -21,7 +21,6 @@
         .tag-num { width: 3rem; font-weight: 900; color: #2563eb; }
         .tag-ind { width: 1.5rem; font-family: monospace; color: #94a3b8; }
         footer { font-size: 0.7rem; color: #94a3b8; text-align: center; padding: 30px 10px; line-height: 1.6; letter-spacing: 0.02em; }
-        .mode-label { transition: all 0.2s ease-in-out; border-width: 2px; }
     </style>
 </head>
 <body class="bg-slate-50 min-h-screen pb-10 font-sans text-slate-900">
@@ -35,12 +34,12 @@
         <div class="bg-white rounded-3xl shadow-sm border p-4">
             <h2 class="text-xs font-bold mb-3 text-slate-400 tracking-wider">Step 1: Cataloging mode</h2>
             <div class="flex gap-4">
-                <label class="mode-label flex-1 flex items-center justify-center gap-2 p-3 border-slate-200 rounded-2xl cursor-pointer hover:border-blue-500 has-[:checked]:border-blue-600 has-[:checked]:bg-blue-50">
-                    <input type="radio" name="catalog-mode" value="chi" checked class="w-4 h-4 text-blue-600 focus:ring-blue-500">
+                <label class="flex-1 flex items-center justify-center gap-2 p-3 border-2 rounded-2xl cursor-pointer hover:border-blue-500 transition has-[:checked]:border-blue-600 has-[:checked]:bg-blue-50">
+                    <input type="radio" name="catalog-mode" value="chi" checked class="w-4 h-4 text-blue-600">
                     <span class="font-bold text-sm text-slate-700">中文編目</span>
                 </label>
-                <label class="mode-label flex-1 flex items-center justify-center gap-2 p-3 border-slate-200 rounded-2xl cursor-pointer hover:border-blue-500 has-[:checked]:border-blue-600 has-[:checked]:bg-blue-50">
-                    <input type="radio" name="catalog-mode" value="eng" class="w-4 h-4 text-blue-600 focus:ring-blue-500">
+                <label class="flex-1 flex items-center justify-center gap-2 p-3 border-2 rounded-2xl cursor-pointer hover:border-blue-500 transition has-[:checked]:border-blue-600 has-[:checked]:bg-blue-50">
+                    <input type="radio" name="catalog-mode" value="eng" class="w-4 h-4 text-blue-600">
                     <span class="font-bold text-sm text-slate-700">西文編目</span>
                 </label>
             </div>
@@ -50,7 +49,7 @@
             <h2 class="text-xs font-bold text-slate-400 tracking-wider">Step 2: Language selection</h2>
             <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs">
                 <div class="group-box space-y-2">
-                    <p class="font-bold text-blue-600 border-b pb-1">東方語言</p>
+                    <p class="font-bold text-blue-600 border-b pb-1 text-xs">東方語言</p>
                     <label class="flex items-center gap-2 font-medium opacity-50"><input type="checkbox" onchange="toggleGroup(this, 'oriental-item')"> [全選]</label>
                     <label class="flex items-center gap-2"><input type="checkbox" class="lang-opt oriental-item" value="chi_tra"> 繁體中文</label>
                     <label class="flex items-center gap-2"><input type="checkbox" class="lang-opt oriental-item" value="chi_sim"> 簡體中文</label>
@@ -58,7 +57,7 @@
                     <label class="flex items-center gap-2"><input type="checkbox" class="lang-opt oriental-item" value="kor"> 韓文</label>
                 </div>
                 <div class="group-box space-y-2">
-                    <p class="font-bold text-emerald-600 border-b pb-1">西方語言</p>
+                    <p class="font-bold text-emerald-600 border-b pb-1 text-xs">西方語言</p>
                     <label class="flex items-center gap-2 font-medium opacity-50"><input type="checkbox" onchange="toggleGroup(this, 'western-item')"> [全選]</label>
                     <label class="flex items-center gap-2"><input type="checkbox" class="lang-opt western-item" value="eng"> 英文</label>
                     <label class="flex items-center gap-2"><input type="checkbox" class="lang-opt western-item" value="fra"> 法文</label>
@@ -66,7 +65,7 @@
                     <label class="flex items-center gap-2"><input type="checkbox" class="lang-opt western-item" value="rus"> 俄文</label>
                 </div>
                 <div class="group-box space-y-2">
-                    <p class="font-bold text-amber-600 border-b pb-1">特殊語言</p>
+                    <p class="font-bold text-amber-600 border-b pb-1 text-xs">特殊語言</p>
                     <label class="flex items-center gap-2 font-medium opacity-50"><input type="checkbox" onchange="toggleGroup(this, 'special-item')"> [全選]</label>
                     <label class="flex items-center gap-2"><input type="checkbox" class="lang-opt special-item" value="nor"> 挪威文</label>
                     <label class="flex items-center gap-2"><input type="checkbox" class="lang-opt special-item" value="nld"> 荷蘭文</label>
@@ -78,18 +77,20 @@
             <button id="init-btn" class="w-full bg-slate-900 text-white py-4 rounded-2xl font-bold text-sm shadow-xl hover:bg-black transition">Initialize & start camera</button>
         </div>
 
-        <div id="video-container" class="aspect-video shadow-2xl hidden">
+        <div id="video-container" class="aspect-[3/4] shadow-2xl hidden">
             <video id="video" class="w-full h-full object-cover" autoplay playsinline></video>
             <div id="scanner-line"></div>
         </div>
 
         <div id="status" class="text-center text-[10px] font-mono text-slate-400 font-bold h-4">Standing by...</div>
+        <div id="debug-text" class="bg-black/5 text-[10px] p-2 rounded-lg text-slate-400 hidden overflow-hidden h-8"></div>
 
         <div class="bg-white rounded-[2rem] shadow-2xl border border-slate-200 overflow-hidden text-sm" id="marc-output-area">
             <div class="p-6 space-y-5">
                 <div class="flex items-center border-b border-slate-100 pb-1" data-tag="020" data-ind="##"><span class="tag-num">020</span><span class="tag-ind">##</span><span contenteditable="true" id="f-020" class="marc-field">$a </span></div>
                 <div class="flex items-center bg-blue-50/40 p-2 rounded-xl" data-tag="100" data-ind="1#"><span class="tag-num">100</span><span class="tag-ind">1#</span><span contenteditable="true" id="f-100" class="marc-field">$a </span></div>
                 <div class="flex items-start" data-tag="245" data-ind="10"><span class="tag-num">245</span><span class="tag-ind">10</span><span contenteditable="true" id="f-245" class="marc-field">$a  / $c </span></div>
+                <div class="flex items-center bg-slate-50 p-2 rounded-xl" data-tag="250" data-ind="##"><span class="tag-num">250</span><span class="tag-ind">##</span><span contenteditable="true" id="f-250" class="marc-field" placeholder="版本資訊">$a </span></div>
                 <div class="flex items-center" data-tag="264" data-ind="#4"><span class="tag-num">264</span><span class="tag-ind">#4</span><span contenteditable="true" id="f-264" class="marc-field">$a  : $b  , $c </span></div>
                 <div class="flex items-start bg-amber-50/50 rounded-xl p-3" data-tag="520" data-ind="##"><span class="tag-num">520</span><span class="tag-ind">##</span><span contenteditable="true" id="f-520" class="marc-field text-xs leading-relaxed">$a </span></div>
                 <div class="flex items-center bg-emerald-50/40 p-2 rounded-xl" data-tag="700" data-ind="1#"><span class="tag-num">700</span><span class="tag-ind">1#</span><span contenteditable="true" id="f-700" class="marc-field">$a </span></div>
@@ -117,6 +118,7 @@
         const canvas = document.getElementById('canvas');
         const initBtn = document.getElementById('init-btn');
         const status = document.getElementById('status');
+        const debugText = document.getElementById('debug-text');
         const videoContainer = document.getElementById('video-container');
 
         let isScanning = false; let worker = null;
@@ -132,12 +134,19 @@
         };
 
         const ROLE_MAP = [
-            { id: 'author', regex: /(著|作者|撰|by|author|auteur|autor|av|forfatter|door|autore|লেখক|تأليف)/i },
+            { id: 'author', regex: /(著|作者|撰|by|author|auteur|autor|av|forfatter|door|autore|লেখক|তأليف)/i },
             { id: 'translator', regex: /(譯|翻譯|translated|translator|traducteur|traductor|oversetter|vertaler|traduttore|অনুবাদক|ترجم)/i },
             { id: 'editor', regex: /(編|主編|編著|edited|editor|éditeur|redaktør|redacteur|curatore|সম্পাদক|تحرير)/i },
             { id: 'illustrator', regex: /(繪|插畫|illustrated|illustrator|ilustrador|illustatør|illustratore|চিত্রশিল্পী|رسাম)/i },
             { id: 'preface', regex: /(序|序言|preface|préface|prefacio|forord|prefazione|ভূমিকা|مقدمة)/i },
             { id: 'intro', regex: /(導讀|前言|introduction|введение|introducción|innledning|introduzione|উপস্থাপনা|إدخال)/i }
+        ];
+
+        // 250 版本敘述特徵庫
+        const EDITION_PATTERNS = [
+            { lang: 'oriental', regex: /(初版|[第卷][\d一二三四五六七八九十]+[版次]|修訂版|增訂版|新版|精裝版|平裝版)/ },
+            { lang: 'western', regex: /(\d+(st|nd|rd|th)?\s*(ed\.|edition|éd\.|édition|edición|edizione|uitgave|utgave|oplag))/i },
+            { lang: 'special', regex: /(طبعة|সংস্করণ)/ }
         ];
 
         async function initOCR() {
@@ -151,28 +160,41 @@
         async function startCamera() {
             try {
                 const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
-                video.srcObject = stream; videoContainer.classList.remove('hidden'); isScanning = true; scanFrame();
-            } catch (err) { alert("Camera connection failed."); }
+                video.srcObject = stream; videoContainer.classList.remove('hidden'); debugText.classList.remove('hidden');
+                isScanning = true; scanFrame();
+            } catch (err) { alert("Camera failed."); }
         }
 
         function formatName(rawName) {
             rawName = rawName.trim().replace(/[:：]$/, '');
-            if (/^[\u4e00-\u9fa5\u3040-\u30ff\uac00-\ud7af]{2,4}$/.test(rawName)) return `${rawName[0]}, ${rawName.substring(1)}`;
+            if (/^[\u4e00-\u9fa5\u3040-\u30ff\uac00-\ud7af]{2,10}$/.test(rawName)) return `${rawName[0]}, ${rawName.substring(1)}`;
             const parts = rawName.split(/\s+/);
             if (parts.length >= 2) { const last = parts.pop(); return `${last}, ${parts.join(" ")}`; }
             return rawName;
         }
 
         function mapToMARC(text) {
-            const modeInput = document.querySelector('input[name="catalog-mode"]:checked');
-            const mode = modeInput ? modeInput.value : 'chi';
+            debugText.innerText = "Captured: " + text.substring(0, 50) + "...";
+            const mode = document.querySelector('input[name="catalog-mode"]:checked').value;
             const lines = text.split('\n').map(l => l.trim()).filter(l => l.length >= 2);
             let people = []; let summary = "";
+
             const isRTL = /[\u0600-\u06FF]/.test(text);
-            [document.getElementById('f-100'), document.getElementById('f-520'), document.getElementById('f-700')].forEach(el => {
+            [document.getElementById('f-100'), document.getElementById('f-250'), document.getElementById('f-520'), document.getElementById('f-700')].forEach(el => {
                 el.style.direction = isRTL ? 'rtl' : 'ltr'; el.style.textAlign = isRTL ? 'right' : 'left';
             });
+
             lines.forEach(line => {
+                // 1. 偵測版本資訊 (250)
+                EDITION_PATTERNS.forEach(pat => {
+                    const match = line.match(pat.regex);
+                    if (match) {
+                        const current250 = document.getElementById('f-250').innerText;
+                        if (current250 === "$a ") document.getElementById('f-250').innerText = `$a ${match[0]}`;
+                    }
+                });
+
+                // 2. 偵測責任者
                 ROLE_MAP.forEach(roleDef => {
                     const match = line.match(new RegExp(`([^\\n，。:：]{2,20})\\s*${roleDef.regex.source}`, 'i'));
                     if (match) {
@@ -181,8 +203,15 @@
                         if (!people.some(p => p.name === name)) people.push({ name, relator, rawName: match[1].trim() });
                     }
                 });
+
+                // 3. 偵測書名 (245)
+                if (line.length > 5 && line.length < 50 && !line.match(/著|編|譯|出版|ISBN|978|版/)) {
+                    const currentTitle = document.getElementById('f-245').innerText;
+                    if (currentTitle === "$a  / $c ") document.getElementById('f-245').innerText = `$a ${line} / $c `;
+                }
                 if (line.length > 30 && !line.match(/ISBN|978|出版社|書局/)) summary += line + " ";
             });
+
             if (people.length > 0) {
                 const mainAuthor = people.find(p => p.relator.includes('作者') || p.relator.includes('author')) || people[0];
                 const eMain = mainAuthor.relator ? `, $e ${mainAuthor.relator}` : "";
@@ -194,23 +223,19 @@
                     }).join(' ');
                 }
                 const authorStmt = people.map(p => `${p.rawName} ${p.relator}`).join('; ');
-                const currentTitle = document.getElementById('f-245').innerText.split(' / ')[0];
-                document.getElementById('f-245').innerText = `${currentTitle} / $c ${authorStmt}`;
+                const titleOnly = document.getElementById('f-245').innerText.split(' / ')[0];
+                document.getElementById('f-245').innerText = `${titleOnly} / $c ${authorStmt}`;
             }
             if (summary.length > 30) document.getElementById('f-520').innerText = `$a ${summary.trim()}`;
             const isbn = text.match(/(978[- ]?\d{1,5}[- ]?\d{1,7}[- ]?\d{1,6}[- ]?\d{1})/);
             if (isbn) document.getElementById('f-020').innerText = `$a ${isbn[0].replace(/[- ]/g, '')}`;
-            const year = text.match(/(19|20)\d{2}/);
-            if (year) {
-                const f264 = document.getElementById('f-264');
-                if(!f264.innerText.includes(year[0])) f264.innerText = f264.innerText.replace('$c', `$c ${year[0]}`);
-            }
         }
 
         async function scanFrame() {
             if (!isScanning) return;
             const context = canvas.getContext('2d');
             canvas.width = video.videoWidth; canvas.height = video.videoHeight;
+            context.filter = 'contrast(1.4) grayscale(1)';
             context.drawImage(video, 0, 0, canvas.width, canvas.height);
             const { data: { text } } = await worker.recognize(canvas);
             mapToMARC(text);
@@ -241,8 +266,9 @@
             const getVal = (id) => document.getElementById(id).innerText;
             const fields = [
                 { tag: '020', ind: '  ', data: getVal('f-020') }, { tag: '100', ind: '1 ', data: getVal('f-100') },
-                { tag: '245', ind: '10', data: getVal('f-245') }, { tag: '264', ind: ' 4', data: getVal('f-264') },
-                { tag: '520', ind: '  ', data: getVal('f-520') }, { tag: '700', ind: '1 ', data: getVal('f-700') }
+                { tag: '245', ind: '10', data: getVal('f-245') }, { tag: '250', ind: '  ', data: getVal('f-250') },
+                { tag: '264', ind: ' 4', data: getVal('f-264') }, { tag: '520', ind: '  ', data: getVal('f-520') }, 
+                { tag: '700', ind: '1 ', data: getVal('f-700') }
             ].filter(f => f.data.trim().length > 3).map(f => {
                 const processedData = f.ind + f.data.replace(/\$/g, '\x1f');
                 return { tag: f.tag, data: encoder.encode(processedData + '\x1e') };
@@ -254,7 +280,7 @@
                 buf = n; off += f.data.length;
             });
             const ldr = (24 + dir.length + 1 + buf.length + 1).toString().padStart(5, '0') + 'nam a22' + (24 + dir.length + 1).toString().padStart(5, '0') + 'ia 4500';
-            const final = new Uint8Array(24 + dir.length + 1 + buf.length + 1);
+            const fin = new Uint8Array(24 + dir.length + 1 + buf.length + 1);
             let p = 0; final.set(encoder.encode(ldr), p); p += 24;
             final.set(encoder.encode(dir + '\x1e'), p); p += dir.length + 1;
             final.set(buf, p); p += buf.length; final[p] = 0x1d;
