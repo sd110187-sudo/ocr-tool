@@ -21,6 +21,7 @@
         .tag-num { width: 3rem; font-weight: 900; color: #2563eb; }
         .tag-ind { width: 1.5rem; font-family: monospace; color: #94a3b8; }
         footer { font-size: 0.7rem; color: #94a3b8; text-align: center; padding: 30px 10px; line-height: 1.6; letter-spacing: 0.02em; }
+        .mode-label { transition: all 0.2s ease-in-out; border-width: 2px; }
     </style>
 </head>
 <body class="bg-slate-50 min-h-screen pb-10 font-sans text-slate-900">
@@ -34,12 +35,12 @@
         <div class="bg-white rounded-3xl shadow-sm border p-4">
             <h2 class="text-xs font-bold mb-3 text-slate-400 tracking-wider">Step 1: Cataloging mode</h2>
             <div class="flex gap-4">
-                <label class="flex-1 flex items-center justify-center gap-2 p-3 border-2 rounded-2xl cursor-pointer hover:border-blue-500 transition has-[:checked]:border-blue-600 has-[:checked]:bg-blue-50">
-                    <input type="radio" name="catalog-mode" value="chi" checked class="w-4 h-4 text-blue-600">
+                <label class="mode-label flex-1 flex items-center justify-center gap-2 p-3 border-slate-200 rounded-2xl cursor-pointer hover:border-blue-500 has-[:checked]:border-blue-600 has-[:checked]:bg-blue-50">
+                    <input type="radio" name="catalog-mode" value="chi" checked class="w-4 h-4 text-blue-600 focus:ring-blue-500">
                     <span class="font-bold text-sm text-slate-700">中文編目</span>
                 </label>
-                <label class="flex-1 flex items-center justify-center gap-2 p-3 border-2 rounded-2xl cursor-pointer hover:border-blue-500 transition has-[:checked]:border-blue-600 has-[:checked]:bg-blue-50">
-                    <input type="radio" name="catalog-mode" value="eng" class="w-4 h-4 text-blue-600">
+                <label class="mode-label flex-1 flex items-center justify-center gap-2 p-3 border-slate-200 rounded-2xl cursor-pointer hover:border-blue-500 has-[:checked]:border-blue-600 has-[:checked]:bg-blue-50">
+                    <input type="radio" name="catalog-mode" value="eng" class="w-4 h-4 text-blue-600 focus:ring-blue-500">
                     <span class="font-bold text-sm text-slate-700">西文編目</span>
                 </label>
             </div>
@@ -51,7 +52,7 @@
                 <div class="group-box space-y-2">
                     <p class="font-bold text-blue-600 border-b pb-1">東方語言</p>
                     <label class="flex items-center gap-2 font-medium opacity-50"><input type="checkbox" onchange="toggleGroup(this, 'oriental-item')"> [全選]</label>
-                    <label class="flex items-center gap-2"><input type="checkbox" class="lang-opt oriental-item" value="chi_tra" checked> 繁體中文</label>
+                    <label class="flex items-center gap-2"><input type="checkbox" class="lang-opt oriental-item" value="chi_tra"> 繁體中文</label>
                     <label class="flex items-center gap-2"><input type="checkbox" class="lang-opt oriental-item" value="chi_sim"> 簡體中文</label>
                     <label class="flex items-center gap-2"><input type="checkbox" class="lang-opt oriental-item" value="jpn"> 日文</label>
                     <label class="flex items-center gap-2"><input type="checkbox" class="lang-opt oriental-item" value="kor"> 韓文</label>
@@ -59,7 +60,7 @@
                 <div class="group-box space-y-2">
                     <p class="font-bold text-emerald-600 border-b pb-1">西方語言</p>
                     <label class="flex items-center gap-2 font-medium opacity-50"><input type="checkbox" onchange="toggleGroup(this, 'western-item')"> [全選]</label>
-                    <label class="flex items-center gap-2"><input type="checkbox" class="lang-opt western-item" value="eng" checked> 英文</label>
+                    <label class="flex items-center gap-2"><input type="checkbox" class="lang-opt western-item" value="eng"> 英文</label>
                     <label class="flex items-center gap-2"><input type="checkbox" class="lang-opt western-item" value="fra"> 法文</label>
                     <label class="flex items-center gap-2"><input type="checkbox" class="lang-opt western-item" value="spa"> 西班牙文</label>
                     <label class="flex items-center gap-2"><input type="checkbox" class="lang-opt western-item" value="rus"> 俄文</label>
@@ -134,7 +135,7 @@
             { id: 'author', regex: /(著|作者|撰|by|author|auteur|autor|av|forfatter|door|autore|লেখক|تأليف)/i },
             { id: 'translator', regex: /(譯|翻譯|translated|translator|traducteur|traductor|oversetter|vertaler|traduttore|অনুবাদক|ترجم)/i },
             { id: 'editor', regex: /(編|主編|編著|edited|editor|éditeur|redaktør|redacteur|curatore|সম্পাদক|تحرير)/i },
-            { id: 'illustrator', regex: /(繪|插畫|illustrated|illustrator|ilustrador|illustatør|illustratore|চিত্রশিল্পী|رسام)/i },
+            { id: 'illustrator', regex: /(繪|插畫|illustrated|illustrator|ilustrador|illustatør|illustratore|চিত্রশিল্পী|رسাম)/i },
             { id: 'preface', regex: /(序|序言|preface|préface|prefacio|forord|prefazione|ভূমিকা|مقدمة)/i },
             { id: 'intro', regex: /(導讀|前言|introduction|введение|introducción|innledning|introduzione|উপস্থাপনা|إدخال)/i }
         ];
@@ -151,7 +152,7 @@
             try {
                 const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
                 video.srcObject = stream; videoContainer.classList.remove('hidden'); isScanning = true; scanFrame();
-            } catch (err) { alert("Camera failed."); }
+            } catch (err) { alert("Camera connection failed."); }
         }
 
         function formatName(rawName) {
@@ -163,7 +164,8 @@
         }
 
         function mapToMARC(text) {
-            const mode = document.querySelector('input[name="catalog-mode"]:checked').value;
+            const modeInput = document.querySelector('input[name="catalog-mode"]:checked');
+            const mode = modeInput ? modeInput.value : 'chi';
             const lines = text.split('\n').map(l => l.trim()).filter(l => l.length >= 2);
             let people = []; let summary = "";
             const isRTL = /[\u0600-\u06FF]/.test(text);
@@ -185,15 +187,12 @@
                 const mainAuthor = people.find(p => p.relator.includes('作者') || p.relator.includes('author')) || people[0];
                 const eMain = mainAuthor.relator ? `, $e ${mainAuthor.relator}` : "";
                 document.getElementById('f-100').innerText = `$a ${mainAuthor.name}${eMain}`;
-                
-                const others = people.filter(p => p !== mainAuthor);
-                if (others.length > 0) {
-                    document.getElementById('f-700').innerText = others.map(p => {
+                if (people.length > 1) {
+                    document.getElementById('f-700').innerText = people.slice(1).map(p => {
                         const e = p.relator ? `, $e ${p.relator}` : "";
                         return `$a ${p.name}${e}`;
                     }).join(' ');
                 }
-
                 const authorStmt = people.map(p => `${p.rawName} ${p.relator}`).join('; ');
                 const currentTitle = document.getElementById('f-245').innerText.split(' / ')[0];
                 document.getElementById('f-245').innerText = `${currentTitle} / $c ${authorStmt}`;
@@ -231,7 +230,7 @@
             });
             navigator.clipboard.writeText(copyText).then(() => {
                 const original = btn.innerHTML;
-                btn.innerHTML = "Copied!";
+                btn.innerHTML = "<span>Copied!</span>";
                 btn.classList.replace('bg-slate-100', 'bg-green-100');
                 setTimeout(() => { btn.innerHTML = original; btn.classList.replace('bg-green-100', 'bg-slate-100'); }, 1500);
             });
@@ -255,11 +254,11 @@
                 buf = n; off += f.data.length;
             });
             const ldr = (24 + dir.length + 1 + buf.length + 1).toString().padStart(5, '0') + 'nam a22' + (24 + dir.length + 1).toString().padStart(5, '0') + 'ia 4500';
-            const fin = new Uint8Array(24 + dir.length + 1 + buf.length + 1);
-            let p = 0; fin.set(encoder.encode(ldr), p); p += 24;
-            fin.set(encoder.encode(dir + '\x1e'), p); p += dir.length + 1;
-            fin.set(buf, p); p += buf.length; fin[p] = 0x1d;
-            const b = new Blob([fin], { type: 'application/octet-stream' });
+            const final = new Uint8Array(24 + dir.length + 1 + buf.length + 1);
+            let p = 0; final.set(encoder.encode(ldr), p); p += 24;
+            final.set(encoder.encode(dir + '\x1e'), p); p += dir.length + 1;
+            final.set(buf, p); p += buf.length; final[p] = 0x1d;
+            const b = new Blob([final], { type: 'application/octet-stream' });
             const l = document.createElement('a'); l.href = URL.createObjectURL(b); l.download = `catalog_export.mrc`; l.click();
         }
     </script>
