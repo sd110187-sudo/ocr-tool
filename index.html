@@ -20,70 +20,47 @@
             background: rgba(30, 41, 59, 0.8); z-index: 20; display: none;
         }
         #progress-bar { width: 0%; height: 100%; background: #22c55e; transition: width 0.2s ease; }
-        .marc-field { font-family: 'Courier New', monospace; outline: none; width: 100%; display: block; padding: 4px; min-height: 1.5em; flex: 1; font-size: 0.95rem; background: #f8fafc; border-radius: 4px; }
-        .tag-row { border-bottom: 1px solid #f1f5f9; padding: 8px 0; display: flex; align-items: flex-start; }
-        .tag-num { width: 2.5rem; font-weight: 900; color: #2563eb; font-size: 0.75rem; margin-top: 4px; }
-        .tag-ind { width: 1.2rem; font-family: monospace; color: #94a3b8; font-size: 0.75rem; margin-top: 4px; }
-        .clear-tag { cursor: pointer; color: #cbd5e1; padding: 0 8px; font-size: 18px; }
-        .group-box { border: 1px solid #e2e8f0; border-radius: 12px; padding: 8px; background: #fff; }
-        /* 標題建議標籤 */
-        .title-sugg { display: inline-block; background: #eff6ff; color: #1d4ed8; padding: 2px 8px; border-radius: 6px; font-size: 10px; margin-right: 4px; margin-top: 4px; cursor: pointer; border: 1px solid #dbeafe; }
-        .title-sugg:hover { background: #dbeafe; }
+        
+        /* 文字池樣式 */
+        .text-chip { display: inline-block; background: #f1f5f9; border: 1px solid #e2e8f0; padding: 4px 10px; border-radius: 8px; margin: 3px; font-size: 12px; cursor: pointer; color: #334155; }
+        .text-chip:hover { background: #dbeafe; border-color: #3b82f6; }
+        
+        .marc-field { font-family: 'Courier New', monospace; outline: none; width: 100%; display: block; padding: 6px; min-height: 1.5em; flex: 1; font-size: 0.95rem; background: #fff; border: 1px solid #e2e8f0; border-radius: 6px; }
+        .tag-row { border-bottom: 1px solid #f1f5f9; padding: 10px 0; display: flex; align-items: flex-start; }
+        .tag-num { width: 2.5rem; font-weight: 900; color: #2563eb; font-size: 0.75rem; margin-top: 8px; }
+        .tag-ind { width: 1.2rem; font-family: monospace; color: #94a3b8; font-size: 0.75rem; margin-top: 8px; }
+        .clear-tag { cursor: pointer; color: #cbd5e1; padding: 0 8px; font-size: 20px; }
         footer { font-size: 0.65rem; color: #94a3b8; text-align: center; padding: 20px 10px; }
     </style>
 </head>
-<body class="bg-slate-100 min-h-screen pb-10 font-sans text-slate-900">
+<body class="bg-slate-50 min-h-screen pb-10 font-sans text-slate-900">
 
     <div class="max-w-2xl mx-auto p-4 space-y-4">
         <header class="text-center py-4">
             <h1 class="text-2xl font-black tracking-tight text-slate-800">OCR Tool for Catalogers</h1>
-            <p class="text-[10px] text-blue-600 font-bold uppercase tracking-widest">TKU Smart Assistant v47</p>
+            <p class="text-[10px] text-blue-600 font-bold uppercase tracking-widest">TKU Precision v48</p>
         </header>
 
-        <div class="bg-white rounded-3xl shadow-md p-4 space-y-4">
-            <div>
-                <h2 class="text-xs font-bold mb-2 text-slate-400 tracking-wider">Step 1: Cataloging mode</h2>
-                <div class="flex gap-4">
-                    <label class="flex-1 flex items-center justify-center gap-2 p-2 border-2 rounded-xl cursor-pointer has-[:checked]:border-blue-600 has-[:checked]:bg-blue-50">
-                        <input type="radio" name="catalog-mode" value="chi" checked class="hidden"><span class="font-bold text-xs">中文編目</span>
-                    </label>
-                    <label class="flex-1 flex items-center justify-center gap-2 p-2 border-2 rounded-xl cursor-pointer has-[:checked]:border-blue-600 has-[:checked]:bg-blue-50">
-                        <input type="radio" name="catalog-mode" value="eng" class="hidden"><span class="font-bold text-xs">西文編目</span>
-                    </label>
+        <div class="bg-white rounded-3xl shadow-sm border p-4 space-y-4">
+            <div class="grid grid-cols-3 gap-2 text-[8px]">
+                <div class="border p-2 rounded-xl">
+                    <p class="font-bold text-blue-600 border-b mb-1">東方語言</p>
+                    <label class="flex items-center gap-1"><input type="checkbox" onchange="toggleGroup(this, 'oriental-item')"> [全選]</label>
+                    <label class="flex items-center gap-1"><input type="checkbox" class="lang-opt oriental-item" value="chi_tra" checked> 繁中</label>
+                    <label class="flex items-center gap-1"><input type="checkbox" class="lang-opt oriental-item" value="jpn"> 日文</label>
+                </div>
+                <div class="border p-2 rounded-xl">
+                    <p class="font-bold text-emerald-600 border-b mb-1">西方語言</p>
+                    <label class="flex items-center gap-1"><input type="checkbox" onchange="toggleGroup(this, 'western-item')"> [全選]</label>
+                    <label class="flex items-center gap-1"><input type="checkbox" class="lang-opt western-item" value="eng"> 英文</label>
+                </div>
+                <div class="border p-2 rounded-xl">
+                    <p class="font-bold text-amber-600 border-b mb-1">特殊語言</p>
+                    <label class="flex items-center gap-1"><input type="checkbox" onchange="toggleGroup(this, 'special-item')"> [全選]</label>
+                    <label class="flex items-center gap-1"><input type="checkbox" class="lang-opt special-item" value="ara"> 阿語</label>
                 </div>
             </div>
-            
-            <div>
-                <h2 class="text-xs font-bold mb-2 text-slate-400 tracking-wider">Step 2: Language selection</h2>
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-3 text-[9px]">
-                    <div class="group-box space-y-1">
-                        <p class="font-bold text-blue-600 border-b pb-0.5 mb-1">東方語言</p>
-                        <label class="flex items-center gap-2 font-bold text-slate-400"><input type="checkbox" onchange="toggleGroup(this, 'oriental-item')"> [全選]</label>
-                        <label class="flex items-center gap-2"><input type="checkbox" class="lang-opt oriental-item" value="chi_tra"> 繁中</label>
-                        <label class="flex items-center gap-2"><input type="checkbox" class="lang-opt oriental-item" value="chi_sim"> 簡中</label>
-                        <label class="flex items-center gap-2"><input type="checkbox" class="lang-opt oriental-item" value="jpn"> 日文</label>
-                        <label class="flex items-center gap-2"><input type="checkbox" class="lang-opt oriental-item" value="kor"> 韓文</label>
-                    </div>
-                    <div class="group-box space-y-1">
-                        <p class="font-bold text-emerald-600 border-b pb-0.5 mb-1">西方語言</p>
-                        <label class="flex items-center gap-2 font-bold text-slate-400"><input type="checkbox" onchange="toggleGroup(this, 'western-item')"> [全選]</label>
-                        <label class="flex items-center gap-2"><input type="checkbox" class="lang-opt western-item" value="eng"> 英文</label>
-                        <label class="flex items-center gap-2"><input type="checkbox" class="lang-opt western-item" value="fra"> 法文</label>
-                        <label class="flex items-center gap-2"><input type="checkbox" class="lang-opt western-item" value="spa"> 西文</label>
-                        <label class="flex items-center gap-2"><input type="checkbox" class="lang-opt western-item" value="deu"> 德文</label>
-                        <label class="flex items-center gap-2"><input type="checkbox" class="lang-opt western-item" value="rus"> 俄文</label>
-                    </div>
-                    <div class="group-box space-y-1">
-                        <p class="font-bold text-amber-600 border-b pb-0.5 mb-1">特殊語言</p>
-                        <label class="flex items-center gap-2 font-bold text-slate-400"><input type="checkbox" onchange="toggleGroup(this, 'special-item')"> [全選]</label>
-                        <label class="flex items-center gap-2"><input type="checkbox" class="lang-opt special-item" value="ita"> 義大利文</label>
-                        <label class="flex items-center gap-2"><input type="checkbox" class="lang-opt special-item" value="nld"> 荷蘭文</label>
-                        <label class="flex items-center gap-2"><input type="checkbox" class="lang-opt special-item" value="nor"> 挪威文</label>
-                        <label class="flex items-center gap-2"><input type="checkbox" class="lang-opt special-item" value="ara"> 阿拉伯文</label>
-                    </div>
-                </div>
-            </div>
-            <button id="init-btn" onclick="initOCR()" class="w-full bg-slate-900 text-white py-3 rounded-xl font-black text-sm shadow-md active:scale-95 transition">1. Initialize Engine</button>
+            <button id="init-btn" onclick="initOCR()" class="w-full bg-slate-900 text-white py-3 rounded-xl font-black text-sm shadow-md">1. Initialize Engine</button>
         </div>
 
         <div id="video-ui" class="hidden space-y-4">
@@ -92,42 +69,30 @@
                 <div id="scanner-line"></div>
                 <div id="progress-overlay"><div id="progress-bar"></div></div>
             </div>
-            <div class="flex gap-2">
-                <button id="capture-btn" onclick="processOCR()" class="flex-[3] bg-blue-600 text-white py-4 rounded-2xl font-black text-lg shadow-xl active:bg-blue-700 transition">📸 2. Capture & Accumulate</button>
-                <button onclick="clearAllFields()" class="flex-1 bg-white text-red-600 py-4 rounded-2xl font-bold text-xs border border-red-200">Clear All</button>
+            <button id="capture-btn" onclick="processOCR()" class="w-full bg-blue-600 text-white py-4 rounded-2xl font-black text-lg shadow-xl">📸 2. Capture & Extract Text</button>
+            
+            <div id="text-pool-container" class="bg-white p-4 rounded-2xl border-2 border-blue-100 shadow-inner">
+                <p class="text-[10px] font-bold text-blue-500 mb-2 uppercase tracking-tighter">💡 Tap a phrase to assign to MARC field:</p>
+                <div id="text-pool" class="flex flex-wrap"></div>
             </div>
         </div>
 
-        <div id="status" class="text-center text-[10px] font-mono text-slate-500 h-4">Standing by...</div>
-
         <div class="bg-white rounded-[2rem] shadow-xl border border-slate-200 overflow-hidden" id="marc-output-area">
-            <div class="p-6 space-y-3">
+            <div class="p-6 space-y-2">
                 <div class="tag-row" data-tag="020"><span class="tag-num">020</span><span class="tag-ind">##</span><div class="flex-1"><span contenteditable="true" id="f-020" class="marc-field">$a </span></div><span onclick="resetField('f-020')" class="clear-tag">×</span></div>
-                <div class="tag-row bg-blue-50/50 rounded-xl px-2" data-tag="100"><span class="tag-num">100</span><span class="tag-ind">1#</span><div class="flex-1"><span contenteditable="true" id="f-100" class="marc-field">$a </span></div><span onclick="resetField('f-100')" class="clear-tag">×</span></div>
-                
-                <div class="tag-row flex-col" data-tag="245">
-                    <div class="flex w-full items-start">
-                        <span class="tag-num">245</span><span class="tag-ind">10</span>
-                        <div class="flex-1"><span contenteditable="true" id="f-245" class="marc-field">$a  : $b  / $c </span></div>
-                        <span onclick="resetField('f-245')" class="clear-tag">×</span>
-                    </div>
-                    <div id="title-suggestions" class="ml-10 flex flex-wrap"></div>
-                </div>
-
-                <div class="tag-row bg-slate-50/50 rounded-xl px-2" data-tag="250"><span class="tag-num">250</span><span class="tag-ind">##</span><div class="flex-1"><span contenteditable="true" id="f-250" class="marc-field">$a </span></div><span onclick="resetField('f-250')" class="clear-tag">×</span></div>
-                <div class="tag-row" data-tag="264"><span class="tag-num">264</span><span class="tag-ind">#4</span><div class="flex-1"><span contenteditable="true" id="f-264" class="marc-field">$a  : $b  , $c </span></div><span onclick="resetField('f-264')" class="clear-tag">×</span></div>
-                <div class="tag-row bg-amber-50/30 rounded-xl px-2" data-tag="520"><span class="tag-num">520</span><span class="tag-ind">##</span><div class="flex-1"><span contenteditable="true" id="f-520" class="marc-field text-xs">$a </span></div><span onclick="resetField('f-520')" class="clear-tag">×</span></div>
-                <div class="tag-row bg-emerald-50/30 rounded-xl px-2" data-tag="700"><span class="tag-num">700</span><span class="tag-ind">1#</span><div class="flex-1"><span contenteditable="true" id="f-700" class="marc-field">$a </span></div><span onclick="resetField('f-700')" class="clear-tag">×</span></div>
+                <div class="tag-row" data-tag="100"><span class="tag-num">100</span><span class="tag-ind">1#</span><div class="flex-1"><span contenteditable="true" id="f-100" class="marc-field">$a </span></div><span onclick="resetField('f-100')" class="clear-tag">×</span></div>
+                <div class="tag-row" data-tag="245"><span class="tag-num">245</span><span class="tag-ind">10</span><div class="flex-1"><span contenteditable="true" id="f-245" class="marc-field">$a  : $b  / $c </span></div><span onclick="resetField('f-245')" class="clear-tag">×</span></div>
+                <div class="tag-row" data-tag="250"><span class="tag-num">250</span><span class="tag-ind">##</span><div class="flex-1"><span contenteditable="true" id="f-250" class="marc-field">$a </span></div><span onclick="resetField('f-250')" class="clear-tag">×</span></div>
+                <div class="tag-row" data-tag="520"><span class="tag-num">520</span><span class="tag-ind">##</span><div class="flex-1"><span contenteditable="true" id="f-520" class="marc-field text-xs">$a </span></div><span onclick="resetField('f-520')" class="clear-tag">×</span></div>
             </div>
-            
             <div class="px-6 pb-6 flex gap-3">
-                <button onclick="copyToClipboard(this)" class="flex-1 bg-slate-800 text-white py-3 rounded-xl font-bold text-xs">Copy Text</button>
-                <button onclick="downloadMRC()" class="flex-1 bg-blue-600 text-white py-3 rounded-xl font-bold text-xs">Download .mrc</button>
+                <button onclick="clearAllFields()" class="flex-1 bg-red-50 text-red-600 py-3 rounded-xl font-bold text-xs">Reset All</button>
+                <button onclick="downloadMRC()" class="flex-[2] bg-blue-600 text-white py-3 rounded-xl font-bold text-xs shadow-lg">Download .mrc</button>
             </div>
         </div>
 
         <footer>
-            淡江大學覺生紀念圖書館 採編組<br>TKU Library Assistant v47
+            淡江大學覺生紀念圖書館 採編組<br>TKU Library Professional Cataloging Suite v48
         </footer>
     </div>
 
@@ -137,8 +102,12 @@
         let worker = null;
         let masterEntities = [];
         const CORP_KEYWORDS = /圖書館|中心|大學|學院|學會|公司|出版社|局|署|委員會|政府|部|工作室|組|館/;
-        const CIP_BLOCKERS = /CIP|預行編目|機讀|分類|023\.|10500|1\.|I\.|2\.|3\.|4\.|p\.\s*\d+|cm\./i;
-        const NOISE_WORDS = /中華民國|印行|價格|NT|ISBN|系列|叢書|附錄|再版|手冊|說$|説$|絕錄$|©|\d{4}/;
+        const NOISE_WORDS = /CIP|預行編目|機讀|分類|023\.|中華民國|印行|價格|NT|ISBN|叢書|附錄|年|月|日/;
+        
+        // v48 校正字典 (針對截圖誤讀)
+        const CORRECTIONS = {
+            "毀加絕錄": "書目紀錄", "絕錄": "書目紀錄", "訛唱": "出版", "説誠": "出版", "縮莽": "徐蕙芬", "縮蔡": "徐蕙芬", "共": ""
+        };
 
         function toggleGroup(master, targetClass) {
             const checkboxes = document.getElementsByClassName(targetClass);
@@ -156,113 +125,65 @@
                             document.getElementById('progress-overlay').style.display = 'block';
                             document.getElementById('progress-bar').style.width = (m.progress * 100) + "%";
                         }
-                        document.getElementById('status').innerText = m.status + " (" + Math.round(m.progress * 100) + "%)";
                     }
                 });
                 const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
                 document.getElementById('video').srcObject = stream;
                 document.getElementById('video-ui').classList.remove('hidden');
-                document.getElementById('init-btn').innerText = "Engine Loaded";
             } catch (err) { alert("Error: " + err.message); document.getElementById('init-btn').disabled = false; }
         }
 
         async function processOCR() {
             if (!worker) return;
-            const captureBtn = document.getElementById('capture-btn');
-            captureBtn.disabled = true; captureBtn.innerText = "Processing...";
+            const btn = document.getElementById('capture-btn');
+            btn.disabled = true; btn.innerText = "Reading Text...";
             
             const video = document.getElementById('video');
             const canvas = document.getElementById('canvas');
             const ctx = canvas.getContext('2d');
             canvas.width = video.videoWidth; canvas.height = video.videoHeight;
             
-            // 通用影像增益
+            // v48 強化影像預處理：強制灰階與極限對比
+            ctx.filter = 'contrast(1.8) grayscale(1) brightness(0.9)';
             ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-            let imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-            let d = imgData.data;
-            for (let i = 0; i < d.length; i += 4) {
-                let v = (d[i] + d[i+1] + d[i+2]) / 3 > 120 ? 255 : 0;
-                d[i] = d[i+1] = d[i+2] = v;
-            }
-            ctx.putImageData(imgData, 0, 0);
             
             const { data: { text } } = await worker.recognize(canvas);
-            parseToMARC(text);
+            renderTextPool(text);
             
-            captureBtn.disabled = false; captureBtn.innerText = "📸 2. Capture & Accumulate";
+            btn.disabled = false; btn.innerText = "📸 2. Capture & Extract Text";
             setTimeout(() => { document.getElementById('progress-overlay').style.display = 'none'; }, 500);
         }
 
-        function parseToMARC(text) {
-            const lines = text.split('\n').map(l => l.replace(/([\u4e00-\u9fa5])\s+([\u4e00-\u9fa5])/g, '$1$2').trim()).filter(l => l.length >= 2);
-            let candidates = [];
+        // v48 核心功能：渲染可點擊的文字池
+        function renderTextPool(rawText) {
+            const pool = document.getElementById('text-pool');
+            pool.innerHTML = "";
+            
+            let lines = rawText.split('\n').map(l => l.trim()).filter(l => l.length > 1);
+            
+            lines.forEach(line => {
+                // 自動校正
+                let cleanLine = line;
+                for (let [err, fix] of Object.entries(CORRECTIONS)) cleanLine = cleanLine.replace(new RegExp(err, 'g'), fix);
+                cleanLine = cleanLine.replace(/([\u4e00-\u9fa5])\s+([\u4e00-\u9fa5])/g, '$1$2'); // 去空格
+                
+                if (cleanLine.length < 2) return;
 
-            lines.forEach((line, index) => {
-                // 1. ISBN 精準捕捉 (找所有 13 位數字)
-                let cleanNum = line.replace(/[^\dX]/gi, '');
-                if (cleanNum.length >= 10 && cleanNum.includes('97')) {
-                    const el020 = document.getElementById('f-020');
-                    if (el020.innerText === "$a ") el020.innerText = `$a ${cleanNum.substring(0, 13)}`;
-                }
-
-                // 2. 版本
-                const edMatch = line.match(/(初版|再版|[第卷].*[版次]|修訂版|增訂版)/);
-                if (edMatch && document.getElementById('f-250').innerText === "$a ") {
-                    document.getElementById('f-250').innerText = `$a ${edMatch[0]}`;
-                }
-
-                // 3. 責任者提取 (忽略 CIP 方框內容)
-                if (!CIP_BLOCKERS.test(line)) {
-                    const nameMatch = line.match(/^([^著編譯印\d]{2,15})[:：\s]*(著|編|譯|印|作者|編者|編著)/);
-                    if (nameMatch) {
-                        let cleaned = nameMatch[1].trim();
-                        if (cleaned.length >= 2 && !masterEntities.some(e => e.rawName === cleaned)) {
-                            masterEntities.push({ rawName: cleaned, formattedName: formatName(cleaned), relator: nameMatch[2] });
-                        }
-                    }
-                }
-
-                // 4. 標題候選評分
-                if (line.length >= 4 && line.length <= 50 && !CIP_BLOCKERS.test(line) && !NOISE_WORDS.test(line)) {
-                    candidates.push({ text: line, score: (index < 5 ? 100 : 50) });
-                }
+                const chip = document.createElement('span');
+                chip.className = "text-chip";
+                chip.innerText = cleanLine;
+                chip.onclick = () => showFieldPicker(cleanLine);
+                pool.appendChild(chip);
             });
-
-            // 顯示標題候選標籤
-            const suggDiv = document.getElementById('title-suggestions');
-            suggDiv.innerHTML = ""; // 先清空舊的建議
-            candidates.sort((a,b) => b.score - a.score).slice(0, 4).forEach(c => {
-                const span = document.createElement('span');
-                span.className = "title-sugg";
-                span.innerText = "💡 " + c.text;
-                span.onclick = () => {
-                    const el245 = document.getElementById('f-245');
-                    el245.innerText = `$a ${c.text} : $b  / $c `;
-                    updateAuthorStmt(); // 重新觸發責任者更新
-                };
-                suggDiv.appendChild(span);
-            });
-
-            // 自動填入最高分候選 (如果 245 目前是空的)
-            const el245 = document.getElementById('f-245');
-            if (el245.innerText.includes("$a  :") && candidates.length > 0) {
-                el245.innerText = `$a ${candidates[0].text} : $b  / $c `;
-            }
-
-            updateAuthorStmt();
         }
 
-        function updateAuthorStmt() {
-            if (masterEntities.length > 0) {
-                const first = masterEntities[0];
-                document.getElementById('f-100').innerText = `$a ${first.formattedName}${first.relator ? ', $e ' + first.relator : ''}`;
-                document.getElementById('f-700').innerText = masterEntities.slice(1).map(e => `$a ${e.formattedName}, $e ${e.relator}`).join(' ');
-                
-                const currentVal = document.getElementById('f-245').innerText;
-                const titlePart = currentVal.split(' / ')[0];
-                const authorString = masterEntities.map(e => e.rawName).join('，');
-                document.getElementById('f-245').innerText = `${titlePart} / $c ${authorString} 編著`;
-            }
+        function showFieldPicker(text) {
+            const field = prompt("請輸入代號填入欄位：\n1: 正題名 ($a)\n2: 作者 ($a)\n3: ISBN\n4: 版本\n5: 摘要\n(或直接點取消)", "1");
+            if (field === "1") { document.getElementById('f-245').innerText = `$a ${text} : $b  / $c `; }
+            else if (field === "2") { document.getElementById('f-100').innerText = `$a ${formatName(text)}`; }
+            else if (field === "3") { document.getElementById('f-020').innerText = `$a ${text.replace(/[^\d]/g, '')}`; }
+            else if (field === "4") { document.getElementById('f-250').innerText = `$a ${text}`; }
+            else if (field === "5") { document.getElementById('f-520').innerText += text; }
         }
 
         function formatName(rawName) {
@@ -273,29 +194,14 @@
         }
 
         function resetField(id) {
-            const empty = {'f-245':'$a  : $b  / $c ', 'f-264':'$a  : $b  , $c '};
+            const empty = {'f-245':'$a  : $b  / $c '};
             document.getElementById(id).innerText = empty[id] || '$a ';
-            if(id === 'f-100' || id === 'f-700') masterEntities = [];
         }
 
         function clearAllFields() {
-            if(!confirm("確定要清空所有資料嗎？")) return;
-            ['f-020','f-100','f-245','f-250','f-264','f-520','f-700'].forEach(id => resetField(id));
-            document.getElementById('title-suggestions').innerHTML = "";
-        }
-
-        function copyToClipboard(btn) {
-            const rows = document.querySelectorAll('#marc-output-area div[data-tag]');
-            let copyText = "";
-            rows.forEach(row => {
-                const tag = row.getAttribute('data-tag');
-                const content = row.querySelector('.marc-field').innerText.trim();
-                if (content.length > 5) copyText += `${tag}  ${content}\n`;
-            });
-            navigator.clipboard.writeText(copyText).then(() => {
-                const original = btn.innerText; btn.innerText = "Copied!";
-                setTimeout(() => { btn.innerText = original; }, 1000);
-            });
+            if(!confirm("確定重置？")) return;
+            ['f-020','f-100','f-245','f-250','f-520'].forEach(id => resetField(id));
+            document.getElementById('text-pool').innerHTML = "";
         }
     </script>
 </body>
