@@ -12,7 +12,7 @@
             position: absolute; top: 0; left: 0; width: 100%; height: 3px;
             background: linear-gradient(to right, transparent, #38bdf8, transparent);
             box-shadow: 0 0 20px 5px rgba(56, 189, 248, 0.6);
-            animation: scan 2.5s ease-in-out infinite;
+            animation: scan 2s linear infinite;
         }
         @keyframes scan { 0% { top: 5%; } 50% { top: 95%; } 100% { top: 5%; } }
         #progress-overlay {
@@ -20,68 +20,54 @@
             background: rgba(30, 41, 59, 0.8); z-index: 20; display: none;
         }
         #progress-bar { width: 0%; height: 100%; background: #3b82f6; transition: width 0.2s ease; }
-        .marc-field { font-family: 'Courier New', monospace; outline: none; width: 100%; display: block; padding: 4px; min-height: 1.5em; flex: 1; }
+        .marc-field { font-family: 'Courier New', monospace; outline: none; width: 100%; display: block; padding: 4px; min-height: 1.5em; flex: 1; font-size: 0.9rem; }
         .marc-field:focus { background: #f0f9ff; border-bottom: 2px solid #3b82f6; }
-        .group-box { border: 1px solid #e2e8f0; border-radius: 16px; padding: 12px; background: #fff; }
-        .tag-num { width: 3rem; font-weight: 900; color: #2563eb; font-size: 0.8rem; }
-        .tag-ind { width: 1.5rem; font-family: monospace; color: #94a3b8; font-size: 0.8rem; }
-        .clear-tag { cursor: pointer; color: #cbd5e1; padding: 0 8px; font-size: 10px; transition: color 0.2s; }
-        .clear-tag:hover { color: #ef4444; }
-        footer { font-size: 0.7rem; color: #94a3b8; text-align: center; padding: 30px 10px; line-height: 1.6; }
+        .group-box { border: 1px solid #e2e8f0; border-radius: 16px; padding: 10px; background: #fff; }
+        .tag-num { width: 2.5rem; font-weight: 900; color: #2563eb; font-size: 0.75rem; }
+        .tag-ind { width: 1.2rem; font-family: monospace; color: #94a3b8; font-size: 0.75rem; }
+        .clear-tag { cursor: pointer; color: #cbd5e1; padding: 0 8px; font-size: 10px; }
+        footer { font-size: 0.65rem; color: #94a3b8; text-align: center; padding: 20px 10px; }
     </style>
 </head>
 <body class="bg-slate-50 min-h-screen pb-10 font-sans text-slate-900">
 
     <div class="max-w-2xl mx-auto p-4 space-y-4">
-        <header class="text-center py-4">
-            <h1 class="text-3xl font-black tracking-tight text-slate-800">OCR Tool for Catalogers</h1>
-            <p class="text-xs text-blue-600 font-medium mt-1">Smart MARC 21 metadata extractor</p>
+        <header class="text-center py-2">
+            <h1 class="text-2xl font-black tracking-tight text-slate-800">OCR Tool for Catalogers</h1>
+            <p class="text-[10px] text-blue-600 font-medium uppercase tracking-widest">Tamkang University Library v36</p>
         </header>
 
-        <div class="bg-white rounded-3xl shadow-sm border p-4">
-            <h2 class="text-xs font-bold mb-3 text-slate-400 tracking-wider">Step 1: Cataloging mode</h2>
+        <div class="bg-white rounded-3xl shadow-sm border p-4 space-y-3">
             <div class="flex gap-4">
-                <label class="flex-1 flex items-center justify-center gap-2 p-3 border-2 rounded-2xl cursor-pointer hover:border-blue-500 transition has-[:checked]:border-blue-600 has-[:checked]:bg-blue-50">
-                    <input type="radio" name="catalog-mode" value="chi" checked class="w-4 h-4 text-blue-600">
-                    <span class="font-bold text-sm text-slate-700">中文編目</span>
+                <label class="flex-1 flex items-center justify-center gap-2 p-2 border-2 rounded-xl cursor-pointer has-[:checked]:border-blue-600 has-[:checked]:bg-blue-50">
+                    <input type="radio" name="catalog-mode" value="chi" checked class="hidden"><span class="font-bold text-xs">中文編目</span>
                 </label>
-                <label class="flex-1 flex items-center justify-center gap-2 p-3 border-2 rounded-2xl cursor-pointer hover:border-blue-500 transition has-[:checked]:border-blue-600 has-[:checked]:bg-blue-50">
-                    <input type="radio" name="catalog-mode" value="eng" class="w-4 h-4 text-blue-600">
-                    <span class="font-bold text-sm text-slate-700">西文編目</span>
+                <label class="flex-1 flex items-center justify-center gap-2 p-2 border-2 rounded-xl cursor-pointer has-[:checked]:border-blue-600 has-[:checked]:bg-blue-50">
+                    <input type="radio" name="catalog-mode" value="eng" class="hidden"><span class="font-bold text-xs">西文編目</span>
                 </label>
             </div>
-        </div>
-
-        <div class="bg-white rounded-3xl shadow-sm border p-5 space-y-4">
-            <h2 class="text-xs font-bold text-slate-400 tracking-wider">Step 2: Language selection</h2>
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs">
-                <div class="group-box space-y-2">
-                    <p class="font-bold text-blue-600 border-b pb-1 text-xs">東方語言</p>
-                    <label class="flex items-center gap-2 font-medium opacity-50"><input type="checkbox" onchange="toggleGroup(this, 'oriental-item')"> [全選]</label>
-                    <label class="flex items-center gap-2"><input type="checkbox" class="lang-opt oriental-item" value="chi_tra"> 繁體中文</label>
-                    <label class="flex items-center gap-2"><input type="checkbox" class="lang-opt oriental-item" value="chi_sim"> 簡體中文</label>
-                    <label class="flex items-center gap-2"><input type="checkbox" class="lang-opt oriental-item" value="jpn"> 日文</label>
-                    <label class="flex items-center gap-2"><input type="checkbox" class="lang-opt oriental-item" value="kor"> 韓文</label>
+            
+            <div class="grid grid-cols-3 gap-2 text-[9px]">
+                <div class="group-box space-y-1">
+                    <p class="font-bold text-blue-600">東方</p>
+                    <label class="flex items-center gap-1"><input type="checkbox" class="lang-opt" value="chi_tra"> 繁中</label>
+                    <label class="flex items-center gap-1"><input type="checkbox" class="lang-opt" value="jpn"> 日文</label>
+                    <label class="flex items-center gap-1"><input type="checkbox" class="lang-opt" value="kor"> 韓文</label>
                 </div>
-                <div class="group-box space-y-2">
-                    <p class="font-bold text-emerald-600 border-b pb-1 text-xs">西方語言</p>
-                    <label class="flex items-center gap-2 font-medium opacity-50"><input type="checkbox" onchange="toggleGroup(this, 'western-item')"> [全選]</label>
-                    <label class="flex items-center gap-2"><input type="checkbox" class="lang-opt western-item" value="eng"> 英文</label>
-                    <label class="flex items-center gap-2"><input type="checkbox" class="lang-opt western-item" value="fra"> 法文</label>
-                    <label class="flex items-center gap-2"><input type="checkbox" class="lang-opt western-item" value="spa"> 西班牙文</label>
-                    <label class="flex items-center gap-2"><input type="checkbox" class="lang-opt western-item" value="rus"> 俄文</label>
+                <div class="group-box space-y-1">
+                    <p class="font-bold text-emerald-600">西方</p>
+                    <label class="flex items-center gap-1"><input type="checkbox" class="lang-opt" value="eng"> 英文</label>
+                    <label class="flex items-center gap-1"><input type="checkbox" class="lang-opt" value="fra"> 法文</label>
+                    <label class="flex items-center gap-1"><input type="checkbox" class="lang-opt" value="spa"> 西文</label>
                 </div>
-                <div class="group-box space-y-2">
-                    <p class="font-bold text-amber-600 border-b pb-1 text-xs">特殊語言</p>
-                    <label class="flex items-center gap-2 font-medium opacity-50"><input type="checkbox" onchange="toggleGroup(this, 'special-item')"> [全選]</label>
-                    <label class="flex items-center gap-2"><input type="checkbox" class="lang-opt special-item" value="nor"> 挪威文</label>
-                    <label class="flex items-center gap-2"><input type="checkbox" class="lang-opt special-item" value="nld"> 荷蘭文</label>
-                    <label class="flex items-center gap-2"><input type="checkbox" class="lang-opt special-item" value="ita"> 義大利文</label>
-                    <label class="flex items-center gap-2"><input type="checkbox" class="lang-opt special-item" value="ara"> 阿拉伯語</label>
-                    <label class="flex items-center gap-2"><input type="checkbox" class="lang-opt special-item" value="ben"> 孟加拉文</label>
+                <div class="group-box space-y-1">
+                    <p class="font-bold text-amber-600">特殊</p>
+                    <label class="flex items-center gap-1"><input type="checkbox" class="lang-opt" value="ara"> 阿拉伯</label>
+                    <label class="flex items-center gap-1"><input type="checkbox" class="lang-opt" value="ben"> 孟加拉</label>
+                    <label class="flex items-center gap-1"><input type="checkbox" class="lang-opt" value="nor"> 挪威</label>
                 </div>
             </div>
-            <button id="init-btn" class="w-full bg-slate-900 text-white py-4 rounded-2xl font-bold text-sm shadow-xl hover:bg-black transition">Initialize Engine</button>
+            <button id="init-btn" class="w-full bg-slate-900 text-white py-3 rounded-xl font-bold text-xs">Initialize Engine</button>
         </div>
 
         <div id="video-ui" class="hidden space-y-4">
@@ -91,33 +77,32 @@
                 <div id="progress-overlay"><div id="progress-bar"></div></div>
             </div>
             <div class="flex gap-2">
-                <button id="capture-btn" class="flex-[3] bg-blue-600 text-white py-4 rounded-2xl font-black text-lg shadow-xl hover:bg-blue-700 transition">📸 Capture & Accumulate</button>
-                <button onclick="clearAllFields()" class="flex-1 bg-red-50 text-red-600 py-4 rounded-2xl font-bold text-xs border border-red-100 shadow-sm">Clear All</button>
+                <button id="capture-btn" class="flex-[3] bg-blue-600 text-white py-4 rounded-2xl font-black text-lg">📸 Capture & Accumulate</button>
+                <button onclick="clearAllFields()" class="flex-1 bg-red-50 text-red-600 py-4 rounded-2xl font-bold text-xs">Clear All</button>
             </div>
         </div>
 
-        <div id="status" class="text-center text-[10px] font-mono text-slate-400 font-bold h-4">Standing by...</div>
-        <div id="debug-text" class="bg-black/5 text-[9px] p-2 rounded-lg text-slate-400 hidden overflow-y-auto max-h-20 font-mono"></div>
+        <div id="status" class="text-center text-[10px] font-mono text-slate-400 h-4">Standing by...</div>
+        <div id="debug-text" class="bg-black/5 text-[9px] p-2 rounded-lg text-slate-400 hidden max-h-20 overflow-y-auto"></div>
 
         <div class="bg-white rounded-[2rem] shadow-2xl border border-slate-200 overflow-hidden text-sm" id="marc-output-area">
-            <div class="p-6 space-y-4">
+            <div class="p-6 space-y-3">
                 <div class="flex items-center border-b border-slate-50 pb-1" data-tag="020"><span class="tag-num">020</span><span class="tag-ind">##</span><span contenteditable="true" id="f-020" class="marc-field">$a </span><span onclick="resetField('f-020')" class="clear-tag">❌</span></div>
-                <div class="flex items-center bg-blue-50/40 p-2 rounded-xl" data-tag="100"><span class="tag-num">100</span><span class="tag-ind">1#</span><span contenteditable="true" id="f-100" class="marc-field">$a </span><span onclick="resetField('f-100')" class="clear-tag">❌</span></div>
+                <div class="flex items-center bg-blue-50/30 p-2 rounded-xl" data-tag="100"><span class="tag-num">100</span><span class="tag-ind">1#</span><span contenteditable="true" id="f-100" class="marc-field">$a </span><span onclick="resetField('f-100')" class="clear-tag">❌</span></div>
                 <div class="flex items-start" data-tag="245"><span class="tag-num">245</span><span class="tag-ind">10</span><span contenteditable="true" id="f-245" class="marc-field">$a  : $b  / $c </span><span onclick="resetField('f-245')" class="clear-tag">❌</span></div>
                 <div class="flex items-center bg-slate-50 p-2 rounded-xl" data-tag="250"><span class="tag-num">250</span><span class="tag-ind">##</span><span contenteditable="true" id="f-250" class="marc-field">$a </span><span onclick="resetField('f-250')" class="clear-tag">❌</span></div>
                 <div class="flex items-center" data-tag="264"><span class="tag-num">264</span><span class="tag-ind">#4</span><span contenteditable="true" id="f-264" class="marc-field">$a  : $b  , $c </span><span onclick="resetField('f-264')" class="clear-tag">❌</span></div>
-                <div class="flex items-start bg-amber-50/50 rounded-xl p-3" data-tag="520"><span class="tag-num">520</span><span class="tag-ind">##</span><span contenteditable="true" id="f-520" class="marc-field text-xs leading-relaxed">$a </span><span onclick="resetField('f-520')" class="clear-tag">❌</span></div>
-                <div class="flex items-center bg-emerald-50/40 p-2 rounded-xl" data-tag="700"><span class="tag-num">700</span><span class="tag-ind">1#</span><span contenteditable="true" id="f-700" class="marc-field">$a </span><span onclick="resetField('f-700')" class="clear-tag">❌</span></div>
+                <div class="flex items-start bg-amber-50/30 rounded-xl p-3" data-tag="520"><span class="tag-num">520</span><span class="tag-ind">##</span><span contenteditable="true" id="f-520" class="marc-field text-xs leading-relaxed">$a </span><span onclick="resetField('f-520')" class="clear-tag">❌</span></div>
+                <div class="flex items-center bg-emerald-50/30 p-2 rounded-xl" data-tag="700"><span class="tag-num">700</span><span class="tag-ind">1#</span><span contenteditable="true" id="f-700" class="marc-field">$a </span><span onclick="resetField('f-700')" class="clear-tag">❌</span></div>
             </div>
             <div class="px-6 pb-6 flex gap-3">
-                <button onclick="copyToClipboard(this)" class="flex-1 bg-slate-100 text-slate-700 py-4 rounded-2xl font-bold text-xs tracking-widest hover:bg-slate-200 transition shadow-sm">Copy text</button>
-                <button onclick="downloadMRC()" class="flex-1 bg-blue-600 text-white py-4 rounded-2xl font-bold text-xs tracking-widest hover:bg-blue-700 transition shadow-lg">Download .mrc</button>
+                <button onclick="copyToClipboard(this)" class="flex-1 bg-slate-100 text-slate-700 py-3 rounded-xl font-bold text-xs">Copy text</button>
+                <button onclick="downloadMRC()" class="flex-1 bg-blue-600 text-white py-3 rounded-xl font-bold text-xs">Download .mrc</button>
             </div>
         </div>
 
         <footer>
-            Tamkang University Chueh-sheng Memorial Library,<br>
-            Acquisitions & Technical Services Section
+            淡江大學覺生紀念圖書館 採編組<br>TKU Library, New Taipei City, Taiwan
         </footer>
     </div>
 
@@ -137,36 +122,13 @@
         let worker = null;
         let masterEntities = [];
 
-        function toggleGroup(master, targetClass) {
-            const checkboxes = document.getElementsByClassName(targetClass);
-            for (let cb of checkboxes) cb.checked = master.checked;
-        }
-
-        const RELATOR_TERMS = {
-            'chi': { 'author': '作者', 'translator': '譯者', 'editor': '編者', 'illustrator': '繪者' },
-            'eng': { 'author': 'author', 'translator': 'translator', 'editor': 'editor', 'illustrator': 'illustrator' }
-        };
-
-        const ROLE_MAP = [
-            { id: 'author', regex: /(著|作者|撰|by|written by|authored)/i },
-            { id: 'translator', regex: /(譯|翻譯|translated|translator)/i },
-            { id: 'editor', regex: /(編|主編|編著|edited|editor)/i },
-            { id: 'illustrator', regex: /(繪|插畫|illustrated|illustrator)/i }
-        ];
-
         const CORP_KEYWORDS = /圖書館|中心|大學|學院|學會|公司|出版社|局|署|委員會|政府|部|工作室|組|館/;
-        const TITLE_BLACKLIST = /圖書|手冊|月|年|日|說|編著|譯|修訂|增訂|出版|印行|價格|ISBN|978|系列|叢書|連續性出版品/;
+        // 根據照片特製的黑名單
+        const NOISE_WORDS = /CIP|預行編目|機讀|中華民國|年|月|日|印行|價格|NT|ISBN|978|分類|說$|系列|叢書|附錄/;
 
         function cleanSpaces(str) {
             if (!str) return "";
             return str.replace(/([\u4e00-\u9fa5])\s+([\u4e00-\u9fa5])/g, '$1$2').trim();
-        }
-
-        // 雜訊字元過濾：移除無意義的 OCR 符號
-        function garbageFilter(str) {
-            const noise = /[\^~|_\\<>\[\]{}*&%#@]/g;
-            let clean = str.replace(noise, '').trim();
-            return clean.length < 2 ? "" : clean;
         }
 
         function resetField(id) {
@@ -176,7 +138,7 @@
         }
 
         function clearAllFields() {
-            if(!confirm("Clear all fields?")) return;
+            if(!confirm("Clear all?")) return;
             ['f-020','f-100','f-245','f-250','f-264','f-520','f-700'].forEach(id => resetField(id));
         }
 
@@ -184,7 +146,7 @@
             const selectedLangs = Array.from(document.querySelectorAll('.lang-opt:checked')).map(cb => cb.value);
             if (selectedLangs.length === 0) return alert("Select languages.");
             initBtn.disabled = true;
-            status.innerText = "Initializing Engine...";
+            status.innerText = "Loading AI Models...";
             worker = await Tesseract.createWorker(selectedLangs.join('+'), 1, {
                 logger: m => {
                     if(m.status === 'recognizing text') {
@@ -194,19 +156,14 @@
                     status.innerText = m.status + " (" + Math.round(m.progress * 100) + "%)";
                 }
             });
-            status.innerText = "Ready"; startCamera();
-        }
-
-        async function startCamera() {
-            try {
-                const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
-                video.srcObject = stream; videoUI.classList.remove('hidden'); debugText.classList.remove('hidden');
-            } catch (err) { alert("Camera failed."); }
+            status.innerText = "Ready"; videoUI.classList.remove('hidden');
+            const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
+            video.srcObject = stream; debugText.classList.remove('hidden');
         }
 
         function formatName(rawName) {
             rawName = cleanSpaces(rawName.replace(/[:：，,、]/g, ''));
-            if (CORP_KEYWORDS.test(rawName)) return rawName;
+            if (CORP_KEYWORDS.test(rawName)) return rawName; // 機構不拆分
             if (/^[\u4e00-\u9fa5]{2,4}$/.test(rawName)) return `${rawName[0]}, ${rawName.substring(1)}`;
             const parts = rawName.split(/\s+/);
             if (parts.length >= 2) { const last = parts.pop(); return `${last}, ${parts.join(" ")}`; }
@@ -218,8 +175,7 @@
             captureBtn.disabled = true;
             const context = canvas.getContext('2d');
             canvas.width = video.videoWidth; canvas.height = video.videoHeight;
-            // 強化影像對比，減少雜訊
-            context.filter = 'contrast(1.5) grayscale(1) brightness(0.9)';
+            context.filter = 'contrast(1.6) grayscale(1) brightness(0.8)';
             context.drawImage(video, 0, 0, canvas.width, canvas.height);
             const { data: { text } } = await worker.recognize(canvas);
             debugText.innerText = "Captured Raw: " + text.replace(/\n/g, ' | ');
@@ -230,76 +186,68 @@
 
         function parseTextToMARC(text) {
             const mode = document.querySelector('input[name="catalog-mode"]:checked').value;
-            const lines = text.split('\n')
-                              .map(l => garbageFilter(cleanSpaces(l)))
-                              .filter(l => l.length >= 2);
+            const lines = text.split('\n').map(l => cleanSpaces(l)).filter(l => l.length >= 2);
             
-            let titleCandidate = "";
-            let subTitleCandidate = "";
+            let bestTitle = { line: "", score: -1000, index: -1 };
+            const ROLE_REGEX = /(著|作者|撰|by|編|主編|譯|繪)/i;
 
             lines.forEach((line, index) => {
-                // 1. ISBN (Regex 強化)
-                const isbnMatch = line.match(/(?:ISBN)?\s*(97[89][- ]?\d{1,5}[- ]?\d{1,7}[- ]?\d{1,6}[- ]?\d{1,3})/i);
-                if (isbnMatch && document.getElementById('f-020').innerText.length < 5) {
+                // 1. ISBN & 250 (累加邏輯)
+                const isbnMatch = line.match(/(97[89][- ]?\d{1,5}[- ]?\d{1,7}[- ]?\d{1,6}[- ]?\d{1,3})/);
+                if (isbnMatch && document.getElementById('f-020').innerText === "$a ") {
                     document.getElementById('f-020').innerText = `$a ${isbnMatch[1].replace(/[- ]/g, '')}`;
                 }
-
-                // 2. 版本
-                const edMatch = line.match(/(初版|[第卷].*[版次]|修訂版|增訂版|edition|ed\.)/i);
-                if (edMatch && document.getElementById('f-250').innerText.length < 5) {
+                const edMatch = line.match(/(再版|初版|[第卷].*[版次]|修訂版|增訂版|edition|ed\.)/i);
+                if (edMatch && document.getElementById('f-250').innerText === "$a ") {
                     document.getElementById('f-250').innerText = `$a ${edMatch[0]}`;
                 }
 
-                // 3. 責任者
-                ROLE_MAP.forEach(roleDef => {
-                    const match = line.match(new RegExp(`([^\\n，。:：]{2,20})\\s*${roleDef.regex.source}`, 'i'));
-                    if (match) {
-                        let cleanedName = match[1].replace(/[著編譯繪]$/, '').trim();
-                        if (cleanedName.length >= 2 && !masterEntities.some(e => e.rawName === cleanedName)) {
-                            masterEntities.push({ rawName: cleanedName, formattedName: formatName(cleanedName), relator: RELATOR_TERMS[mode][roleDef.id] || "" });
-                        }
-                    }
-                });
-
-                // 4. 書名智慧篩選
-                const el245 = document.getElementById('f-245');
-                if (el245.innerText === "$a  : $b  / $c " && line.length >= 6 && line.length < 50 && !TITLE_BLACKLIST.test(line)) {
-                    if (line.includes(":") || line.includes("：")) {
-                        const parts = line.split(/[:：]/);
-                        titleCandidate = parts[0].trim();
-                        subTitleCandidate = parts[1].trim();
-                    } else if (!titleCandidate) {
-                        titleCandidate = line;
-                        if (lines[index+1] && lines[index+1].length > 4 && lines[index+1].length < 30 && !TITLE_BLACKLIST.test(lines[index+1])) {
-                            subTitleCandidate = lines[index+1];
-                        }
+                // 2. 責任者提取
+                const nameMatch = line.match(/^([^著編譯印\d]{2,15})[:：\s]*(著|編|譯|印|作者|編者|編著)/);
+                if (nameMatch) {
+                    let cleaned = nameMatch[1].trim();
+                    if (cleaned.length >= 2 && !masterEntities.some(e => e.rawName === cleaned)) {
+                        masterEntities.push({ rawName: cleaned, formattedName: formatName(cleaned), relator: (mode==='chi' ? nameMatch[2] : 'author') });
                     }
                 }
 
-                // 5. 摘要
-                if (line.length > 50 && !line.match(/ISBN|978|出版社|書局/)) {
-                    const el520 = document.getElementById('f-520');
-                    if (!el520.innerText.includes(line.substring(0,10))) el520.innerText += (el520.innerText === "$a " ? "" : " ") + line;
+                // 3. 題名智慧評分
+                let score = 0;
+                if (line.length >= 4 && line.length <= 30) {
+                    score += 50;
+                    if (index < lines.length / 2) score += 20; // 靠上的行
+                    if (NOISE_WORDS.test(line)) score -= 100; // 雜訊過濾
+                    if (ROLE_REGEX.test(line)) score -= 60; // 包含職責的行通常是著者敘述
+                    if (/[A-Za-z0-9]/.test(line)) score += 10; // 包含英數通常是專業書籍書名
+                    
+                    if (score > bestTitle.score) bestTitle = { line, score, index };
                 }
             });
 
-            if (titleCandidate) {
-                const bStr = subTitleCandidate ? ` : $b ${subTitleCandidate}` : " : $b ";
-                document.getElementById('f-245').innerText = `$a ${titleCandidate}${bStr} / $c `;
+            // 更新 245
+            const el245 = document.getElementById('f-245');
+            if (bestTitle.line && (el245.innerText === "$a  : $b  / $c " || bestTitle.score > 30)) {
+                let a = bestTitle.line, b = "";
+                if (a.includes(":") || a.includes("：")) {
+                    const pts = a.split(/[:：]/); a = pts[0]; b = pts[1];
+                } else {
+                    const next = lines[bestTitle.index + 1];
+                    if (next && next.length > 3 && !NOISE_WORDS.test(next) && !ROLE_REGEX.test(next)) b = next;
+                }
+                el245.innerText = `$a ${a} : $b ${b} / $c `;
             }
 
+            // 更新著者與 245$c
             if (masterEntities.length > 0) {
                 const first = masterEntities[0];
-                document.getElementById('f-100').innerText = `$a ${first.formattedName}${first.relator ? ', $e ' + first.relator : ''}`;
+                document.getElementById('f-100').innerText = `$a ${first.formattedName}, $e ${first.relator}`;
                 document.getElementById('f-700').innerText = masterEntities.slice(1).map(e => `$a ${e.formattedName}, $e ${e.relator}`).join(' ');
+                
                 const titlePart = document.getElementById('f-245').innerText.split(' / ')[0];
-                const authorStmt = masterEntities.map(e => `${e.rawName} ${e.relator}`).join('; ');
-                document.getElementById('f-245').innerText = `${titlePart} / $c ${authorStmt}`;
+                const authorStmt = masterEntities.map(e => e.rawName).join('，');
+                document.getElementById('f-245').innerText = `${titlePart} / $c ${authorStmt} 編著`;
             }
         }
-
-        initBtn.addEventListener('click', initOCR);
-        captureBtn.addEventListener('click', processOCR);
 
         function copyToClipboard(btn) {
             const rows = document.querySelectorAll('#marc-output-area > div[data-tag]');
@@ -307,18 +255,13 @@
             rows.forEach(row => {
                 const tag = row.getAttribute('data-tag');
                 const content = row.querySelector('.marc-field').innerText.trim();
-                if (content.length > 5) copyText += `${tag}  ${content}\n`;
+                if (content.length > 6) copyText += `${tag}  ${content}\n`;
             });
             navigator.clipboard.writeText(copyText).then(() => {
                 const original = btn.innerHTML;
                 btn.innerHTML = "<span>Copied!</span>";
                 setTimeout(() => { btn.innerHTML = original; }, 1000);
             });
-        }
-
-        function downloadMRC() {
-            alert("Exporting .mrc file...");
-            // (原有 .mrc 產生邏輯)
         }
     </script>
 </body>
