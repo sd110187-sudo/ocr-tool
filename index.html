@@ -15,13 +15,11 @@
             animation: scan 2.5s ease-in-out infinite;
         }
         @keyframes scan { 0% { top: 5%; } 50% { top: 95%; } 100% { top: 5%; } }
-        
         #progress-overlay {
             position: absolute; bottom: 0; left: 0; width: 100%; height: 6px;
             background: rgba(30, 41, 59, 0.8); z-index: 20; display: none;
         }
         #progress-bar { width: 0%; height: 100%; background: #3b82f6; transition: width 0.2s ease; }
-
         .marc-field { font-family: 'Courier New', monospace; outline: none; width: 100%; display: block; padding: 4px; min-height: 1.5em; }
         .marc-field:focus { background: #f0f9ff; border-bottom: 2px solid #3b82f6; }
         .group-box { border: 1px solid #e2e8f0; border-radius: 16px; padding: 12px; background: #fff; }
@@ -43,11 +41,11 @@
             <div class="flex gap-4">
                 <label class="flex-1 flex items-center justify-center gap-2 p-3 border-2 rounded-2xl cursor-pointer hover:border-blue-500 transition has-[:checked]:border-blue-600 has-[:checked]:bg-blue-50">
                     <input type="radio" name="catalog-mode" value="chi" checked class="w-4 h-4 text-blue-600">
-                    <span class="font-bold text-sm">中文編目</span>
+                    <span class="font-bold text-sm text-slate-700">中文編目</span>
                 </label>
                 <label class="flex-1 flex items-center justify-center gap-2 p-3 border-2 rounded-2xl cursor-pointer hover:border-blue-500 transition has-[:checked]:border-blue-600 has-[:checked]:bg-blue-50">
                     <input type="radio" name="catalog-mode" value="eng" class="w-4 h-4 text-blue-600">
-                    <span class="font-bold text-sm">西文編目</span>
+                    <span class="font-bold text-sm text-slate-700">西文編目</span>
                 </label>
             </div>
         </div>
@@ -56,7 +54,7 @@
             <h2 class="text-xs font-bold text-slate-400 tracking-wider">Step 2: Language selection</h2>
             <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs">
                 <div class="group-box space-y-2">
-                    <p class="font-bold text-blue-600 border-b pb-1">東方語言</p>
+                    <p class="font-bold text-blue-600 border-b pb-1 text-xs">東方語言</p>
                     <label class="flex items-center gap-2 font-medium opacity-50"><input type="checkbox" onchange="toggleGroup(this, 'oriental-item')"> [全選]</label>
                     <label class="flex items-center gap-2"><input type="checkbox" class="lang-opt oriental-item" value="chi_tra"> 繁體中文</label>
                     <label class="flex items-center gap-2"><input type="checkbox" class="lang-opt oriental-item" value="chi_sim"> 簡體中文</label>
@@ -64,7 +62,7 @@
                     <label class="flex items-center gap-2"><input type="checkbox" class="lang-opt oriental-item" value="kor"> 韓文</label>
                 </div>
                 <div class="group-box space-y-2">
-                    <p class="font-bold text-emerald-600 border-b pb-1">西方語言</p>
+                    <p class="font-bold text-emerald-600 border-b pb-1 text-xs">西方語言</p>
                     <label class="flex items-center gap-2 font-medium opacity-50"><input type="checkbox" onchange="toggleGroup(this, 'western-item')"> [全選]</label>
                     <label class="flex items-center gap-2"><input type="checkbox" class="lang-opt western-item" value="eng"> 英文</label>
                     <label class="flex items-center gap-2"><input type="checkbox" class="lang-opt western-item" value="fra"> 法文</label>
@@ -72,7 +70,7 @@
                     <label class="flex items-center gap-2"><input type="checkbox" class="lang-opt western-item" value="rus"> 俄文</label>
                 </div>
                 <div class="group-box space-y-2">
-                    <p class="font-bold text-amber-600 border-b pb-1">特殊語言</p>
+                    <p class="font-bold text-amber-600 border-b pb-1 text-xs">特殊語言</p>
                     <label class="flex items-center gap-2 font-medium opacity-50"><input type="checkbox" onchange="toggleGroup(this, 'special-item')"> [全選]</label>
                     <label class="flex items-center gap-2"><input type="checkbox" class="lang-opt special-item" value="nor"> 挪威文</label>
                     <label class="flex items-center gap-2"><input type="checkbox" class="lang-opt special-item" value="nld"> 荷蘭文</label>
@@ -88,18 +86,11 @@
             <div id="video-container" class="aspect-[4/5] shadow-2xl relative">
                 <video id="video" class="w-full h-full object-cover" autoplay playsinline></video>
                 <div id="scanner-line"></div>
-                <div id="progress-overlay">
-                    <div id="progress-bar"></div>
-                </div>
+                <div id="progress-overlay"><div id="progress-bar"></div></div>
             </div>
-            
             <div class="flex gap-2">
-                <button id="capture-btn" class="flex-[3] bg-blue-600 text-white py-4 rounded-2xl font-black text-lg shadow-xl hover:bg-blue-700 transition flex items-center justify-center gap-2">
-                    📸 Capture & Accumulate
-                </button>
-                <button onclick="clearAllFields()" class="flex-1 bg-red-50 text-red-600 py-4 rounded-2xl font-bold text-xs border border-red-100 shadow-sm">
-                    Clear All
-                </button>
+                <button id="capture-btn" class="flex-[3] bg-blue-600 text-white py-4 rounded-2xl font-black text-lg shadow-xl hover:bg-blue-700 transition flex items-center justify-center gap-2">📸 Capture & Accumulate</button>
+                <button onclick="clearAllFields()" class="flex-1 bg-red-50 text-red-600 py-4 rounded-2xl font-bold text-xs border border-red-100 shadow-sm">Clear All</button>
             </div>
         </div>
 
@@ -110,13 +101,12 @@
             <div class="p-6 space-y-4">
                 <div class="flex items-center border-b border-slate-50 pb-1" data-tag="020" data-ind="##"><span class="tag-num">020</span><span class="tag-ind">##</span><span contenteditable="true" id="f-020" class="marc-field">$a </span></div>
                 <div class="flex items-center bg-blue-50/40 p-2 rounded-xl" data-tag="100" data-ind="1#"><span class="tag-num">100</span><span class="tag-ind">1#</span><span contenteditable="true" id="f-100" class="marc-field">$a </span></div>
-                <div class="flex items-start" data-tag="245" data-ind="10"><span class="tag-num">245</span><span class="tag-ind">10</span><span contenteditable="true" id="f-245" class="marc-field">$a  / $c </span></div>
+                <div class="flex items-start" data-tag="245" data-ind="10"><span class="tag-num">245</span><span class="tag-ind">10</span><span contenteditable="true" id="f-245" class="marc-field">$a  : $b  / $c </span></div>
                 <div class="flex items-center bg-slate-50 p-2 rounded-xl" data-tag="250" data-ind="##"><span class="tag-num">250</span><span class="tag-ind">##</span><span contenteditable="true" id="f-250" class="marc-field">$a </span></div>
                 <div class="flex items-center" data-tag="264" data-ind="#4"><span class="tag-num">264</span><span class="tag-ind">#4</span><span contenteditable="true" id="f-264" class="marc-field">$a  : $b  , $c </span></div>
                 <div class="flex items-start bg-amber-50/50 rounded-xl p-3" data-tag="520" data-ind="##"><span class="tag-num">520</span><span class="tag-ind">##</span><span contenteditable="true" id="f-520" class="marc-field text-xs leading-relaxed">$a </span></div>
                 <div class="flex items-center bg-emerald-50/40 p-2 rounded-xl" data-tag="700" data-ind="1#"><span class="tag-num">700</span><span class="tag-ind">1#</span><span contenteditable="true" id="f-700" class="marc-field">$a </span></div>
             </div>
-            
             <div class="px-6 pb-6 flex gap-3">
                 <button onclick="copyToClipboard(this)" class="flex-1 bg-slate-100 text-slate-700 py-4 rounded-2xl font-bold text-xs tracking-widest hover:bg-slate-200 transition shadow-sm">Copy text</button>
                 <button onclick="downloadMRC()" class="flex-1 bg-blue-600 text-white py-4 rounded-2xl font-bold text-xs tracking-widest hover:bg-blue-700 transition shadow-lg">Download .mrc</button>
@@ -156,15 +146,14 @@
         };
 
         const ROLE_MAP = [
-            { id: 'author', regex: /(著|作者|撰|by|author|auteur|autor|av|forfatter|door|autore|লেখক|تأليف)/i },
-            { id: 'translator', regex: /(譯|翻譯|translated|translator|traducteur|traductor|oversetter|vertaler|traduttore|অনুবাদক|ترجم)/i },
-            { id: 'editor', regex: /(編|主編|編著|edited|editor|éditeur|redaktør|redacteur|curatore|সম্পাদক|تحرير)/i },
-            { id: 'illustrator', regex: /(繪|插畫|illustrated|illustrator|ilustrador|illustatør|illustratore|চিত্রশিল্পী|رسام)/i },
-            { id: 'preface', regex: /(序|序言|preface|préface|prefacio|forord|prefazione|ভূমিকা|مقدمة)/i },
-            { id: 'intro', regex: /(導讀|前言|introduction|введение|introducción|innledning|introduzione|উপস্থাপনা|إدخال)/i }
+            { id: 'author', regex: /(著|作者|撰|by|written by|authored)/i },
+            { id: 'translator', regex: /(譯|翻譯|translated|translator)/i },
+            { id: 'editor', regex: /(編|主編|編著|edited|editor)/i },
+            { id: 'illustrator', regex: /(繪|插畫|illustrated|illustrator)/i }
         ];
 
         const CORP_KEYWORDS = /圖書館|中心|大學|學院|學會|公司|出版社|局|署|委員會|政府|部|工作室|組|館/;
+        const TITLE_BLACKLIST = /圖書|手冊|月|年|日|說|編著|譯|修訂|增訂|出版|印行|價格|ISBN|978|系列|叢書|連續性出版品/;
 
         function cleanSpaces(str) {
             if (!str) return "";
@@ -172,16 +161,20 @@
         }
 
         function clearAllFields() {
-            if(!confirm("Clear all data for a new book?")) return;
-            ['f-020', 'f-100', 'f-245', 'f-250', 'f-264', 'f-520', 'f-700'].forEach(id => {
-                document.getElementById(id).innerText = (id === 'f-245') ? '$a  / $c ' : (id === 'f-264' ? '$a  : $b  , $c ' : '$a ');
-            });
+            if(!confirm("Clear all fields?")) return;
+            document.getElementById('f-020').innerText = '$a ';
+            document.getElementById('f-100').innerText = '$a ';
+            document.getElementById('f-245').innerText = '$a  : $b  / $c ';
+            document.getElementById('f-250').innerText = '$a ';
+            document.getElementById('f-264').innerText = '$a  : $b  , $c ';
+            document.getElementById('f-520').innerText = '$a ';
+            document.getElementById('f-700').innerText = '$a ';
             masterEntities = [];
         }
 
         async function initOCR() {
             const selectedLangs = Array.from(document.querySelectorAll('.lang-opt:checked')).map(cb => cb.value);
-            if (selectedLangs.length === 0) return alert("Please select languages.");
+            if (selectedLangs.length === 0) return alert("Select languages.");
             initBtn.disabled = true;
             status.innerText = "Initializing Engine...";
             worker = await Tesseract.createWorker(selectedLangs.join('+'), 1, {
@@ -217,10 +210,10 @@
             captureBtn.disabled = true;
             const context = canvas.getContext('2d');
             canvas.width = video.videoWidth; canvas.height = video.videoHeight;
-            context.filter = 'contrast(1.2) grayscale(0.2)';
+            context.filter = 'contrast(1.3) grayscale(0.2)';
             context.drawImage(video, 0, 0, canvas.width, canvas.height);
             const { data: { text } } = await worker.recognize(canvas);
-            debugText.innerText = "Captured: " + text.substring(0, 100).replace(/\n/g, ' ');
+            debugText.innerText = "Captured: " + text.substring(0, 100).replace(/\n/g, ' | ');
             parseTextToMARC(text);
             captureBtn.disabled = false;
             setTimeout(() => { progressOverlay.style.display = 'none'; progressBar.style.width = "0%"; }, 500);
@@ -229,51 +222,69 @@
         function parseTextToMARC(text) {
             const mode = document.querySelector('input[name="catalog-mode"]:checked').value;
             const lines = text.split('\n').map(l => cleanSpaces(l)).filter(l => l.length >= 2);
-            
-            lines.forEach(line => {
-                const isbn = line.match(/(978[- ]?\d{1,5}[- ]?\d{1,7}[- ]?\d{1,6}[- ]?\d{1})/);
-                if (isbn && document.getElementById('f-020').innerText === "$a ") {
-                    document.getElementById('f-020').innerText = `$a ${isbn[0].replace(/[- ]/g, '')}`;
-                }
+            let titleAccumulator = { a: "", b: "" };
 
+            lines.forEach((line, index) => {
+                // 1. ISBN & 250 (累加)
+                if (line.match(/(978[- ]?\d{1,5})/)) {
+                    const isbn = line.match(/(978[- ]?\d{1,5}[- ]?\d{1,7}[- ]?\d{1,6}[- ]?\d{1})/);
+                    if (isbn && document.getElementById('f-020').innerText === "$a ") 
+                        document.getElementById('f-020').innerText = `$a ${isbn[0].replace(/[- ]/g, '')}`;
+                }
                 const edMatch = line.match(/(初版|[第卷].*[版次]|修訂版|增訂版|edition|ed\.)/i);
-                if (edMatch && document.getElementById('f-250').innerText === "$a ") {
+                if (edMatch && document.getElementById('f-250').innerText === "$a ") 
                     document.getElementById('f-250').innerText = `$a ${edMatch[0]}`;
-                }
 
+                // 2. 責任者累加
                 ROLE_MAP.forEach(roleDef => {
                     const match = line.match(new RegExp(`([^\\n，。:：]{2,25})\\s*${roleDef.regex.source}`, 'i'));
                     if (match) {
                         let cleanedName = match[1].replace(/[著編譯繪]$/, '').trim();
-                        if (cleanedName.length < 2) return;
-                        const relator = RELATOR_TERMS[mode][roleDef.id] || "";
-                        if (!masterEntities.some(e => e.rawName === cleanedName)) {
-                            masterEntities.push({ rawName: cleanedName, formattedName: formatName(cleanedName), relator });
+                        if (cleanedName.length >= 2 && !masterEntities.some(e => e.rawName === cleanedName)) {
+                            masterEntities.push({ rawName: cleanedName, formattedName: formatName(cleanedName), relator: RELATOR_TERMS[mode][roleDef.id] || "" });
                         }
                     }
                 });
 
-                if (line.length > 5 && line.length < 40 && !line.match(/著|編|譯|出版|ISBN|978|版|說/) && document.getElementById('f-245').innerText === "$a  / $c ") {
-                    document.getElementById('f-245').innerText = `$a ${line} / $c `;
+                // 3. 正副題名智慧辨識 (245 $a, $b)
+                const el245 = document.getElementById('f-245');
+                if (el245.innerText.includes("$a  : $b  /") && line.length >= 6 && line.length < 40 && !TITLE_BLACKLIST.test(line)) {
+                    // 檢查是否有冒號拆分
+                    if (line.includes(":") || line.includes("：")) {
+                        const parts = line.split(/[:：]/);
+                        titleAccumulator.a = parts[0].trim();
+                        titleAccumulator.b = parts[1].trim();
+                    } else if (!titleAccumulator.a) {
+                        titleAccumulator.a = line;
+                        // 嘗試抓取下一行為副題名
+                        if (lines[index+1] && lines[index+1].length > 4 && lines[index+1].length < 30 && !TITLE_BLACKLIST.test(lines[index+1]) && !ROLE_MAP.some(r => r.regex.test(lines[index+1]))) {
+                            titleAccumulator.b = lines[index+1];
+                        }
+                    }
                 }
 
+                // 4. 520 摘要
                 if (line.length > 40 && !line.match(/ISBN|978|出版社|書局/)) {
                     const el520 = document.getElementById('f-520');
-                    if (!el520.innerText.includes(line.substring(0,10))) {
-                        el520.innerText += (el520.innerText === "$a " ? "" : " ") + line;
-                    }
+                    if (!el520.innerText.includes(line.substring(0,10))) el520.innerText += (el520.innerText === "$a " ? "" : " ") + line;
                 }
             });
 
+            // 更新 245 顯示
+            if (titleAccumulator.a) {
+                const bStr = titleAccumulator.b ? ` : $b ${titleAccumulator.b}` : " : $b ";
+                document.getElementById('f-245').innerText = `$a ${titleAccumulator.a}${bStr} / $c `;
+            }
+
+            // 更新責任者
             if (masterEntities.length > 0) {
                 const first = masterEntities[0];
                 document.getElementById('f-100').innerText = `$a ${first.formattedName}${first.relator ? ', $e ' + first.relator : ''}`;
-                if (masterEntities.length > 1) {
-                    document.getElementById('f-700').innerText = masterEntities.slice(1).map(e => `$a ${e.formattedName}, $e ${e.relator}`).join(' ');
-                }
-                const currentTitle = document.getElementById('f-245').innerText.split(' / ')[0];
+                document.getElementById('f-700').innerText = masterEntities.slice(1).map(e => `$a ${e.formattedName}, $e ${e.relator}`).join(' ');
+                
+                const titlePart = document.getElementById('f-245').innerText.split(' / ')[0];
                 const authorStmt = masterEntities.map(e => `${e.rawName} ${e.relator}`).join('; ');
-                document.getElementById('f-245').innerText = `${currentTitle} / $c ${authorStmt}`;
+                document.getElementById('f-245').innerText = `${titlePart} / $c ${authorStmt}`;
             }
         }
 
@@ -303,7 +314,7 @@
                 { tag: '245', ind: '10', data: getVal('f-245') }, { tag: '250', ind: '  ', data: getVal('f-250') },
                 { tag: '264', ind: ' 4', data: getVal('f-264') }, { tag: '520', ind: '  ', data: getVal('f-520') }, 
                 { tag: '700', ind: '1 ', data: getVal('f-700') }
-            ].filter(f => f.data.trim().length > 3).map(f => {
+            ].filter(f => f.data.trim().length > 6).map(f => {
                 const processedData = f.ind + f.data.replace(/\$/g, '\x1f');
                 return { tag: f.tag, data: encoder.encode(processedData + '\x1e') };
             });
@@ -314,12 +325,13 @@
                 buf = n; off += f.data.length;
             });
             const ldr = (24 + dir.length + 1 + buf.length + 1).toString().padStart(5, '0') + 'nam a22' + (24 + dir.length + 1).toString().padStart(5, '0') + 'ia 4500';
-            const fin = new Uint8Array(24 + dir.length + 1 + buf.length + 1);
-            let p = 0; fin.set(encoder.encode(ldr), p); p += 24;
-            fin.set(encoder.encode(dir + '\x1e'), p); p += dir.length + 1;
-            fin.set(buf, p); p += buf.length; final[p] = 0x1d;
-            const b = new Blob([fin], { type: 'application/octet-stream' });
-            const l = document.createElement('a'); l.href = URL.createObjectURL(b); l.download = `catalog_export.mrc`; l.click();
+            const final = new Uint8Array(ldr.length + dir.length + 1 + buf.length + 1);
+            let p = 0; final.set(encoder.encode(ldr), p); p += 24;
+            final.set(encoder.encode(dir + '\x1e'), p); p += dir.length + 1;
+            final.set(buf, p); p += buf.length; final[p] = 0x1d;
+            const blob = new Blob([final], { type: 'application/octet-stream' });
+            const link = document.createElement('a'); link.href = URL.createObjectURL(blob);
+            link.download = `catalog_v32.mrc`; link.click();
         }
     </script>
 </body>
