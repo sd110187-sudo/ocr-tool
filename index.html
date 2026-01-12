@@ -113,4 +113,64 @@ const {data}=await worker.recognize(canvas);
 const lang=detectLang(data.text);
 
 if(currentMode==='cover') parseCover(data.text,lang);
-if(currentMode==='verso') pa
+if(currentMode==='verso') parseVerso(data.text);
+if(currentMode==='back')  parseBack(data.text);
+
+status.innerText='Done';
+}
+
+/* ---------- PARSERS ---------- */
+
+function parseCover(t,lang){
+const lines=t.split('\n').map(l=>l.trim()).filter(l=>l.length>3);
+const title=lines.sort((a,b)=>b.length-a.length)[0]||'';
+const nameLine=lines.find(l=>l.split(' ').length<=4);
+
+f245.innerText=`$a ${title} / $c ${nameLine||''}`;
+if(nameLine) f100.innerText=`$a ${formatName(nameLine)}, $e author.`;
+
+detect700(lines,lang);
+}
+
+function parseVerso(t){
+const isbn=t.match(/97[89]\d{10}/);
+if(isbn) f020.innerText=`$a ${isbn[0]}`;
+
+const year=t.match(/\d{4}/);
+const pub=t.match(/Press|Verlag|Éditions|Editorial|Издательство/i);
+f264.innerText=`$a  : $b ${pub?pub[0]:''}, $c ${year?year[0]:''}`;
+}
+
+function parseBack(t){
+f520.innerText=`$a ${t.replace(/\n+/g,' ')}`;
+}
+
+/* ---------- 700 ROLE DETECTION ---------- */
+
+function detect700(lines,lang){
+const roles={
+eng:{editor:/edited by/i,translator:/translated by/i},
+fra:{editor:/édité par/i,translator:/traduit par/i},
+deu:{editor:/herausgegeben von/i},
+spa:{editor:/editado por/i,translator:/traducido por/i},
+rus:{editor:/редактор/i,translator:/перевод/i}
+};
+
+lines.forEach(l=>{
+for(const r in roles[lang]||{}){
+if(roles[lang][r].test(l)){
+const name=l.replace(roles[lang][r],'').trim();
+f700.innerText+=`\n$a ${formatName(name)}, $e ${r}.`;
+}
+}
+});
+}
+
+function formatName(n){
+const p=n.split(/\s+/);
+return p.length>1?`${p.pop()}, ${p.join(' ')}`:n;
+}
+</script>
+
+</body>
+</html>
