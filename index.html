@@ -3,17 +3,18 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>TKU Western Cataloger v67</title>
+<title>TKU Western Cataloger v67.1</title>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/tesseract.js/5.0.5/tesseract.min.js"></script>
 <script src="https://cdn.tailwindcss.com"></script>
 
 <style>
-#video-container{display:none;position:relative;border-radius:28px;overflow:hidden}
+#video-container{display:none;position:relative;border-radius:24px;overflow:hidden}
 #scanner-line{position:absolute;top:0;width:100%;height:3px;background:#3b82f6;animation:scan 2s linear infinite}
 @keyframes scan{0%{top:5%}50%{top:95%}100%{top:5%}}
-.marc-field{font-family:Courier New,monospace;border:1px solid #e5e7eb;padding:8px;border-radius:10px}
+.marc-field{font-family:Courier New,monospace;border:1px solid #e5e7eb;padding:8px;border-radius:10px;min-height:1.4em}
 .locked{background:#f0fdf4;border-color:#22c55e}
+.mode-active{outline:3px solid #000}
 </style>
 </head>
 
@@ -22,18 +23,18 @@
 <div class="max-w-2xl mx-auto p-4 space-y-4">
 
 <header class="text-center">
-<h1 class="text-2xl font-black">Western MARC v67</h1>
+<h1 class="text-2xl font-black">Western MARC v67.1</h1>
 <p class="text-xs text-slate-400">Three-page Smart Cataloging</p>
 </header>
 
-<!-- MODE SELECT -->
+<!-- MODE -->
 <div class="grid grid-cols-3 gap-2">
-<button onclick="setMode('cover')" class="mode-btn bg-blue-600 text-white py-3 rounded-xl">📕 封面</button>
-<button onclick="setMode('verso')" class="mode-btn bg-slate-600 text-white py-3 rounded-xl">📄 版權頁</button>
-<button onclick="setMode('back')" class="mode-btn bg-emerald-600 text-white py-3 rounded-xl">📘 封底</button>
+<button id="btn-cover" class="mode-btn bg-blue-600 text-white py-3 rounded-xl" onclick="setMode('cover')">📕 封面</button>
+<button id="btn-verso" class="mode-btn bg-slate-600 text-white py-3 rounded-xl" onclick="setMode('verso')">📄 版權頁</button>
+<button id="btn-back"  class="mode-btn bg-emerald-600 text-white py-3 rounded-xl" onclick="setMode('back')">📘 封底</button>
 </div>
 
-<div id="status" class="text-center text-xs text-slate-500">Ready</div>
+<div id="status" class="text-center text-xs text-slate-500">Initializing…</div>
 
 <!-- CAMERA -->
 <div id="video-container" class="aspect-[4/5] bg-black">
@@ -45,16 +46,15 @@
 SCAN PAGE
 </button>
 
-<!-- MARC OUTPUT -->
+<!-- MARC -->
 <div class="bg-white rounded-3xl shadow p-6 space-y-2">
-
-<div><b>020</b> <div id="f-020" class="marc-field">$a </div></div>
-<div><b>100</b> <div id="f-100" class="marc-field">$a </div></div>
-<div><b>245</b> <div id="f-245" class="marc-field">$a  : $b  / $c </div></div>
-<div><b>250</b> <div id="f-250" class="marc-field">$a </div></div>
-<div><b>264</b> <div id="f-264" class="marc-field">$a  : $b , $c </div></div>
-<div><b>520</b> <div id="f-520" class="marc-field text-xs">$a </div></div>
-
+<div><b>020</b><div id="f-020" class="marc-field">$a </div></div>
+<div><b>100</b><div id="f-100" class="marc-field">$a </div></div>
+<div><b>245</b><div id="f-245" class="marc-field">$a  : $b  / $c </div></div>
+<div><b>250</b><div id="f-250" class="marc-field">$a </div></div>
+<div><b>264</b><div id="f-264" class="marc-field">$a  : $b , $c </div></div>
+<div><b>700</b><div id="f-700" class="marc-field">$a </div></div>
+<div><b>520</b><div id="f-520" class="marc-field text-xs">$a </div></div>
 </div>
 
 </div>
@@ -62,21 +62,34 @@ SCAN PAGE
 <canvas id="canvas" class="hidden"></canvas>
 
 <script>
-let worker=null;
+let worker;
 let currentMode='cover';
 
-const LANGS=['eng','fra','deu','spa','rus'];
+let video,canvas,status;
+let f020,f100,f245,f250,f264,f520,f700;
 
-async function boot(){
-worker=await Tesseract.createWorker(LANGS.join('+'));
+document.addEventListener('DOMContentLoaded',async()=>{
+video=document.getElementById('video');
+canvas=document.getElementById('canvas');
+status=document.getElementById('status');
+['020','100','245','250','264','520','700'].forEach(t=>{
+window['f'+t]=document.getElementById('f-'+t);
+});
+
+worker=await Tesseract.createWorker('eng+fra+deu+spa+rus');
 const stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:'environment'}});
 video.srcObject=stream;
-videoContainer.style.display='block';
-}
-boot();
+document.getElementById('video-container').style.display='block';
+status.innerText='Ready';
+setMode('cover');
+});
 
 function setMode(m){
 currentMode=m;
+['cover','verso','back'].forEach(x=>{
+document.getElementById('btn-'+x)?.classList.remove('mode-active');
+});
+document.getElementById('btn-'+m).classList.add('mode-active');
 status.innerText=`Mode: ${m}`;
 }
 
@@ -89,53 +102,15 @@ return'eng';
 }
 
 async function scanPage(){
-status.innerText='Scanning...';
-const c=canvas,ctx=c.getContext('2d');
-c.width=video.videoWidth;
-c.height=video.videoHeight;
+status.innerText='Scanning…';
+const ctx=canvas.getContext('2d');
+canvas.width=video.videoWidth;
+canvas.height=video.videoHeight;
 ctx.filter='grayscale(1) contrast(1.5)';
-ctx.drawImage(video,0,0,c.width,c.height);
+ctx.drawImage(video,0,0);
 
-const {data}=await worker.recognize(c);
+const {data}=await worker.recognize(canvas);
 const lang=detectLang(data.text);
 
-await worker.terminate();
-worker=await Tesseract.createWorker(lang);
-
 if(currentMode==='cover') parseCover(data.text,lang);
-if(currentMode==='verso') parseVerso(data.text);
-if(currentMode==='back') parseBack(data.text);
-
-status.innerText='Done';
-}
-
-function parseCover(t,lang){
-const lines=t.split('\n').map(l=>l.trim()).filter(l=>l.length>3);
-const title=lines.sort((a,b)=>b.length-a.length)[0]||'';
-const author=lines.find(l=>l.split(' ').length<=3&&/[A-Za-z]/.test(l));
-
-f245.innerText=`$a ${title} / $c ${author||''}`;
-if(author) f100.innerText=`$a ${formatName(author)}, $e author.`;
-}
-
-function parseVerso(t){
-const isbn=t.match(/97[89]\d{10}/);
-if(isbn) f020.innerText=`$a ${isbn[0]}`;
-
-const year=t.match(/\d{4}/);
-const pub=t.match(/Press|Verlag|Éditions|Editorial|Издательство/i);
-f264.innerText=`$a  : $b ${pub?pub[0]:''}, $c ${year?year[0]:''}`;
-}
-
-function parseBack(t){
-f520.innerText=`$a ${t.replace(/\n+/g,' ')}`;
-}
-
-function formatName(n){
-const p=n.split(' ');
-return p.length>1?`${p.pop()}, ${p.join(' ')}`:n;
-}
-</script>
-
-</body>
-</html>
+if(currentMode==='verso') pa
