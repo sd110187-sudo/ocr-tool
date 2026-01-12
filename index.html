@@ -21,10 +21,11 @@
         }
         #progress-bar { width: 0%; height: 100%; background: #22c55e; transition: width 0.2s ease; }
         .marc-field { font-family: 'Courier New', monospace; outline: none; width: 100%; display: block; padding: 4px; min-height: 1.5em; flex: 1; font-size: 0.95rem; background: #f8fafc; border-radius: 4px; }
-        .tag-row { border-bottom: 1px solid #f1f5f9; padding: 8px 0; display: flex; align-items: center; }
+        .tag-row { border-bottom: 1px solid #f1f5f9; padding: 6px 0; display: flex; align-items: center; }
         .tag-num { width: 2.5rem; font-weight: 900; color: #2563eb; font-size: 0.75rem; }
         .tag-ind { width: 1.2rem; font-family: monospace; color: #94a3b8; font-size: 0.75rem; }
-        .clear-tag { cursor: pointer; color: #cbd5e1; padding: 0 8px; font-size: 14px; }
+        .clear-tag { cursor: pointer; color: #cbd5e1; padding: 0 8px; font-size: 18px; }
+        .group-box { border: 1px solid #e2e8f0; border-radius: 12px; padding: 8px; background: #fff; }
         #raw-output-window { background: #0f172a; color: #94a3b8; font-family: monospace; font-size: 9px; padding: 10px; border-radius: 12px; margin-top: 10px; border: 1px solid #334155; }
         footer { font-size: 0.65rem; color: #94a3b8; text-align: center; padding: 20px 10px; }
     </style>
@@ -34,43 +35,53 @@
     <div class="max-w-2xl mx-auto p-4 space-y-4">
         <header class="text-center py-4">
             <h1 class="text-2xl font-black tracking-tight text-slate-800">OCR Tool for Catalogers</h1>
-            <p class="text-[10px] text-blue-600 font-bold uppercase tracking-widest">TKU Library Correction Suite v44</p>
+            <p class="text-[10px] text-blue-600 font-bold uppercase">Tamkang Library Suite v45</p>
         </header>
 
         <div class="bg-white rounded-3xl shadow-md p-4 space-y-4">
-            <div class="flex gap-4">
-                <label class="flex-1 flex items-center justify-center gap-2 p-2 border-2 rounded-xl cursor-pointer has-[:checked]:border-blue-600 has-[:checked]:bg-blue-50">
-                    <input type="radio" name="catalog-mode" value="chi" checked class="hidden"><span class="font-bold text-xs">中文編目</span>
-                </label>
-                <label class="flex-1 flex items-center justify-center gap-2 p-2 border-2 rounded-xl cursor-pointer has-[:checked]:border-blue-600 has-[:checked]:bg-blue-50">
-                    <input type="radio" name="catalog-mode" value="eng" class="hidden"><span class="font-bold text-xs">西文編目</span>
-                </label>
+            <div>
+                <h2 class="text-xs font-bold mb-2 text-slate-400 tracking-wider">Step 1: Cataloging mode</h2>
+                <div class="flex gap-4">
+                    <label class="flex-1 flex items-center justify-center gap-2 p-2 border-2 rounded-xl cursor-pointer has-[:checked]:border-blue-600 has-[:checked]:bg-blue-50">
+                        <input type="radio" name="catalog-mode" value="chi" checked class="hidden"><span class="font-bold text-xs">中文編目</span>
+                    </label>
+                    <label class="flex-1 flex items-center justify-center gap-2 p-2 border-2 rounded-xl cursor-pointer has-[:checked]:border-blue-600 has-[:checked]:bg-blue-50">
+                        <input type="radio" name="catalog-mode" value="eng" class="hidden"><span class="font-bold text-xs">西文編目</span>
+                    </label>
+                </div>
             </div>
             
-            <div class="grid grid-cols-3 gap-2 text-[8px]">
-                <div class="group-box space-y-1">
-                    <p class="font-bold text-blue-600 border-b">東方語言</p>
-                    <label class="flex items-center gap-1"><input type="checkbox" onchange="toggleGroup(this, 'oriental-item')"> [全選]</label>
-                    <label class="flex items-center gap-1"><input type="checkbox" class="lang-opt oriental-item" value="chi_tra"> 繁中</label>
-                    <label class="flex items-center gap-1"><input type="checkbox" class="lang-opt oriental-item" value="chi_sim"> 簡中</label>
-                    <label class="flex items-center gap-1"><input type="checkbox" class="lang-opt oriental-item" value="jpn"> 日文</label>
-                </div>
-                <div class="group-box space-y-1">
-                    <p class="font-bold text-emerald-600 border-b">西方語言</p>
-                    <label class="flex items-center gap-1"><input type="checkbox" onchange="toggleGroup(this, 'western-item')"> [全選]</label>
-                    <label class="flex items-center gap-1"><input type="checkbox" class="lang-opt western-item" value="eng"> 英文</label>
-                    <label class="flex items-center gap-1"><input type="checkbox" class="lang-opt western-item" value="fra"> 法文</label>
-                    <label class="flex items-center gap-1"><input type="checkbox" class="lang-opt western-item" value="spa"> 西文</label>
-                </div>
-                <div class="group-box space-y-1">
-                    <p class="font-bold text-amber-600 border-b">特殊語言</p>
-                    <label class="flex items-center gap-1"><input type="checkbox" onchange="toggleGroup(this, 'special-item')"> [全選]</label>
-                    <label class="flex items-center gap-1"><input type="checkbox" class="lang-opt special-item" value="ita"> 義語</label>
-                    <label class="flex items-center gap-1"><input type="checkbox" class="lang-opt special-item" value="nld"> 荷蘭</label>
-                    <label class="flex items-center gap-1"><input type="checkbox" class="lang-opt special-item" value="ara"> 阿語</label>
+            <div>
+                <h2 class="text-xs font-bold mb-2 text-slate-400 tracking-wider">Step 2: Language selection</h2>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-3 text-[9px]">
+                    <div class="group-box space-y-1">
+                        <p class="font-bold text-blue-600 border-b pb-0.5 mb-1">東方語言</p>
+                        <label class="flex items-center gap-2 font-bold text-slate-400"><input type="checkbox" onchange="toggleGroup(this, 'oriental-item')"> [全選]</label>
+                        <label class="flex items-center gap-2"><input type="checkbox" class="lang-opt oriental-item" value="chi_tra"> 繁中</label>
+                        <label class="flex items-center gap-2"><input type="checkbox" class="lang-opt oriental-item" value="chi_sim"> 簡中</label>
+                        <label class="flex items-center gap-2"><input type="checkbox" class="lang-opt oriental-item" value="jpn"> 日文</label>
+                        <label class="flex items-center gap-2"><input type="checkbox" class="lang-opt oriental-item" value="kor"> 韓文</label>
+                    </div>
+                    <div class="group-box space-y-1">
+                        <p class="font-bold text-emerald-600 border-b border-emerald-100 pb-0.5 mb-1">西方語言</p>
+                        <label class="flex items-center gap-2 font-bold text-slate-400"><input type="checkbox" onchange="toggleGroup(this, 'western-item')"> [全選]</label>
+                        <label class="flex items-center gap-2"><input type="checkbox" class="lang-opt western-item" value="eng"> 英文</label>
+                        <label class="flex items-center gap-2"><input type="checkbox" class="lang-opt western-item" value="fra"> 法文</label>
+                        <label class="flex items-center gap-2"><input type="checkbox" class="lang-opt western-item" value="spa"> 西文</label>
+                        <label class="flex items-center gap-2"><input type="checkbox" class="lang-opt western-item" value="deu"> 德文</label>
+                        <label class="flex items-center gap-2"><input type="checkbox" class="lang-opt western-item" value="rus"> 俄文</label>
+                    </div>
+                    <div class="group-box space-y-1">
+                        <p class="font-bold text-amber-600 border-b border-amber-100 pb-0.5 mb-1">特殊語言</p>
+                        <label class="flex items-center gap-2 font-bold text-slate-400"><input type="checkbox" onchange="toggleGroup(this, 'special-item')"> [全選]</label>
+                        <label class="flex items-center gap-2"><input type="checkbox" class="lang-opt special-item" value="ita"> 義大利文</label>
+                        <label class="flex items-center gap-2"><input type="checkbox" class="lang-opt special-item" value="nld"> 荷蘭文</label>
+                        <label class="flex items-center gap-2"><input type="checkbox" class="lang-opt special-item" value="nor"> 挪威文</label>
+                        <label class="flex items-center gap-2"><input type="checkbox" class="lang-opt special-item" value="ara"> 阿拉伯文</label>
+                    </div>
                 </div>
             </div>
-            <button id="init-btn" onclick="initOCR()" class="w-full bg-slate-900 text-white py-3 rounded-xl font-black text-sm active:scale-95 transition">1. Initialize Engine</button>
+            <button id="init-btn" onclick="initOCR()" class="w-full bg-slate-900 text-white py-3 rounded-xl font-black text-sm shadow-md">1. Initialize Engine</button>
         </div>
 
         <div id="video-ui" class="hidden space-y-4">
@@ -80,7 +91,7 @@
                 <div id="progress-overlay"><div id="progress-bar"></div></div>
             </div>
             <div class="flex gap-2">
-                <button id="capture-btn" onclick="processOCR()" class="flex-[3] bg-blue-600 text-white py-4 rounded-2xl font-black text-lg shadow-xl active:bg-blue-700 transition">📸 2. Capture & Accumulate</button>
+                <button id="capture-btn" onclick="processOCR()" class="flex-[3] bg-blue-600 text-white py-4 rounded-2xl font-black text-lg shadow-xl">📸 2. Capture & Accumulate</button>
                 <button onclick="clearAllFields()" class="flex-1 bg-white text-red-600 py-4 rounded-2xl font-bold text-xs border border-red-200">Clear</button>
             </div>
             <div id="raw-output-window">
@@ -116,21 +127,21 @@
         let worker = null;
         let masterEntities = [];
         const CORP_KEYWORDS = /圖書館|中心|大學|學院|學會|公司|出版社|局|署|委員會|政府|部|工作室|組|館/;
-        const CIP_BLOCKERS = /CIP|預行編目|機讀|分類|023\.|10500|1\.|2\.|3\.|4\./;
-        const NOISE_WORDS = /中華民國|印行|價格|NT|系列|叢書|附錄|年|月|日|再版|手冊|ISBN/;
+        // 強力屏蔽關鍵字：排除 CIP 雜訊
+        const CIP_BLOCKERS = /CIP|預行編目|機讀|分類|023\.|10500|1\.|I\.|2\.|3\.|4\./;
+        const NOISE_WORDS = /中華民國|印行|價格|NT|ISBN|系列|叢書|附錄|再版|手冊|說$|説$|絕錄$/;
         
-        // v44 特製模糊校正辭典
-        const FUZZY_DICTIONARY = [
-            { raw: /毀\s*加\s*絕\s*錄/g, fix: "書目紀錄" },
-            { raw: /絕\s*錄/g, fix: "書目紀錄" },
-            { raw: /訛\s*唱/g, fix: "出版" },
-            { raw: /說\s*誠/g, fix: "出版" },
-            { raw: /縮\s*莽/g, fix: "書目" },
-            { raw: /共/g, fix: "蕙" },
-            { raw: /莽/g, fix: "蕙" },
-            { raw: /蕹/g, fix: "蕙" },
-            { raw: /縮/g, fix: "徐" },
-            { raw: /説/g, fix: "說" }
+        // v45 校正辭典 (更寬鬆的匹配)
+        const FUZZY_RULES = [
+            { raw: /[毀毀]\s*[加加]\s*[絕絕]\s*[錄錄]/g, fix: "書目紀錄" },
+            { raw: /[絕絕]\s*[錄錄]/g, fix: "書目紀錄" },
+            { raw: /[訛訛]\s*[唱唱]/g, fix: "出版" },
+            { raw: /[説說]\s*[誠誠]/g, fix: "出版" },
+            { raw: /[縮縮]\s*[莽莽]/g, fix: "書目" },
+            { raw: /[共共]/g, fix: "蕙" },
+            { raw: /[莽莽]/g, fix: "蕙" },
+            { raw: /[蕹蕹]/g, fix: "蕙" },
+            { raw: /[縮縮]/g, fix: "徐" }
         ];
 
         function toggleGroup(master, targetClass) {
@@ -141,16 +152,14 @@
         async function initOCR() {
             try {
                 const selectedLangs = Array.from(document.querySelectorAll('.lang-opt:checked')).map(cb => cb.value);
-                if (selectedLangs.length === 0) return alert("請選取語言！");
+                if (selectedLangs.length === 0) return alert("請勾選語言！");
                 document.getElementById('init-btn').disabled = true;
-                document.getElementById('init-btn').innerText = "AI Booting...";
                 worker = await Tesseract.createWorker(selectedLangs.join('+'), 1, {
                     logger: m => {
                         if(m.status === 'recognizing text') {
                             document.getElementById('progress-overlay').style.display = 'block';
                             document.getElementById('progress-bar').style.width = (m.progress * 100) + "%";
                         }
-                        document.getElementById('status').innerText = m.status + " (" + Math.round(m.progress * 100) + "%)";
                     }
                 });
                 const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
@@ -163,63 +172,52 @@
         async function processOCR() {
             if (!worker) return;
             const captureBtn = document.getElementById('capture-btn');
-            captureBtn.disabled = true; captureBtn.innerText = "Scanning...";
+            captureBtn.disabled = true; captureBtn.innerText = "OCR...";
             
             const video = document.getElementById('video');
             const canvas = document.getElementById('canvas');
             const ctx = canvas.getContext('2d');
             canvas.width = video.videoWidth; canvas.height = video.videoHeight;
             
-            // v44 深度影像預處理：二值化 (Thresholding)
+            // 二值化預處理
             ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
             let imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
             let d = imgData.data;
             for (let i = 0; i < d.length; i += 4) {
-                let avg = (d[i] + d[i+1] + d[i+2]) / 3;
-                let v = avg > 128 ? 255 : 0; // 簡單有效的閾值處理
+                let v = (d[i] + d[i+1] + d[i+2]) / 3 > 120 ? 255 : 0;
                 d[i] = d[i+1] = d[i+2] = v;
             }
             ctx.putImageData(imgData, 0, 0);
             
             const { data: { text } } = await worker.recognize(canvas);
+            let processed = text;
+            FUZZY_RULES.forEach(r => { processed = processed.replace(r.raw, r.fix); });
             
-            // 語意校正
-            let processedText = text;
-            FUZZY_DICTIONARY.forEach(pair => { processedText = processedText.replace(pair.raw, pair.fix); });
-            
-            document.getElementById('raw-text-content').innerText = processedText || "[No text found]";
-            parseToMARC(processedText);
+            document.getElementById('raw-text-content').innerText = processed;
+            parseToMARC(processed);
             
             captureBtn.disabled = false; captureBtn.innerText = "📸 2. Capture & Accumulate";
             setTimeout(() => { document.getElementById('progress-overlay').style.display = 'none'; }, 500);
         }
 
         function parseToMARC(text) {
-            if (!text) return;
-            // 中文字間空格清理 + 去除單字雜訊
-            const lines = text.split('\n').map(l => {
-                let clean = l.replace(/([\u4e00-\u9fa5])\s+([\u4e00-\u9fa5])/g, '$1$2').trim();
-                return clean;
-            }).filter(l => l.length >= 2);
-
+            const lines = text.split('\n').map(l => l.replace(/([\u4e00-\u9fa5])\s+([\u4e00-\u9fa5])/g, '$1$2').trim()).filter(l => l.length >= 2);
             let bestTitle = { line: "", score: -500 };
-            const ROLE_REGEX = /(著|作者|撰|by|編|主編|譯|繪)/i;
 
             lines.forEach((line, index) => {
-                // 1. ISBN (支援 10 或 13 位)
-                const isbnMatch = line.match(/(97[89]\d{10})|(\d{9}[\dX])/);
-                const el020 = document.getElementById('f-020');
-                if (isbnMatch && (el020.innerText === "$a " || el020.innerText === "")) {
-                    el020.innerText = `$a ${isbnMatch[0]}`;
+                // ISBN (容錯提取數字)
+                let isbnNum = line.replace(/[^\dX]/gi, '');
+                if (isbnNum.startsWith('97') && isbnNum.length >= 10 && document.getElementById('f-020').innerText === "$a ") {
+                    document.getElementById('f-020').innerText = `$a ${isbnNum.substring(0,13)}`;
                 }
 
-                // 2. 版本
+                // 版本
                 const edMatch = line.match(/(初版|再版|[第卷].*[版次]|修訂版|增訂版)/);
                 if (edMatch && document.getElementById('f-250').innerText === "$a ") {
                     document.getElementById('f-250').innerText = `$a ${edMatch[0]}`;
                 }
 
-                // 3. 責任者提取
+                // 責任者
                 const nameMatch = line.match(/^([^著編譯印\d]{2,15})[:：\s]*(著|編|譯|印|作者|編者|編著)/);
                 if (nameMatch) {
                     let cleaned = nameMatch[1].replace(/[書目紀錄手冊]/g, '').trim();
@@ -228,37 +226,35 @@
                     }
                 }
 
-                // 4. 題名智慧評分 (v44 強化 MARC 關鍵字權重)
+                // 245 權重計分
                 let score = 0;
-                if (line.length >= 4 && line.length <= 45) {
+                if (line.length >= 4 && line.length <= 50) {
                     score += 100;
-                    if (line.includes("MARC") || line.includes("書目紀錄")) score += 200;
-                    if (line.includes("手冊")) score += 150;
-                    if (CIP_BLOCKERS.test(line)) score -= 1000;
-                    if (NOISE_WORDS.test(line)) score -= 200;
-                    if (ROLE_REGEX.test(line)) score -= 100;
+                    if (line.includes("MARC") || line.includes("書目紀錄")) score += 300;
+                    if (line.includes("手冊")) score += 200;
+                    if (CIP_BLOCKERS.test(line)) score -= 2000; // 絕對屏蔽 CIP 行
+                    if (NOISE_WORDS.test(line)) score -= 300;
                     if (score > bestTitle.score) bestTitle = { line, score };
                 }
             });
 
-            // 更新 245
+            // 填入 245
             const el245 = document.getElementById('f-245');
-            if (bestTitle.line && (el245.innerText === "$a  : $b  / $c " || el245.innerText.length < 15)) {
+            if (bestTitle.line && (el245.innerText === "$a  : $b  / $c " || el245.innerText.length < 10)) {
                 let a = bestTitle.line, b = "";
                 if (a.includes(":") || a.includes("：")) {
-                    const pts = a.split(/[:：]/); a = pts[0]; b = pts[1];
+                    let pts = a.split(/[:：]/); a = pts[0]; b = pts[1];
                 }
                 el245.innerText = `$a ${a.trim()} : $b ${b.trim()} / $c `;
             }
 
-            // 更新 100/700
+            // 更新著者
             if (masterEntities.length > 0) {
                 const first = masterEntities[0];
                 document.getElementById('f-100').innerText = `$a ${first.formattedName}, $e ${first.relator}`;
                 document.getElementById('f-700').innerText = masterEntities.slice(1).map(e => `$a ${e.formattedName}, $e ${e.relator}`).join(' ');
                 const titlePart = document.getElementById('f-245').innerText.split(' / ')[0];
-                const authorStmt = masterEntities.map(e => e.rawName).join('，');
-                document.getElementById('f-245').innerText = `${titlePart} / $c ${authorStmt} 編著`;
+                document.getElementById('f-245').innerText = `${titlePart} / $c ${masterEntities.map(e=>e.rawName).join('，')} 編著`;
             }
         }
 
@@ -276,7 +272,7 @@
         }
 
         function clearAllFields() {
-            if(!confirm("Clear all?")) return;
+            if(!confirm("確定要清空所有資料嗎？")) return;
             ['f-020','f-100','f-245','f-250','f-264','f-520','f-700'].forEach(id => resetField(id));
             document.getElementById('raw-text-content').innerText = "Waiting...";
         }
