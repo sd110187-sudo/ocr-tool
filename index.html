@@ -3,28 +3,30 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Western MARC v70</title>
+<title>Western MARC v71</title>
 
 <style>
-body{font-family:-apple-system,BlinkMacSystemFont;background:#f6f7f9;margin:0}
-header{text-align:center;padding:18px;font-size:26px;font-weight:700}
+body{font-family:-apple-system,BlinkMacSystemFont;background:#f5f6f8;margin:0}
+header{text-align:center;padding:18px;font-size:26px;font-weight:800}
 .mode{display:flex;justify-content:center;gap:10px}
-.mode button{padding:10px 16px;border-radius:14px;border:none;font-size:16px;opacity:.5}
+.mode button{padding:10px 16px;border-radius:14px;border:none;font-size:16px;opacity:.4}
 .mode button.active{opacity:1;background:#2563eb;color:white}
 #scan{width:90%;margin:16px auto;padding:18px;font-size:22px;background:black;color:white;border-radius:16px}
-#scan[disabled]{background:#666}
-.status{width:90%;margin:0 auto 12px;font-size:14px;color:#444}
-.progress{height:8px;background:#ddd;border-radius:8px;overflow:hidden}
+#scan[disabled]{background:#777}
+.status{width:90%;margin:auto;font-size:14px;color:#333}
+.progress{width:90%;margin:auto;height:8px;background:#ddd;border-radius:6px;overflow:hidden}
 .bar{height:100%;width:0;background:#2563eb;transition:.3s}
 .card{background:white;margin:16px;padding:16px;border-radius:16px}
-label{font-weight:600}
-input,textarea,select{width:100%;margin-top:6px;padding:10px;border-radius:10px;border:1px solid #ddd}
+label{font-weight:700}
+input,textarea{width:100%;margin-top:6px;padding:10px;border-radius:10px;border:1px solid #ddd}
+pre{background:#eee;padding:12px;border-radius:10px;font-size:12px;white-space:pre-wrap}
+.filled{border:2px solid #22c55e}
 </style>
 </head>
 
 <body>
 
-<header>Western MARC v70</header>
+<header>Western MARC v71</header>
 
 <div class="mode">
 <button id="mCover" onclick="setMode('cover')">📕 封面</button>
@@ -32,19 +34,22 @@ input,textarea,select{width:100%;margin-top:6px;padding:10px;border-radius:10px;
 <button id="mBack" onclick="setMode('back')">📘 封底</button>
 </div>
 
-<div class="status" id="status">請選擇頁面並按 SCAN</div>
+<div class="status" id="status">請選擇頁面後按 SCAN</div>
 <div class="progress"><div class="bar" id="bar"></div></div>
 
 <button id="scan" onclick="scan()">SCAN</button>
 
 <div class="card">
+<label>OCR 原文（除錯用）</label>
+<pre id="ocrText">(尚未掃描)</pre>
+</div>
+
+<div class="card">
 <label>020 ISBN</label><input id="f020">
 <label>100</label><input id="f100">
-<label>110</label><input id="f110">
 <label>245</label><input id="f245">
 <label>264</label><input id="f264">
 <label>520</label><textarea id="f520"></textarea>
-<label>700</label><input id="f700">
 </div>
 
 <script>
@@ -57,43 +62,29 @@ function setMode(m){
   if(m==='cover') mCover.classList.add('active');
   if(m==='copyright') mCopy.classList.add('active');
   if(m==='back') mBack.classList.add('active');
-  status.textContent='已選擇：'+(m==='cover'?'封面':m==='copyright'?'版權頁':'封底');
+  status.textContent='目前模式：'+(m==='cover'?'封面':m==='copyright'?'版權頁':'封底');
 }
 
-/* ===== Scan ===== */
 async function scan(){
   const file=await pickImage();
   if(!file) return;
 
-  lockUI(true);
-  setProgress(10,'影像上傳中…');
+  lock(true);
+  setProg(20,'上傳影像…');
 
-  try{
-    setProgress(40,'OCR 辨識中…');
-    const text=await ocr(file);
+  const text=await ocr(file);
+  ocrText.textContent=text;
 
-    setProgress(70,'MARC 規則套用中…');
-    applyMARC(text);
+  setProg(60,'套用 MARC 規則…');
+  applyMARC(text);
 
-    setProgress(100,'完成');
-  }catch(e){
-    status.textContent='發生錯誤：'+e.message;
-  }
-
-  setTimeout(()=>lockUI(false),500);
+  setProg(100,'完成');
+  setTimeout(()=>lock(false),500);
 }
 
-function lockUI(b){
-  scan.disabled=b;
-}
+function lock(b){scan.disabled=b}
+function setProg(p,msg){bar.style.width=p+'%';status.textContent=msg}
 
-/* ===== Progress ===== */
-function setProgress(p,msg){
-  bar.style.width=p+'%';
-  status.textContent=msg;
-}
-
-/* ===== Image Picker ===== */
 function pickImage(){
   return new Promise(r=>{
     const i=document.createElement('input');
@@ -103,40 +94,50 @@ function pickImage(){
   });
 }
 
-/* ===== OCR.space ===== */
 async function ocr(file){
   const fd=new FormData();
   fd.append('apikey','K82186283388957');
   fd.append('language','auto');
   fd.append('file',file);
-
-  const res=await fetch('https://api.ocr.space/parse/image',{method:'POST',body:fd});
-  const j=await res.json();
-  return j.ParsedResults[0].ParsedText;
+  const r=await fetch('https://api.ocr.space/parse/image',{method:'POST',body:fd});
+  const j=await r.json();
+  return j.ParsedResults[0].ParsedText.trim();
 }
 
-/* ===== MARC ===== */
+/* ===== MARC rules ===== */
 function applyMARC(t){
+  const lines=t.split('\n').map(l=>l.trim()).filter(l=>l.length>2);
+
   if(mode==='cover'){
-    if(!f245.value) f245.value=t.split('\n')[0];
-    if(!f100.value){
-      const m=t.match(/by\s+([^\n]+)/i);
-      if(m) f100.value=invert(m[1]);
+    if(!f245.value && lines[0]){
+      f245.value='$a '+lines[0];
+      f245.classList.add('filled');
+    }
+    if(!f100.value && lines[1]){
+      f100.value='$a '+invert(lines[1])+', $e author.';
+      f100.classList.add('filled');
     }
   }
+
   if(mode==='copyright'){
-    const y=t.match(/\b(19|20)\d{2}\b/);
-    if(y && !f264.value) f264.value='$c '+y[0];
-    const isbn=t.match(/\b97[89]\d{10}\b/);
-    if(isbn && !f020.value) f020.value=isbn[0];
+    if(!f020.value){
+      const i=t.match(/\b97[89]\d{10}\b/);
+      if(i){f020.value='$a '+i[0];f020.classList.add('filled')}
+    }
+    if(!f264.value){
+      const y=t.match(/\b(19|20)\d{2}\b/);
+      if(y){f264.value='$c '+y[0];f264.classList.add('filled')}
+    }
   }
-  if(mode==='back'){
-    if(!f520.value) f520.value=t.slice(0,700);
+
+  if(mode==='back' && !f520.value){
+    f520.value='$a '+t.slice(0,800);
+    f520.classList.add('filled');
   }
 }
 
 function invert(n){
-  const p=n.trim().split(' ');
+  const p=n.split(' ');
   return p.length>1?p.pop()+', '+p.join(' '):n;
 }
 </script>
