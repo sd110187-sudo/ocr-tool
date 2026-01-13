@@ -8,13 +8,17 @@
 <style>
 body{font-family:-apple-system,BlinkMacSystemFont;background:#f6f7f9;margin:0}
 header{text-align:center;padding:18px;font-size:26px;font-weight:700}
-.mode{display:flex;justify-content:center;gap:10px;margin-bottom:10px}
-.mode button{padding:10px 16px;border-radius:14px;border:none;font-size:16px}
-#scan{width:90%;margin:14px auto;padding:18px;font-size:22px;background:black;color:white;border-radius:16px}
+.mode{display:flex;justify-content:center;gap:10px}
+.mode button{padding:10px 16px;border-radius:14px;border:none;font-size:16px;opacity:.5}
+.mode button.active{opacity:1;background:#2563eb;color:white}
+#scan{width:90%;margin:16px auto;padding:18px;font-size:22px;background:black;color:white;border-radius:16px}
+#scan[disabled]{background:#666}
+.status{width:90%;margin:0 auto 12px;font-size:14px;color:#444}
+.progress{height:8px;background:#ddd;border-radius:8px;overflow:hidden}
+.bar{height:100%;width:0;background:#2563eb;transition:.3s}
 .card{background:white;margin:16px;padding:16px;border-radius:16px}
 label{font-weight:600}
 input,textarea,select{width:100%;margin-top:6px;padding:10px;border-radius:10px;border:1px solid #ddd}
-small{color:#666}
 </style>
 </head>
 
@@ -23,61 +27,73 @@ small{color:#666}
 <header>Western MARC v70</header>
 
 <div class="mode">
-<button onclick="setMode('cover')">📕 封面</button>
-<button onclick="setMode('copyright')">📄 版權頁</button>
-<button onclick="setMode('back')">📘 封底</button>
+<button id="mCover" onclick="setMode('cover')">📕 封面</button>
+<button id="mCopy" onclick="setMode('copyright')">📄 版權頁</button>
+<button id="mBack" onclick="setMode('back')">📘 封底</button>
 </div>
 
-<div class="card">
-<label>OCR 語言</label>
-<select id="lang">
-  <option value="eng">English</option>
-  <option value="rus">Русский</option>
-  <option value="jpn">日本語</option>
-  <option value="chi_sim">中文（简体）</option>
-  <option value="chi_tra">中文（繁體）</option>
-  <option value="spa">Español</option>
-  <option value="fra">Français</option>
-  <option value="deu">Deutsch</option>
-  <option value="ita">Italiano</option>
-  <option value="auto">Auto Detect</option>
-</select>
-<small>（OCR.space 支援 28+ 語言）</small>
-</div>
+<div class="status" id="status">請選擇頁面並按 SCAN</div>
+<div class="progress"><div class="bar" id="bar"></div></div>
 
 <button id="scan" onclick="scan()">SCAN</button>
 
 <div class="card">
-<label>020 ISBN</label>
-<input id="f020">
-<label>100 Personal Author</label>
-<input id="f100">
-<label>110 Corporate Author</label>
-<input id="f110">
-<label>245 Title</label>
-<input id="f245">
-<label>264 Publication</label>
-<input id="f264">
-<label>520 Summary</label>
-<textarea id="f520"></textarea>
-<label>700 Added Entry</label>
-<input id="f700">
+<label>020 ISBN</label><input id="f020">
+<label>100</label><input id="f100">
+<label>110</label><input id="f110">
+<label>245</label><input id="f245">
+<label>264</label><input id="f264">
+<label>520</label><textarea id="f520"></textarea>
+<label>700</label><input id="f700">
 </div>
 
 <script>
-/* ================= 基本狀態 ================= */
 let mode='cover';
-function setMode(m){mode=m;alert('模式：'+m)}
+setMode('cover');
 
-/* ================= Scan ================= */
+function setMode(m){
+  mode=m;
+  ['mCover','mCopy','mBack'].forEach(id=>document.getElementById(id).classList.remove('active'));
+  if(m==='cover') mCover.classList.add('active');
+  if(m==='copyright') mCopy.classList.add('active');
+  if(m==='back') mBack.classList.add('active');
+  status.textContent='已選擇：'+(m==='cover'?'封面':m==='copyright'?'版權頁':'封底');
+}
+
+/* ===== Scan ===== */
 async function scan(){
   const file=await pickImage();
   if(!file) return;
-  const text=await ocr(file);
-  applyMARC(text);
+
+  lockUI(true);
+  setProgress(10,'影像上傳中…');
+
+  try{
+    setProgress(40,'OCR 辨識中…');
+    const text=await ocr(file);
+
+    setProgress(70,'MARC 規則套用中…');
+    applyMARC(text);
+
+    setProgress(100,'完成');
+  }catch(e){
+    status.textContent='發生錯誤：'+e.message;
+  }
+
+  setTimeout(()=>lockUI(false),500);
 }
 
-/* ================= Image Picker ================= */
+function lockUI(b){
+  scan.disabled=b;
+}
+
+/* ===== Progress ===== */
+function setProgress(p,msg){
+  bar.style.width=p+'%';
+  status.textContent=msg;
+}
+
+/* ===== Image Picker ===== */
 function pickImage(){
   return new Promise(r=>{
     const i=document.createElement('input');
@@ -87,11 +103,11 @@ function pickImage(){
   });
 }
 
-/* ================= OCR.space ================= */
+/* ===== OCR.space ===== */
 async function ocr(file){
   const fd=new FormData();
   fd.append('apikey','K82186283388957');
-  fd.append('language',document.getElementById('lang').value);
+  fd.append('language','auto');
   fd.append('file',file);
 
   const res=await fetch('https://api.ocr.space/parse/image',{method:'POST',body:fd});
@@ -99,85 +115,29 @@ async function ocr(file){
   return j.ParsedResults[0].ParsedText;
 }
 
-/* ================= MARC Engine ================= */
+/* ===== MARC ===== */
 function applyMARC(t){
-
   if(mode==='cover'){
-    if(!f245.value) f245.value=titleRule(t);
-    if(!f100.value) f100.value=authorRule(t);
-    if(!f110.value) f110.value=corpRule(t);
-  }
-
-  if(mode==='copyright'){
-    if(!f264.value) f264.value=pubRule(t);
-    if(!f020.value){
-      const isbn=isbnRule(t);
-      if(isbn){
-        f020.value=isbn;
-        googleBooks(isbn);
-      }
+    if(!f245.value) f245.value=t.split('\n')[0];
+    if(!f100.value){
+      const m=t.match(/by\s+([^\n]+)/i);
+      if(m) f100.value=invert(m[1]);
     }
   }
-
-  if(mode==='back'){
-    if(!f520.value) f520.value=summaryRule(t);
-    if(!f700.value) f700.value=addedRule(t);
+  if(mode==='copyright'){
+    const y=t.match(/\b(19|20)\d{2}\b/);
+    if(y && !f264.value) f264.value='$c '+y[0];
+    const isbn=t.match(/\b97[89]\d{10}\b/);
+    if(isbn && !f020.value) f020.value=isbn[0];
   }
-}
-
-/* ================= Rules ================= */
-function titleRule(t){
-  return t.split('\n')[0].trim();
-}
-
-function authorRule(t){
-  const m=t.match(/by\s+([^\n]+)/i);
-  return m?invert(m[1]):'';
-}
-
-function corpRule(t){
-  const m=t.match(/([A-Z][A-Za-z ]+(Press|University|Institute))/);
-  return m?m[1]:'';
-}
-
-function pubRule(t){
-  const y=t.match(/\b(19|20)\d{2}\b/);
-  const p=t.match(/Published by\s+([^,\n]+)/i);
-  return y||p?`${p?'$b '+p[1]:''} ${y?'$c '+y[0]:''}`:'';
-}
-
-function summaryRule(t){
-  return t.slice(0,700);
-}
-
-function addedRule(t){
-  const m=t.match(/(edited|translated) by ([^\n]+)/i);
-  return m?`${invert(m[2])}, $e ${m[1]}`:'';
-}
-
-function isbnRule(t){
-  const m=t.match(/\b97[89][- ]?\d{1,5}[- ]?\d+[- ]?\d+[- ]?\d\b/);
-  return m?m[0].replace(/[- ]/g,''):'';
+  if(mode==='back'){
+    if(!f520.value) f520.value=t.slice(0,700);
+  }
 }
 
 function invert(n){
   const p=n.trim().split(' ');
   return p.length>1?p.pop()+', '+p.join(' '):n;
-}
-
-/* ================= Google Books（輔助） ================= */
-async function googleBooks(isbn){
-  const r=await fetch(`https://www.googleapis.com/books/v1/volumes?q=isbn:${isbn}`);
-  const j=await r.json();
-  if(!j.items) return;
-
-  const v=j.items[0].volumeInfo;
-
-  if(!f245.value && v.title) f245.value=v.title;
-  if(!f100.value && v.authors) f100.value=invert(v.authors[0]);
-
-  /* ⚠️ 摘要僅在 520 空白時補 */
-  if(!f520.value && v.description) f520.value=v.description;
 }
 </script>
 
