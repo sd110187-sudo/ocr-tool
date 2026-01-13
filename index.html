@@ -2,31 +2,27 @@
 <html lang="zh-Hant">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Western MARC v71</title>
-
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Western MARC – Stable OCR</title>
+<script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
 <style>
-body{font-family:-apple-system,BlinkMacSystemFont;background:#f5f6f8;margin:0}
-header{text-align:center;padding:18px;font-size:26px;font-weight:800}
-.mode{display:flex;justify-content:center;gap:10px}
-.mode button{padding:10px 16px;border-radius:14px;border:none;font-size:16px;opacity:.4}
+body{font-family:-apple-system;background:#f4f5f7;margin:0}
+header{text-align:center;font-size:24px;font-weight:800;padding:16px}
+.mode{display:flex;justify-content:center;gap:8px}
+.mode button{padding:10px 14px;border:none;border-radius:12px;opacity:.4}
 .mode button.active{opacity:1;background:#2563eb;color:white}
 #scan{width:90%;margin:16px auto;padding:18px;font-size:22px;background:black;color:white;border-radius:16px}
-#scan[disabled]{background:#777}
-.status{width:90%;margin:auto;font-size:14px;color:#333}
-.progress{width:90%;margin:auto;height:8px;background:#ddd;border-radius:6px;overflow:hidden}
-.bar{height:100%;width:0;background:#2563eb;transition:.3s}
+.status{width:90%;margin:auto;font-size:14px}
+pre{background:#eee;padding:12px;border-radius:12px;white-space:pre-wrap;font-size:12px}
 .card{background:white;margin:16px;padding:16px;border-radius:16px}
-label{font-weight:700}
-input,textarea{width:100%;margin-top:6px;padding:10px;border-radius:10px;border:1px solid #ddd}
-pre{background:#eee;padding:12px;border-radius:10px;font-size:12px;white-space:pre-wrap}
+input,textarea{width:100%;margin-top:6px;padding:10px;border-radius:10px;border:1px solid #ccc}
 .filled{border:2px solid #22c55e}
 </style>
 </head>
 
 <body>
 
-<header>Western MARC v71</header>
+<header>Western MARC – Stable OCR</header>
 
 <div class="mode">
 <button id="mCover" onclick="setMode('cover')">📕 封面</button>
@@ -34,18 +30,16 @@ pre{background:#eee;padding:12px;border-radius:10px;font-size:12px;white-space:p
 <button id="mBack" onclick="setMode('back')">📘 封底</button>
 </div>
 
-<div class="status" id="status">請選擇頁面後按 SCAN</div>
-<div class="progress"><div class="bar" id="bar"></div></div>
-
+<div class="status" id="status">請選模式後按 SCAN</div>
 <button id="scan" onclick="scan()">SCAN</button>
 
 <div class="card">
-<label>OCR 原文（除錯用）</label>
-<pre id="ocrText">(尚未掃描)</pre>
+<b>OCR 原文（一定會顯示）</b>
+<pre id="ocrText">尚未掃描</pre>
 </div>
 
 <div class="card">
-<label>020 ISBN</label><input id="f020">
+<label>020</label><input id="f020">
 <label>100</label><input id="f100">
 <label>245</label><input id="f245">
 <label>264</label><input id="f264">
@@ -54,6 +48,8 @@ pre{background:#eee;padding:12px;border-radius:10px;font-size:12px;white-space:p
 
 <script>
 let mode='cover';
+let worker;
+
 setMode('cover');
 
 function setMode(m){
@@ -62,28 +58,26 @@ function setMode(m){
   if(m==='cover') mCover.classList.add('active');
   if(m==='copyright') mCopy.classList.add('active');
   if(m==='back') mBack.classList.add('active');
-  status.textContent='目前模式：'+(m==='cover'?'封面':m==='copyright'?'版權頁':'封底');
 }
 
 async function scan(){
   const file=await pickImage();
   if(!file) return;
 
-  lock(true);
-  setProg(20,'上傳影像…');
+  status.textContent='OCR 辨識中…';
 
-  const text=await ocr(file);
-  ocrText.textContent=text;
+  if(!worker){
+    worker=await Tesseract.createWorker('eng+fra+deu+spa+rus');
+  }
 
-  setProg(60,'套用 MARC 規則…');
+  const { data } = await worker.recognize(file);
+  const text=data.text.trim();
+
+  ocrText.textContent=text || '(OCR 無文字)';
   applyMARC(text);
 
-  setProg(100,'完成');
-  setTimeout(()=>lock(false),500);
+  status.textContent='完成';
 }
-
-function lock(b){scan.disabled=b}
-function setProg(p,msg){bar.style.width=p+'%';status.textContent=msg}
 
 function pickImage(){
   return new Promise(r=>{
@@ -94,17 +88,6 @@ function pickImage(){
   });
 }
 
-async function ocr(file){
-  const fd=new FormData();
-  fd.append('apikey','K82186283388957');
-  fd.append('language','auto');
-  fd.append('file',file);
-  const r=await fetch('https://api.ocr.space/parse/image',{method:'POST',body:fd});
-  const j=await r.json();
-  return j.ParsedResults[0].ParsedText.trim();
-}
-
-/* ===== MARC rules ===== */
 function applyMARC(t){
   const lines=t.split('\n').map(l=>l.trim()).filter(l=>l.length>2);
 
@@ -120,18 +103,20 @@ function applyMARC(t){
   }
 
   if(mode==='copyright'){
-    if(!f020.value){
-      const i=t.match(/\b97[89]\d{10}\b/);
-      if(i){f020.value='$a '+i[0];f020.classList.add('filled')}
+    const y=t.match(/\b(19|20)\d{2}\b/);
+    if(y && !f264.value){
+      f264.value='$c '+y[0];
+      f264.classList.add('filled');
     }
-    if(!f264.value){
-      const y=t.match(/\b(19|20)\d{2}\b/);
-      if(y){f264.value='$c '+y[0];f264.classList.add('filled')}
+    const i=t.match(/\b97[89]\d{10}\b/);
+    if(i && !f020.value){
+      f020.value='$a '+i[0];
+      f020.classList.add('filled');
     }
   }
 
   if(mode==='back' && !f520.value){
-    f520.value='$a '+t.slice(0,800);
+    f520.value='$a '+t.slice(0,700);
     f520.classList.add('filled');
   }
 }
