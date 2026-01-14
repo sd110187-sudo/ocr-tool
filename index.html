@@ -2,130 +2,323 @@
 <html lang="zh-Hant">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>Western MARC – Stable OCR</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Smart MARC - Dual API & Fuzzy OCR</title>
 <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
 <style>
-body{font-family:-apple-system;background:#f4f5f7;margin:0}
-header{text-align:center;font-size:24px;font-weight:800;padding:16px}
-.mode{display:flex;justify-content:center;gap:8px}
-.mode button{padding:10px 14px;border:none;border-radius:12px;opacity:.4}
-.mode button.active{opacity:1;background:#2563eb;color:white}
-#scan{width:90%;margin:16px auto;padding:18px;font-size:22px;background:black;color:white;border-radius:16px}
-.status{width:90%;margin:auto;font-size:14px}
-pre{background:#eee;padding:12px;border-radius:12px;white-space:pre-wrap;font-size:12px}
-.card{background:white;margin:16px;padding:16px;border-radius:16px}
-input,textarea{width:100%;margin-top:6px;padding:10px;border-radius:10px;border:1px solid #ccc}
-.filled{border:2px solid #22c55e}
+:root { --primary: #7c3aed; --success: #22c55e; --fail: #ef4444; --bg: #f8fafc; }
+body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: var(--bg); margin: 0; padding-bottom: 60px; }
+header { background: white; text-align: center; padding: 16px; font-weight: 800; font-size: 1.1rem; border-bottom: 1px solid #e2e8f0; position: sticky; top: 0; z-index: 10; }
+
+/* Control Panel */
+.controls { padding: 12px; display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; background: white; }
+.mode-btn { padding: 8px; border: 1px solid #cbd5e1; border-radius: 8px; background: white; color: #64748b; font-size: 13px; font-weight: 600; cursor: pointer; }
+.mode-btn.active { background: var(--primary); color: white; border-color: var(--primary); }
+
+/* Scanner */
+.scan-wrapper { padding: 16px; text-align: center; }
+#scanBtn { width: 100%; padding: 16px; font-size: 18px; font-weight: bold; background: #0f172a; color: white; border: none; border-radius: 12px; display: flex; align-items: center; justify-content: center; gap: 10px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); }
+#scanBtn:disabled { background: #94a3b8; }
+.status-bar { margin-top: 10px; font-size: 13px; color: #475569; min-height: 20px; font-weight: 500; }
+
+/* MARC Form */
+.card { background: white; margin: 12px 16px; padding: 16px; border-radius: 12px; box-shadow: 0 1px 2px rgba(0,0,0,0.05); border: 1px solid #e2e8f0; }
+.card-header { display: flex; justify-content: space-between; margin-bottom: 12px; align-items: center; }
+.badge { font-size: 10px; padding: 3px 8px; border-radius: 12px; font-weight: bold; text-transform: uppercase; letter-spacing: 0.5px; }
+.badge.api { background: #dbeafe; color: #1e40af; }
+.badge.ocr { background: #fef9c3; color: #854d0e; }
+.badge.none { background: #f1f5f9; color: #64748b; }
+
+.field-row { margin-bottom: 10px; display: flex; align-items: center; }
+.tag { width: 40px; font-family: monospace; font-weight: bold; color: #64748b; font-size: 14px; }
+input, textarea { flex: 1; padding: 10px; border: 1px solid #cbd5e1; border-radius: 8px; font-family: monospace; font-size: 14px; transition: all 0.2s; }
+input:focus, textarea:focus { border-color: var(--primary); outline: none; box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.1); }
+textarea { min-height: 80px; resize: vertical; }
+
+.highlight-success { animation: flashGreen 1.5s; }
+@keyframes flashGreen { 0% { background: #dcfce7; } 100% { background: white; } }
+
+/* Debug Area */
+details { margin: 0 16px; font-size: 12px; color: #64748b; }
+#ocrDebug { white-space: pre-wrap; background: #f1f5f9; padding: 10px; border-radius: 8px; max-height: 150px; overflow-y: auto; }
 </style>
 </head>
-
 <body>
 
-<header>Western MARC – Stable OCR</header>
+<header>MARC 21 智慧掃描</header>
 
-<div class="mode">
-<button id="mCover" onclick="setMode('cover')">📕 封面</button>
-<button id="mCopy" onclick="setMode('copyright')">📄 版權頁</button>
-<button id="mBack" onclick="setMode('back')">📘 封底</button>
+<div class="controls">
+    <button class="mode-btn active" onclick="setMode('copyright')">版權頁/條碼</button>
+    <button class="mode-btn" onclick="setMode('cover')">封面</button>
+    <button class="mode-btn" onclick="setMode('back')">封底摘要</button>
 </div>
 
-<div class="status" id="status">請選模式後按 SCAN</div>
-<button id="scan" onclick="scan()">SCAN</button>
+<div class="scan-wrapper">
+    <button id="scanBtn" onclick="document.getElementById('fileInput').click()">
+        <span>📷 啟動相機</span>
+    </button>
+    <div class="status-bar" id="status">準備就緒</div>
+    <input type="file" id="fileInput" accept="image/*" capture="environment" style="display:none" onchange="processImage(this)">
+</div>
 
 <div class="card">
-<b>OCR 原文（一定會顯示）</b>
-<pre id="ocrText">尚未掃描</pre>
+    <div class="card-header">
+        <b>MARC 資料</b>
+        <span id="sourceBadge" class="badge none">來源: 無</span>
+    </div>
+    
+    <div class="field-row"><span class="tag">020</span><input id="f020" placeholder="$a ISBN"></div>
+    <div class="field-row"><span class="tag">100</span><input id="f100" placeholder="$a Author"></div>
+    <div class="field-row"><span class="tag">245</span><input id="f245" placeholder="$a Title"></div>
+    <div class="field-row"><span class="tag">250</span><input id="f250" placeholder="$a Edition"></div>
+    <div class="field-row"><span class="tag">264</span><input id="f264" placeholder="$c Year"></div>
+    <div class="field-row"><span class="tag">520</span><textarea id="f520" placeholder="$a Abstract"></textarea></div>
 </div>
 
-<div class="card">
-<label>020</label><input id="f020">
-<label>100</label><input id="f100">
-<label>245</label><input id="f245">
-<label>264</label><input id="f264">
-<label>520</label><textarea id="f520"></textarea>
-</div>
+<details>
+    <summary>查看 OCR 原始文字</summary>
+    <div id="ocrDebug">尚未掃描</div>
+</details>
+
+<canvas id="hiddenCanvas" style="display:none;"></canvas>
 
 <script>
-let mode='cover';
 let worker;
+let mode = 'copyright';
 
-setMode('cover');
+// 1. 初始化 Tesseract
+(async () => {
+    setStatus('載入 OCR 核心...', true);
+    worker = await Tesseract.createWorker('eng+fra+deu+spa+rus');
+    setStatus('系統就緒');
+})();
 
-function setMode(m){
-  mode=m;
-  ['mCover','mCopy','mBack'].forEach(id=>document.getElementById(id).classList.remove('active'));
-  if(m==='cover') mCover.classList.add('active');
-  if(m==='copyright') mCopy.classList.add('active');
-  if(m==='back') mBack.classList.add('active');
+function setStatus(msg, loading = false) {
+    const el = document.getElementById('status');
+    el.textContent = msg;
+    document.getElementById('scanBtn').disabled = loading;
+    if(loading) el.textContent += ' ⏳';
 }
 
-async function scan(){
-  const file=await pickImage();
-  if(!file) return;
-
-  status.textContent='OCR 辨識中…';
-
-  if(!worker){
-    worker=await Tesseract.createWorker('eng+fra+deu+spa+rus');
-  }
-
-  const { data } = await worker.recognize(file);
-  const text=data.text.trim();
-
-  ocrText.textContent=text || '(OCR 無文字)';
-  applyMARC(text);
-
-  status.textContent='完成';
+function setMode(m) {
+    mode = m;
+    document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
+    event.target.classList.add('active');
+    setStatus(`模式: ${m === 'copyright' ? '優先找 ISBN' : m === 'cover' ? '校對題名' : '抓取摘要'}`);
 }
 
-function pickImage(){
-  return new Promise(r=>{
-    const i=document.createElement('input');
-    i.type='file';i.accept='image/*';
-    i.onchange=()=>r(i.files[0]);
-    i.click();
-  });
+async function processImage(input) {
+    if (!input.files[0]) return;
+    const file = input.files[0];
+    
+    setStatus('影像優化處理...', true);
+    
+    // 步驟 1: 影像前處理 (轉灰階+二值化，極大提升 Tesseract 準度)
+    const processedImg = await preprocessImage(file);
+    
+    setStatus('OCR 識別中...', true);
+    const { data: { text } } = await worker.recognize(processedImg);
+    
+    document.getElementById('ocrDebug').textContent = text;
+    
+    // 步驟 2: 執行資料分析策略
+    await analyzeData(text);
+    
+    input.value = ''; // 重置
 }
 
-function applyMARC(t){
-  const lines=t.split('\n').map(l=>l.trim()).filter(l=>l.length>2);
-
-  if(mode==='cover'){
-    if(!f245.value && lines[0]){
-      f245.value='$a '+lines[0];
-      f245.classList.add('filled');
+// 核心邏輯：三層防禦系統
+async function analyzeData(rawText) {
+    setStatus('分析數據中...', true);
+    
+    // 清洗 OCR 雜訊 (將 OCR 常見錯誤如 1SBN, 2O19 修正)
+    const cleanText = fuzzyClean(rawText);
+    
+    // 策略 A: 嘗試提取 ISBN
+    const isbn = extractISBN(cleanText);
+    
+    let apiFound = false;
+    
+    if (isbn) {
+        setStatus(`偵測到 ISBN ${isbn}，查詢資料庫...`, true);
+        
+        // 策略 B1: Google Books API
+        apiFound = await fetchGoogleBooks(isbn);
+        
+        // 策略 B2: 如果 Google 失敗，嘗試 Open Library API
+        if (!apiFound) {
+            setStatus('Google 無資料，嘗試 Open Library...', true);
+            apiFound = await fetchOpenLibrary(isbn);
+        }
     }
-    if(!f100.value && lines[1]){
-      f100.value='$a '+invert(lines[1])+', $e author.';
-      f100.classList.add('filled');
+    
+    // 策略 C: 如果 API 全軍覆沒，使用啟發式規則分析 OCR 文字
+    if (!apiFound) {
+        setStatus('API 無資料，使用 OCR 智慧填入');
+        document.getElementById('sourceBadge').textContent = "來源: OCR 解析";
+        document.getElementById('sourceBadge').className = "badge ocr";
+        parseOCRFallback(cleanText);
+    } else {
+        setStatus('完成');
     }
-  }
-
-  if(mode==='copyright'){
-    const y=t.match(/\b(19|20)\d{2}\b/);
-    if(y && !f264.value){
-      f264.value='$c '+y[0];
-      f264.classList.add('filled');
-    }
-    const i=t.match(/\b97[89]\d{10}\b/);
-    if(i && !f020.value){
-      f020.value='$a '+i[0];
-      f020.classList.add('filled');
-    }
-  }
-
-  if(mode==='back' && !f520.value){
-    f520.value='$a '+t.slice(0,700);
-    f520.classList.add('filled');
-  }
 }
 
-function invert(n){
-  const p=n.split(' ');
-  return p.length>1?p.pop()+', '+p.join(' '):n;
+// --- API 模組 ---
+
+async function fetchGoogleBooks(isbn) {
+    try {
+        const res = await fetch(`https://www.googleapis.com/books/v1/volumes?q=isbn:${isbn}`);
+        const data = await res.json();
+        if (data.totalItems > 0) {
+            const info = data.items[0].volumeInfo;
+            fillForm({
+                source: 'Google API',
+                f020: '$a ' + isbn,
+                f100: info.authors ? `$a ${info.authors[0]}, $e author.` : '',
+                f245: `$a ${info.title} ${info.subtitle ? ': $b ' + info.subtitle : ''}`,
+                f264: `$c ${info.publishedDate?.substring(0,4) || ''} : $b ${info.publisher || ''}`,
+                f520: info.description ? `$a ${info.description}` : ''
+            });
+            return true;
+        }
+    } catch(e) { console.error(e); }
+    return false;
 }
+
+async function fetchOpenLibrary(isbn) {
+    try {
+        // Open Library API
+        const key = `ISBN:${isbn}`;
+        const res = await fetch(`https://openlibrary.org/api/books?bibkeys=${key}&jscmd=data&format=json`);
+        const data = await res.json();
+        
+        if (data[key]) {
+            const info = data[key];
+            fillForm({
+                source: 'Open Library',
+                f020: '$a ' + isbn,
+                f100: info.authors ? `$a ${info.authors[0].name}, $e author.` : '',
+                f245: `$a ${info.title} ${info.subtitle ? ': $b ' + info.subtitle : ''}`,
+                f264: `$c ${info.publish_date || ''} : $b ${info.publishers?.[0]?.name || ''}`,
+                f520: '' // Open Library 摘要通常較少
+            });
+            return true;
+        }
+    } catch(e) { console.error(e); }
+    return false;
+}
+
+// --- 容錯與備援解析模組 (關鍵部分) ---
+
+// 1. OCR 糾錯：修正常見的 OCR 數字/字母混淆
+function fuzzyClean(text) {
+    return text
+        .replace(/\|/g, 'I') // 把 | 變成 I
+        .replace(/1SBN/gi, 'ISBN')
+        .replace(/\bO(\d)/g, '0$1') // 把 O123 變成 0123
+        .replace(/\b(\d)O\b/g, '$10') // 把 199O 變成 1990
+        .replace(/ISBN.*?:?/gi, 'ISBN'); // 統一 ISBN 前綴
+}
+
+// 2. 暴力抓取 ISBN (支援 10 與 13 碼)
+function extractISBN(text) {
+    const match = text.match(/(97[89]\d{9}[\dxX])|(\d{9}[\dxX])/);
+    return match ? match[0] : null;
+}
+
+// 3. 智慧 fallback 解析 (當沒有 API 時)
+function parseOCRFallback(text) {
+    const lines = text.split('\n').map(l => l.trim()).filter(l => l.length > 2);
+    
+    // 如果是版權頁，嘗試抓年份與 ISBN
+    if (mode === 'copyright') {
+        const isbn = extractISBN(text);
+        if(isbn && !getValue('f020')) fill('f020', '$a ' + isbn);
+
+        // 找年份 (19xx 或 20xx)
+        const yearMatch = text.match(/\b(19|20)\d{2}\b/);
+        if(yearMatch && !getValue('f264')) fill('f264', '$c ' + yearMatch[0]);
+        
+        // 找版次 (Edition)
+        const edMatch = text.match(/(\d+(st|nd|rd|th)\s+Ed)|(First|Second)\s+Ed/i);
+        if(edMatch && !getValue('f250')) fill('f250', '$a ' + edMatch[0]);
+    }
+    
+    // 如果是封面，通常字體最大的是書名，其次是作者
+    if (mode === 'cover' && lines.length > 0) {
+        if(!getValue('f245')) fill('f245', '$a ' + lines[0]); // 假設第一行是書名
+        
+        // 尋找像是作者的行 (通常沒有數字，且長度適中)
+        for(let i=1; i<Math.min(lines.length, 5); i++) {
+            const line = lines[i];
+            if (!/\d/.test(line) && line.length < 30 && !getValue('f100')) {
+                // 簡單檢查是否有 "by" 開頭
+                const name = line.replace(/^by\s+/i, '');
+                fill('f100', '$a ' + name + ', $e author.');
+            }
+        }
+    }
+
+    // 如果是封底，全文塞入摘要
+    if (mode === 'back' && !getValue('f520')) {
+        // 過濾掉 ISBN 行
+        const summary = lines.filter(l => !l.includes('ISBN') && l.length > 20).join(' ');
+        if(summary.length > 20) fill('f520', '$a ' + summary);
+    }
+}
+
+// --- 影像處理與工具 ---
+
+function preprocessImage(file) {
+    return new Promise(resolve => {
+        const img = new Image();
+        img.onload = () => {
+            const cvs = document.getElementById('hiddenCanvas');
+            const ctx = cvs.getContext('2d');
+            
+            // 縮放圖片以加快 OCR 速度 (寬度限制在 1500px)
+            const ratio = Math.min(1500 / img.width, 1);
+            cvs.width = img.width * ratio;
+            cvs.height = img.height * ratio;
+            
+            ctx.drawImage(img, 0, 0, cvs.width, cvs.height);
+            
+            // 轉灰階與增加對比度
+            const idata = ctx.getImageData(0,0,cvs.width,cvs.height);
+            const d = idata.data;
+            for(let i=0; i<d.length; i+=4){
+                const gray = 0.2126*d[i] + 0.7152*d[i+1] + 0.0722*d[i+2]; // 亮度公式
+                const val = gray > 140 ? 255 : 0; // 二值化閾值
+                d[i] = d[i+1] = d[i+2] = val;
+            }
+            ctx.putImageData(idata,0,0);
+            resolve(cvs.toDataURL('image/jpeg'));
+        };
+        img.src = URL.createObjectURL(file);
+    });
+}
+
+function fillForm(data) {
+    if(data.source) {
+        const badge = document.getElementById('sourceBadge');
+        badge.textContent = '來源: ' + data.source;
+        badge.className = 'badge api';
+    }
+    for (let key in data) {
+        if (key !== 'source' && data[key]) fill(key, data[key]);
+    }
+}
+
+function fill(id, val) {
+    const el = document.getElementById(id);
+    if(el) {
+        el.value = val;
+        el.classList.add('highlight-success');
+        setTimeout(()=>el.classList.remove('highlight-success'), 1500);
+    }
+}
+
+function getValue(id) { return document.getElementById(id).value; }
 </script>
-
 </body>
 </html>
