@@ -3,10 +3,10 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>MARC 21 - v9.0 (Guard & $c)</title>
+<title>MARC 21 - v10.0 (Pub+Place)</title>
 <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
 <style>
-:root { --primary: #0f172a; --accent: #be123c; /* Red for Guard */ --bg: #f8fafc; --text: #334155; }
+:root { --primary: #0f172a; --accent: #059669; --bg: #f8fafc; --text: #334155; }
 body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: var(--bg); color: var(--text); margin: 0; padding-bottom: 140px; }
 header { background: white; padding: 14px; font-weight: 800; text-align: center; border-bottom: 1px solid #e2e8f0; position: sticky; top: 0; z-index: 50; }
 
@@ -28,7 +28,7 @@ header { background: white; padding: 14px; font-weight: 800; text-align: center;
 .card-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
 .badge { font-size: 10px; padding: 3px 8px; border-radius: 4px; font-weight: bold; background: #f1f5f9; color: #64748b; }
 .badge.api { background: #dcfce7; color: #166534; }
-.badge.reject { background: #fee2e2; color: #991b1b; } /* Rejected Red */
+.badge.reject { background: #fee2e2; color: #991b1b; }
 .badge.ocr { background: #ffedd5; color: #9a3412; }
 
 /* Fields */
@@ -42,11 +42,9 @@ header { background: white; padding: 14px; font-weight: 800; text-align: center;
 .multiline { white-space: normal; min-height: 80px; }
 .copy-btn { width: 44px; background: #f8fafc; border-left: 1px solid #cbd5e1; cursor: pointer; font-size: 16px; display: flex; align-items: center; justify-content: center; }
 .copy-btn:active { background: #e2e8f0; }
-
-.locked-field { border: 2px solid #f59e0b !important; background: #fffbeb; } /* Yellow Lock */
-.safe-field { border: 2px solid #22c55e !important; background: #f0fdf4; } /* Green Success */
-.rejected-field { border: 2px solid #ef4444 !important; animation: shake 0.4s; } /* Red Reject */
-
+.locked-field { border: 2px solid #f59e0b !important; background: #fffbeb; }
+.safe-field { border: 2px solid #22c55e !important; background: #f0fdf4; }
+.rejected-field { border: 2px solid #ef4444 !important; animation: shake 0.4s; }
 @keyframes shake { 0%, 100% {transform: translateX(0);} 25% {transform: translateX(-5px);} 75% {transform: translateX(5px);} }
 
 details { margin: 16px; font-size: 11px; color: #94a3b8; }
@@ -57,11 +55,11 @@ details { margin: 16px; font-size: 11px; color: #94a3b8; }
 </head>
 <body>
 
-<header>MARC 21 - v9.0 (Guard)</header>
+<header>MARC 21 - v10.0 (Pub+Place)</header>
 
 <div class="controls">
     <button class="mode-btn active" onclick="setMode('copyright')">版權頁 (錨點)</button>
-    <button class="mode-btn" onclick="setMode('cover')">封面 (防護反查)</button>
+    <button class="mode-btn" onclick="setMode('cover')">封面/扉頁 (反查)</button>
     <button class="mode-btn" onclick="setMode('back')">封底摘要</button>
 </div>
 
@@ -71,21 +69,17 @@ details { margin: 16px; font-size: 11px; color: #94a3b8; }
         <input type="text" id="manualQuery" class="search-input" placeholder="OCR失敗時手動搜...">
         <button class="search-btn" onclick="manualSearch()">🔍</button>
     </div>
-    <div class="status" id="status">系統就緒</div>
+    <div class="status" id="status">建議：拍攝「扉頁」底部可抓取出版地</div>
     <input type="file" id="fileIn" accept="image/*" capture="environment" style="display:none" onchange="process(this)">
 </div>
 
 <div class="card">
-    <div class="card-head">
-        <b>MARC 記錄</b>
-        <span id="srcTag" class="badge">無資料</span>
-    </div>
-    
+    <div class="card-head"><b>MARC 記錄</b><span id="srcTag" class="badge">無資料</span></div>
     <div class="field-group"><span class="tag-label">020 ISBN</span><div class="input-wrapper"><textarea id="f020" class="scroll-input" rows="1" placeholder="$a"></textarea><button class="copy-btn" onclick="copyOne('f020')">📋</button></div></div>
     <div class="field-group"><span class="tag-label">100 Author</span><div class="input-wrapper"><textarea id="f100" class="scroll-input" rows="1" placeholder="$a"></textarea><button class="copy-btn" onclick="copyOne('f100')">📋</button></div></div>
-    <div class="field-group"><span class="tag-label">245 Title ($c 責任者自動抓取)</span><div class="input-wrapper"><textarea id="f245" class="scroll-input" rows="1" placeholder="$a"></textarea><button class="copy-btn" onclick="copyOne('f245')">📋</button></div></div>
+    <div class="field-group"><span class="tag-label">245 Title ($c 責任者)</span><div class="input-wrapper"><textarea id="f245" class="scroll-input" rows="1" placeholder="$a"></textarea><button class="copy-btn" onclick="copyOne('f245')">📋</button></div></div>
     <div class="field-group"><span class="tag-label">250 Edition</span><div class="input-wrapper"><textarea id="f250" class="scroll-input" rows="1" placeholder="$a"></textarea><button class="copy-btn" onclick="copyOne('f250')">📋</button></div></div>
-    <div class="field-group"><span class="tag-label">264 Pub (年份鎖定)</span><div class="input-wrapper" id="wrap264"><textarea id="f264" class="scroll-input" rows="1" placeholder="$b Pub, $c Year"></textarea><button class="copy-btn" onclick="copyOne('f264')">📋</button></div></div>
+    <div class="field-group"><span class="tag-label">264 Pub ($a 地點 : $b 出版者)</span><div class="input-wrapper" id="wrap264"><textarea id="f264" class="scroll-input" rows="1" placeholder="$a [Place] : $b Pub, $c Year"></textarea><button class="copy-btn" onclick="copyOne('f264')">📋</button></div></div>
     <div class="field-group"><span class="tag-label">520 Abstract</span><div class="input-wrapper"><textarea id="f520" class="scroll-input multiline" placeholder="$a"></textarea><button class="copy-btn" onclick="copyOne('f520')">📋</button></div></div>
 </div>
 
@@ -95,6 +89,15 @@ details { margin: 16px; font-size: 11px; color: #94a3b8; }
 
 <script>
 let worker, mode = 'copyright';
+
+// --- 資料庫：出版重鎮與機構關鍵字 ---
+const DB_CITIES = [
+    'Paris','London','New York','Berlin','München','Frankfurt','Wien','Madrid','Barcelona','Roma','Milano','Bruxelles','Amsterdam','Taipei','Tokyo','Beijing','Shanghai','Hong Kong','Singapore','Sydney','Toronto','Chicago','Boston','Oxford','Cambridge','Princeton','Geneva','Lausanne','Zürich','Stuttgart','Köln','Hamburg'
+];
+
+const DB_PUBS = [
+    'Press','University','Verlag','Editions','Éditions','Librairie','Gallimard','Penguin','Routledge','Springer','Wiley','Elsevier','Hachette','Seuil','PUF','Flammarion','Albin Michel','Fayard','Dunod','Larousse','Nathan','Bordas','Colin','Ellipses','Eyrolles','Dalloz','Sirey','LGDJ','LexisNexis','Francis Lefebvre','Pedone','Hermann','Vrin','Cerf','Labor','De Boeck','Larcier','Bruylant','Peter Lang','Nomos','Beck','Mohr Siebeck','De Gruyter','Brill','Nijhoff','Hart','Sweet & Maxwell'
+];
 
 (async () => {
     msg('載入 OCR...', true);
@@ -106,7 +109,7 @@ function setMode(m) {
     mode = m;
     document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
     event.target.classList.add('active');
-    msg(m === 'cover' ? '封面模式：智慧防護啟動' : '一般模式');
+    msg(m === 'cover' ? '封面/扉頁：強力偵測出版地' : '版權頁：抓取年份');
 }
 
 async function process(input) {
@@ -115,7 +118,7 @@ async function process(input) {
     document.getElementById('manualQuery').value = '';
     msg('影像處理中...', true);
     const imgData = await preprocess(file);
-    msg('OCR 辨識中...', true);
+    msg('OCR 識別中...', true);
     const { data } = await worker.recognize(imgData);
     document.getElementById('debug').textContent = data.text;
     await analyze(data);
@@ -130,36 +133,53 @@ async function analyze(data) {
     const existingYear = extractYear(val('f264'));
     let success = false;
 
-    // A. ISBN 命中 (最高信任度，不須防護)
+    // A. API 流程
     if (isbnMatch) {
         msg(`ISBN ${isbnMatch[0]} 命中`, true);
-        success = await fetchGoogle(`isbn:${isbnMatch[0]}`, existingYear, null); // null means no validation needed
+        success = await fetchGoogle(`isbn:${isbnMatch[0]}`, existingYear, null);
         if(!success) success = await fetchOpenLibrary(isbnMatch[0]);
     }
 
-    // B. 文字反查 (需通過「語意防火牆」)
+    // B. 反查流程
     if (!success && mode === 'cover') {
         const extracted = extractKeywords(lines);
         if (extracted.query.length > 3) {
             document.getElementById('manualQuery').value = extracted.cleanTitle; 
             msg(`反查: ${extracted.cleanTitle}...`, true);
-            // 傳入 extracted.cleanTitle 作為驗證基準
             success = await fetchGoogle(extracted.query, existingYear, extracted.cleanTitle); 
         }
     }
 
-    // C. OCR 補強
-    msg('整合資料...');
+    // C. OCR 補強 (核心：出版地/出版社獵人)
+    msg('執行機構與地點偵測...');
+    
+    // 全域偵測：出版地 ($a) 與 出版社 ($b)
+    detectPublisherAndPlace(lines, text);
+
+    // 版次 ($250)
     const edition = extractEdition(text);
     if(edition) updateField('f250', `$a ${edition}`, true);
 
+    // 責任者 ($c) - 僅封面模式
     if (mode === 'cover') {
-        analyzeCoverMerge(lines, success);
+        detectResponsibility(lines);
+        // 如果 API 沒資料，用 OCR 補標題
+        if (!success && !val('f245')) {
+            const title = extractTitleFromOCR(lines);
+            if(title) updateField('f245', `$a ${title}`);
+        }
     } else if (mode === 'copyright') {
-        analyzeCopyrightMerge(text, lines);
-    } else if (mode === 'back') {
-        analyzeBack(lines);
+        // 版權頁模式加強年份
+        const year = extractYear(text);
+        if (year && !val('f264').includes(year)) {
+            // 保留已有的 $a $b，只更新 $c
+            let current = val('f264') || '';
+            if(!current.includes('$c')) updateField('f264', `${current} $c ${year}`, true);
+        }
     }
+    
+    // 摘要 (封底)
+    if (mode === 'back') analyzeBack(lines);
 
     if (!success && !val('f245')) {
         document.getElementById('srcTag').textContent = 'OCR 解析';
@@ -168,171 +188,188 @@ async function analyze(data) {
     msg('完成');
 }
 
-// --- 核心：帶有「防火牆」的 Google Search ---
-async function fetchGoogle(query, localYear, validationText = null) {
+// --- 核心：出版地與出版社偵測引擎 ---
+function detectPublisherAndPlace(lines, fullText) {
+    let foundPlace = '';
+    let foundPub = '';
+
+    // 1. 搜尋已知城市 (Case Insensitive)
+    for (let city of DB_CITIES) {
+        if (new RegExp(`\\b${city}\\b`, 'i').test(fullText)) {
+            foundPlace = city;
+            break; // 找到一個就停，避免多重地點混亂
+        }
+    }
+
+    // 2. 搜尋已知出版社關鍵字
+    // 策略：找包含關鍵字的「那一行」，並提取整行
+    for (let line of lines) {
+        const txt = line.text.trim();
+        if (txt.length < 3) continue;
+
+        // 檢查是否包含 Publisher Keyword
+        const hasPubKw = DB_PUBS.some(kw => new RegExp(`\\b${kw}\\b`, 'i').test(txt));
+        
+        // 檢查是否包含 © (版權頁常見)
+        const hasCopy = txt.includes('©') || txt.includes('Copyright');
+
+        if ((hasPubKw || hasCopy) && !foundPub) {
+            // 清洗：移除 © 20xx 之類的年份
+            let cleanPub = txt.replace(/©\s*\d{4}/, '').replace(/Copyright/i, '').trim();
+            // 移除純數字
+            if (!/^[\d\s]+$/.test(cleanPub) && cleanPub.length > 3) {
+                foundPub = cleanPub;
+            }
+        }
+    }
+
+    // 3. 頁尾策略 (Footer Strategy) - 僅在封面/扉頁模式
+    // 通常扉頁最下面一行就是出版社+地點
+    if (mode === 'cover' && (!foundPub || !foundPlace)) {
+        const validLines = lines.filter(l => l.text.trim().length > 3);
+        if (validLines.length > 0) {
+            // 取最後一行 (Bottom line)
+            const lastLine = validLines[validLines.length - 1].text.trim();
+            
+            // 如果還沒找到地點，且最後一行像地點 (包含逗號或已知城市)
+            if (!foundPlace && (lastLine.includes(',') || DB_CITIES.some(c=>lastLine.includes(c)))) {
+                 // 簡單假設：最後一行可能是 "City : Publisher" 或 "City, Year"
+                 // 這裡不做過度推斷，僅當作後備
+            }
+            
+            // 如果還沒找到出版社，且最後一行不是 ISBN
+            if (!foundPub && !lastLine.includes('ISBN') && !/\d{4}/.test(lastLine)) {
+                foundPub = lastLine;
+            }
+        }
+    }
+
+    // 4. 合併至 264 欄位
+    const current264 = val('f264');
+    let new264 = current264;
+
+    // 如果目前沒有 $a (地點) 且找到了地點
+    if (!current264.includes('$a') && foundPlace) {
+        // 如果是空的，直接填
+        if (!new264) new264 = `$a ${foundPlace} :`;
+        else new264 = `$a ${foundPlace} : ` + new264.replace('$a [Place] :', ''); // 替換佔位符
+    } else if (current264.includes('[Place]') && foundPlace) {
+         new264 = new264.replace('[Place]', foundPlace);
+    }
+
+    // 如果目前沒有 $b (出版者) 且找到了出版者
+    if (!current264.includes('$b') && foundPub) {
+        // 確保格式正確
+        if (!new264) new264 = `: $b ${foundPub},`;
+        else if (new264.includes(':')) new264 = new264.replace(':', `: $b ${foundPub},`); 
+        else new264 += ` : $b ${foundPub},`;
+    }
+
+    // 寫入更新
+    if (new264 !== current264) {
+        updateField('f264', new264, true);
+    }
+}
+
+// --- 責任者獵人 ($c) ---
+function detectResponsibility(lines) {
+    const validLines = lines.filter(l => l.text.trim().length > 2);
+    // 找標題下方區域
+    let maxH = 0, titleIdx = -1;
+    validLines.forEach((l, i) => { const h = l.bbox.y1 - l.bbox.y0; if(h>maxH) { maxH=h; titleIdx=i; }});
+    
+    let statement = [];
+    if (titleIdx >= 0) {
+        const titleBottomY = validLines[titleIdx].bbox.y1;
+        for (let i = 0; i < validLines.length; i++) {
+            const line = validLines[i];
+            if (line.bbox.y0 > titleBottomY) {
+                const t = line.text.trim();
+                // 擴充關鍵字
+                if (/^(par|by|von|textes|trad|edit|pref|intro|présentés|choisis|translated|edited|foreword)/i.test(t) || t.includes('Université') || t.includes('Sorbonne') || t.includes('Professor')) {
+                    statement.push(t);
+                }
+            }
+        }
+    }
+    if (statement.length > 0) {
+        const st = statement.join(' ');
+        const cur = val('f245');
+        if (cur && !cur.includes('$c')) updateField('f245', `${cur} / $c ${st}`, true);
+    }
+}
+
+// --- Google API (含防火牆) ---
+async function fetchGoogle(query, localYear, validationText) {
     try {
         const url = `https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(query)}&maxResults=5`;
         const res = await fetch(url);
         const json = await res.json();
-        
         if (json.totalItems > 0) {
-            let bestItem = json.items[0]; 
-            
-            // 1. 防火牆檢核 (Semantic Firewall)
-            // 如果我們是透過 OCR 反查 (即 validationText 存在)，必須檢查相似度
+            let bestItem = json.items[0];
             if (validationText) {
-                const apiTitle = bestItem.volumeInfo.title || "";
-                const similarity = checkSimilarity(validationText, apiTitle);
-                
-                // 如果相似度太低 (< 30%)，判定為錯誤搜尋，攔截！
-                if (similarity < 0.3) {
-                    msg(`🚫 攔截！API 結果 (${apiTitle}) 與原書不符`, false);
-                    document.getElementById('srcTag').textContent = 'API 結果遭拒';
-                    document.getElementById('srcTag').className = 'badge reject';
-                    // 讓輸入框紅框震動一下
+                const sim = checkSimilarity(validationText, bestItem.volumeInfo.title||"");
+                if (sim < 0.3) {
+                    msg(`🚫 攔截！API結果不符`, false);
                     document.getElementById('f245').parentElement.classList.add('rejected-field');
-                    setTimeout(() => document.getElementById('f245').parentElement.classList.remove('rejected-field'), 1000);
-                    return false; // 拒絕更新
+                    return false;
                 }
             }
-
-            // 2. 年份錨點邏輯 (同 v8)
             if (localYear) {
-                const yearInt = parseInt(localYear);
-                const match = json.items.find(item => {
-                    const iYear = parseInt(extractYear(item.volumeInfo.publishedDate || ''));
-                    return !isNaN(iYear) && Math.abs(iYear - yearInt) <= 2;
-                });
-                if (match) bestItem = match;
+                const y = parseInt(localYear);
+                const m = json.items.find(x => { const iy = parseInt(extractYear(x.volumeInfo.publishedDate||'')); return !isNaN(iy) && Math.abs(iy-y)<=2; });
+                if(m) bestItem = m;
             }
 
-            // 3. 寫入資料
             const i = bestItem.volumeInfo;
-            let title = `$a ${i.title}`;
-            if(i.subtitle) title += ` : $b ${i.subtitle}`;
-            updateField('f245', title, true);
+            // 標題
+            let t = `$a ${i.title}`; if(i.subtitle) t+=` : $b ${i.subtitle}`;
+            updateField('f245', t, true);
+            // 作者
+            if(i.authors) updateField('f100', `$a ${formatAuthorName(i.authors[0])}, $e author.`, true);
             
-            if(i.authors) {
-                const fmtName = formatAuthorName(i.authors[0]);
-                updateField('f100', `$a ${fmtName}, $e author.`, true);
+            // 出版資訊 (優先使用 API，但保留 $a 空間給 OCR 填)
+            let pubStr = '';
+            // 如果 OCR 已經掃到了地點，保留它
+            const currentPlace = val('f264').match(/\$a\s+([^:]+)/)?.[1] || '[Place]';
+            
+            pubStr += `$a ${currentPlace} : `;
+            if(i.publisher) pubStr += `$b ${i.publisher}, `;
+            if(i.publishedDate) pubStr += `$c ${i.publishedDate.substring(0,4)}`;
+            
+            // 只有在沒鎖定的情況下更新
+            if(!document.getElementById('wrap264').classList.contains('locked-field')) {
+                updateField('f264', pubStr, true);
+                // 如果年份差異太大，鎖定
+                const apiY = extractYear(i.publishedDate||'');
+                if(localYear && apiY && Math.abs(parseInt(localYear)-parseInt(apiY))>3) lockField('wrap264');
             }
-            
-            // 年份鎖定邏輯
-            const apiYear = extractYear(i.publishedDate || '');
-            const yearDiff = localYear && apiYear ? Math.abs(parseInt(localYear) - parseInt(apiYear)) : 0;
-            
-            if (!localYear || yearDiff <= 3) {
-                let pub = '';
-                if(i.publisher) pub += `$b ${i.publisher}, `;
-                if(i.publishedDate) pub += `$c ${i.publishedDate.substring(0,4)}`;
-                if(pub) { updateField('f264', `$a [Place] : ${pub}`, true); unlockField('wrap264'); }
-            } else {
-                lockField('wrap264'); // 鎖定
-            }
-            
-            if(i.description && val('f520').length < 50) updateField('f520', `$a ${i.description}`);
+
+            if(i.description && val('f520').length<50) updateField('f520', `$a ${i.description}`);
             if(i.industryIdentifiers && !val('f020')) {
-                const isbn13 = i.industryIdentifiers.find(x=>x.type==='ISBN_13');
-                if(isbn13) updateField('f020', `$a ${isbn13.identifier}`);
+                const isbn = i.industryIdentifiers.find(x=>x.type==='ISBN_13');
+                if(isbn) updateField('f020', `$a ${isbn.identifier}`);
             }
-            
-            document.getElementById('srcTag').textContent = 'API 命中 (已驗證)';
+            document.getElementById('srcTag').textContent = 'API 命中';
             document.getElementById('srcTag').className = 'badge api';
             return true;
         }
-    } catch(e) { console.error(e); }
+    } catch(e){}
     return false;
 }
 
-// --- 新增：相似度檢查 (Token Overlap) ---
-function checkSimilarity(str1, str2) {
-    if (!str1 || !str2) return 0;
-    const tokenize = s => s.toLowerCase().replace(/[^\w\s]/g, '').split(/\s+/).filter(w => w.length > 2);
-    const set1 = new Set(tokenize(str1));
-    const set2 = new Set(tokenize(str2));
-    
-    let intersection = 0;
-    set1.forEach(word => { if (set2.has(word)) intersection++; });
-    
-    const smallerSize = Math.min(set1.size, set2.size);
-    return smallerSize === 0 ? 0 : intersection / smallerSize;
-}
-
-// --- 升級：封面分析 (包含 245 $c 獵人) ---
-function analyzeCoverMerge(lines, apiSuccess) {
-    if(!lines.length) return;
-    const validLines = lines.filter(l => l.text.trim().length > 2);
-    
-    // 1. 找書名 (最大字)
-    let maxH = 0, titleIdx = -1;
-    validLines.forEach((l, i) => { const h = l.bbox.y1 - l.bbox.y0; if(h>maxH) { maxH=h; titleIdx=i; }});
-    const ocrTitle = validLines.filter(l => (l.bbox.y1 - l.bbox.y0) > maxH * 0.7).map(l => l.text.trim()).join(' ');
-
-    // 2. 如果 API 失敗，用 OCR 補書名
-    const curTitle = val('f245').replace(/^\$a /, '');
-    if (!apiSuccess && !curTitle && ocrTitle) {
-        updateField('f245', `$a ${ocrTitle}`);
-    }
-
-    // 3. --- $c 責任者獵人 (新功能) ---
-    // 掃描「書名下方」的所有行
-    let statement = [];
-    if (titleIdx >= 0) {
-        const titleBottomY = validLines[titleIdx].bbox.y1;
-        
-        for (let i = 0; i < validLines.length; i++) {
-            const line = validLines[i];
-            const text = line.text.trim();
-            // 條件：位於標題下方，且包含關鍵字
-            if (line.bbox.y0 > titleBottomY) {
-                // 關鍵字：法/英/德
-                if (/^(par|by|von|textes|trad|edit|pref|intro|présentés|choisis)/i.test(text) || text.includes('Sorbonne') || text.includes('Université')) {
-                    statement.push(text);
-                }
-            }
-        }
-    }
-    
-    // 如果抓到了，填入 245 $c
-    if (statement.length > 0) {
-        const fullStatement = statement.join(' ');
-        const currentField = val('f245');
-        // 避免重複填寫
-        if (currentField && !currentField.includes('$c')) {
-            updateField('f245', `${currentField} / $c ${fullStatement}`, true);
-        }
-    }
-}
-
-// --- 其他功能 ---
-function extractKeywords(lines) {
-    const validLines = lines.filter(l => l.text.trim().length > 2);
-    if(validLines.length === 0) return { query: '', cleanTitle: '' };
-    let maxH = 0, titleIdx = -1;
-    validLines.forEach((l, i) => { const h = l.bbox.y1 - l.bbox.y0; if(h > maxH) { maxH = h; titleIdx = i; }});
-    
-    let q = '', title = '';
-    if (titleIdx >= 0) {
-        title = validLines[titleIdx].text.trim().replace(/[|\-_—]/g, ' ').trim();
-        q += `intitle:${title}`;
-        for(let i=0; i<titleIdx; i++){
-            const t = validLines[i].text.trim();
-            if(t.length > 3 && !/\d/.test(t) && !t.includes('Pline')) { q += `+inauthor:${t.split(' ')[0]}`; break; }
-        }
-    }
-    return { query: q, cleanTitle: title };
-}
-
-// 輔助函式保持不變
-function manualSearch() { const q = document.getElementById('manualQuery').value.trim(); if(q) fetchGoogle(q, extractYear(val('f264')), null); }
-function extractYear(s) { const m = s?s.match(/\b(18|19|20)\d{2}\b/):null; return m?m[0]:null; }
-function lockField(id) { document.getElementById(id).classList.add('locked-field'); }
-function unlockField(id) { document.getElementById(id).classList.remove('locked-field'); }
-function formatAuthorName(n) { if(n.includes("'")||n.includes(" d'"))return n; let x=n; if(/^[A-Z\s\.\-',]+$/.test(n)) x=n.toLowerCase().replace(/(^|\s)\S/g,l=>l.toUpperCase()); const p=x.split(' '); return p.length>1&&!x.includes(',')?`${p.pop()}, ${p.join(' ')}`:x; }
-function extractEdition(t){ const n=t.normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase(); const m=n.match(/(\d+[\.\s]?(ª|º|a|o|st|nd|rd|th|e|eme|er|re))[\s\.]*(ed|éd|aufl)/i); if(m){const r=t.match(new RegExp(m[1].replace('.','\\.'),'i'));return r?`${r[0]} edition`:m[0];} const x=t.match(/(Première|Deuxième|Troisième|First|Second)\s+(éd|ed)/i); return x?x[0]:null; }
-function analyzeCopyrightMerge(t,l){ const y=t.match(/\b(19|20)\d{2}\b/); let p=''; for(let x of l){if(x.text.includes('©')||/Editions|Press|Verlag/i.test(x.text)){p=x.text.replace(/.*©\s*\d*\s*/,'').replace(/^\d{4}/,'').trim();if(p.length>2&&!/\d/.test(p))break}} const c=val('f264'); if(!c){let s='';if(p)s+=`: $b ${p}, `;if(y)s+=`$c ${y[0]}`;if(s)updateField('f264',`$a [Place] ${s}`)} }
-function analyzeBack(l){ if(val('f520'))return; const c=l.filter(x=>!x.text.includes('ISBN')&&(x.text.replace(/[^a-z]/gi,'').length/x.text.length)>0.5); const s=c.map(x=>x.text.trim()).join(' '); if(s.length>20)updateField('f520',`$a ${s}`) }
-function updateField(id,v,f=false){ const e=document.getElementById(id); if(f||!e.value){e.value=v;e.parentElement.classList.add('safe-field');setTimeout(()=>e.parentElement.classList.remove('safe-field'),1200)} }
+// Utils (保持 v9)
+function checkSimilarity(s1,s2){if(!s1||!s2)return 0;const t=s=>s.toLowerCase().replace(/[^\w\s]/g,'').split(/\s+/).filter(w=>w.length>2);const a=new Set(t(s1)),b=new Set(t(s2));let i=0;a.forEach(w=>{if(b.has(w))i++});const m=Math.min(a.size,b.size);return m===0?0:i/m}
+function extractTitleFromOCR(l){const v=l.filter(x=>x.text.trim().length>2);let m=0;v.forEach(x=>{const h=x.bbox.y1-x.bbox.y0;if(h>m)m=h});return v.filter(x=>(x.bbox.y1-x.bbox.y0)>m*0.7).map(x=>x.text.trim()).join(' ')}
+function extractKeywords(l){const v=l.filter(x=>x.text.trim().length>2);if(!v.length)return{query:'',cleanTitle:''};let m=0,idx=-1;v.forEach((x,i)=>{const h=x.bbox.y1-x.bbox.y0;if(h>m){m=h;idx=i}});let q='',t='';if(idx>=0){t=v[idx].text.trim().replace(/[|\-_—]/g,' ').trim();q=`intitle:${t}`;for(let i=0;i<idx;i++){const x=v[i].text.trim();if(x.length>3&&!/\d/.test(x)&&!x.includes('Pline')){q+=`+inauthor:${x.split(' ')[0]}`;break}}}return{query:q,cleanTitle:t}}
+function manualSearch(){const q=document.getElementById('manualQuery').value.trim();if(q)fetchGoogle(q,extractYear(val('f264')),null)}
+function extractYear(s){const m=s?s.match(/\b(18|19|20)\d{2}\b/):null;return m?m[0]:null}
+function lockField(id){document.getElementById(id).classList.add('locked-field')}
+function unlockField(id){document.getElementById(id).classList.remove('locked-field')}
+function formatAuthorName(n){if(n.includes("'")||n.includes(" d'"))return n;let x=n;if(/^[A-Z\s\.\-',]+$/.test(n))x=n.toLowerCase().replace(/(^|\s)\S/g,l=>l.toUpperCase());const p=x.split(' ');return p.length>1&&!x.includes(',')?`${p.pop()}, ${p.join(' ')}`:x}
+function extractEdition(t){const n=t.normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase();const m=n.match(/(\d+[\.\s]?(ª|º|a|o|st|nd|rd|th|e|eme|er|re))[\s\.]*(ed|éd|aufl)/i);if(m){const r=t.match(new RegExp(m[1].replace('.','\\.'),'i'));return r?`${r[0]} edition`:m[0]}const x=t.match(/(Première|Deuxième|Troisième|First|Second)\s+(éd|ed)/i);return x?x[0]:null}
+function analyzeBack(l){if(val('f520'))return;const c=l.filter(x=>!x.text.includes('ISBN')&&(x.text.replace(/[^a-z]/gi,'').length/x.text.length)>0.5);const s=c.map(x=>x.text.trim()).join(' ');if(s.length>20)updateField('f520',`$a ${s}`)}
+function updateField(id,v,f=false){const e=document.getElementById(id);if(f||!e.value){e.value=v;e.parentElement.classList.add('safe-field');setTimeout(()=>e.parentElement.classList.remove('safe-field'),1200)}}
 function val(id){return document.getElementById(id).value}
 function copyOne(id){const e=document.getElementById(id);navigator.clipboard.writeText(e.value);const b=e.nextElementSibling;b.textContent='✅';setTimeout(()=>b.textContent='📋',1000)}
 function copyAll(){const f=['f020','f100','f245','f250','f264','f520'];const t=f.map(k=>{const v=val(k);return v?`${k.substring(1)} ## ${v}`:null}).filter(x=>x).join('\n');navigator.clipboard.writeText(t).then(()=>{const b=document.querySelector('.copy-all-btn');b.textContent='✅ 已複製';setTimeout(()=>b.textContent='📋 複製完整記錄',2000)})}
