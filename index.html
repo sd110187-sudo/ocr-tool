@@ -3,71 +3,124 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>MARC 21 - BnF & Smart Stitch</title>
+<title>MARC 21 - Pro Scanner v4</title>
 <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
 <style>
-:root { --primary: #0055a4; /* BnF Blue */ --bg: #f4f6f8; }
-body { font-family: -apple-system, system-ui, sans-serif; background: var(--bg); margin: 0; padding-bottom: 80px; }
-header { background: white; padding: 16px; font-weight: 800; text-align: center; border-bottom: 1px solid #ddd; position: sticky; top: 0; z-index: 50; }
+:root { --primary: #2563eb; --bg: #f8fafc; --text: #334155; }
+body { font-family: -apple-system, system-ui, sans-serif; background: var(--bg); color: var(--text); margin: 0; padding-bottom: 80px; }
+header { background: white; padding: 16px; font-weight: 800; text-align: center; border-bottom: 1px solid #e2e8f0; position: sticky; top: 0; z-index: 50; box-shadow: 0 1px 2px rgba(0,0,0,0.05); }
 
-.controls { display: flex; gap: 8px; padding: 12px; background: white; overflow-x: auto; }
-.mode-btn { flex: 1; padding: 8px; border: 1px solid #ccc; border-radius: 20px; background: white; font-size: 13px; color: #555; white-space: nowrap; }
+/* Mode Switcher */
+.controls { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; padding: 12px; background: white; border-bottom: 1px solid #f1f5f9; }
+.mode-btn { padding: 8px; border: 1px solid #cbd5e1; border-radius: 8px; background: white; font-size: 13px; color: #64748b; font-weight: 500; }
 .mode-btn.active { background: var(--primary); color: white; border-color: var(--primary); font-weight: 600; }
 
+/* Scanner */
 .scan-area { padding: 16px; text-align: center; }
-#scanBtn { width: 100%; padding: 16px; background: #2c3e50; color: white; border: none; border-radius: 12px; font-size: 16px; font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
-.status { margin-top: 10px; font-size: 13px; color: #666; font-weight: 500; min-height: 20px; }
+#scanBtn { width: 100%; padding: 16px; background: #0f172a; color: white; border: none; border-radius: 12px; font-size: 16px; font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 8px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); }
+#scanBtn:disabled { opacity: 0.7; }
+.status { margin-top: 10px; font-size: 13px; color: #64748b; font-weight: 500; min-height: 20px; }
 
-/* Result Card */
-.card { background: white; margin: 12px 16px; padding: 16px; border-radius: 12px; border: 1px solid #eee; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+/* MARC Cards */
+.card { background: white; margin: 12px 16px; padding: 16px; border-radius: 12px; border: 1px solid #e2e8f0; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
 .card-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
-.badge { font-size: 10px; padding: 4px 8px; border-radius: 4px; background: #eee; color: #666; font-weight: bold; }
-.badge.bnf { background: #e3f2fd; color: #0277bd; }
-.badge.google { background: #e8f5e9; color: #2e7d32; }
-.badge.ocr { background: #fff8e1; color: #f57f17; }
+.badge { font-size: 10px; padding: 3px 8px; border-radius: 12px; font-weight: bold; background: #f1f5f9; color: #64748b; }
+.badge.google { background: #dcfce7; color: #166534; } /* Green */
+.badge.bnf { background: #dbeafe; color: #1e40af; } /* Blue */
+.badge.ocr { background: #ffedd5; color: #9a3412; } /* Orange */
 
-.field { margin-bottom: 10px; display: flex; align-items: center; }
-.tag { width: 40px; font-family: monospace; font-weight: bold; color: #888; font-size: 14px; }
-input, textarea { flex: 1; padding: 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 15px; width: 100%; font-family: inherit; }
-textarea { min-height: 70px; resize: vertical; }
-.filled { animation: glow 1s ease-out; border-color: #4caf50; }
-@keyframes glow { 0% { background-color: #dcedc8; } 100% { background-color: white; } }
+/* Input Groups with Copy Button */
+.field-group { margin-bottom: 12px; }
+.tag-label { display: block; font-family: monospace; font-size: 12px; font-weight: bold; color: #94a3b8; margin-bottom: 4px; }
+.input-wrapper { display: flex; gap: 0; }
+.input-wrapper input, .input-wrapper textarea {
+    flex: 1; padding: 10px; border: 1px solid #cbd5e1; border-radius: 8px 0 0 8px; font-size: 15px; font-family: monospace; -webkit-appearance: none;
+}
+.input-wrapper textarea { min-height: 60px; resize: vertical; border-radius: 8px 0 0 8px; }
+.copy-btn {
+    padding: 0 12px; background: #f1f5f9; border: 1px solid #cbd5e1; border-left: none; border-radius: 0 8px 8px 0; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 18px; transition: background 0.2s;
+}
+.copy-btn:active { background: #e2e8f0; }
 
-details { margin: 16px; font-size: 12px; color: #666; }
-#debug { white-space: pre-wrap; background: #eee; padding: 10px; border-radius: 8px; }
+.filled { border-color: #22c55e !important; background: #f0fdf4; }
+
+details { margin: 16px; font-size: 12px; color: #64748b; }
+#debug { white-space: pre-wrap; background: #f1f5f9; padding: 10px; border-radius: 8px; overflow-x: scroll; }
 </style>
 </head>
 <body>
 
-<header>MARC 21 - 法文/西文專用版</header>
+<header>MARC 21 Pro Scanner</header>
 
 <div class="controls">
-    <button class="mode-btn active" onclick="setMode('copyright')">條碼/版權頁</button>
-    <button class="mode-btn" onclick="setMode('cover')">封面 (智慧拼接)</button>
+    <button class="mode-btn active" onclick="setMode('copyright')">條碼/版權</button>
+    <button class="mode-btn" onclick="setMode('cover')">封面 (佈局)</button>
     <button class="mode-btn" onclick="setMode('back')">封底摘要</button>
 </div>
 
 <div class="scan-area">
     <button id="scanBtn" onclick="document.getElementById('fileIn').click()">📸 啟動相機</button>
-    <div class="status" id="status">準備就緒 (BnF/Google/OpenAlex)</div>
+    <div class="status" id="status">準備就緒 (Google優先)</div>
     <input type="file" id="fileIn" accept="image/*" capture="environment" style="display:none" onchange="process(this)">
 </div>
 
 <div class="card">
     <div class="card-head">
-        <b>MARC 資料</b>
-        <span id="srcTag" class="badge">等待掃描</span>
+        <b>MARC 結果</b>
+        <span id="srcTag" class="badge">待掃描</span>
     </div>
-    <div class="field"><div class="tag">020</div><input id="f020" placeholder="$a ISBN"></div>
-    <div class="field"><div class="tag">100</div><input id="f100" placeholder="$a Author"></div>
-    <div class="field"><div class="tag">245</div><input id="f245" placeholder="$a Title"></div>
-    <div class="field"><div class="tag">250</div><input id="f250" placeholder="$a Edition"></div>
-    <div class="field"><div class="tag">264</div><input id="f264" placeholder="$c Year"></div>
-    <div class="field"><div class="tag">520</div><textarea id="f520" placeholder="$a Abstract"></textarea></div>
+    
+    <div class="field-group">
+        <span class="tag-label">020 ISBN</span>
+        <div class="input-wrapper">
+            <input id="f020" placeholder="$a">
+            <button class="copy-btn" onclick="copy('f020')">📋</button>
+        </div>
+    </div>
+    
+    <div class="field-group">
+        <span class="tag-label">100 Author (自動格式化)</span>
+        <div class="input-wrapper">
+            <input id="f100" placeholder="$a Name, $e author.">
+            <button class="copy-btn" onclick="copy('f100')">📋</button>
+        </div>
+    </div>
+    
+    <div class="field-group">
+        <span class="tag-label">245 Title</span>
+        <div class="input-wrapper">
+            <input id="f245" placeholder="$a Title">
+            <button class="copy-btn" onclick="copy('f245')">📋</button>
+        </div>
+    </div>
+    
+    <div class="field-group">
+        <span class="tag-label">250 Edition</span>
+        <div class="input-wrapper">
+            <input id="f250" placeholder="$a">
+            <button class="copy-btn" onclick="copy('f250')">📋</button>
+        </div>
+    </div>
+    
+    <div class="field-group">
+        <span class="tag-label">264 Publication</span>
+        <div class="input-wrapper">
+            <input id="f264" placeholder="$c Year">
+            <button class="copy-btn" onclick="copy('f264')">📋</button>
+        </div>
+    </div>
+    
+    <div class="field-group">
+        <span class="tag-label">520 Abstract (濾雜訊)</span>
+        <div class="input-wrapper">
+            <textarea id="f520" placeholder="$a"></textarea>
+            <button class="copy-btn" onclick="copy('f520')">📋</button>
+        </div>
+    </div>
 </div>
 
 <details>
-    <summary>OCR 原始資料 (Debug)</summary>
+    <summary>原始文字 (Debug)</summary>
     <div id="debug"></div>
 </details>
 <canvas id="cvs" style="display:none"></canvas>
@@ -75,11 +128,9 @@ details { margin: 16px; font-size: 12px; color: #666; }
 <script>
 let worker, mode = 'copyright';
 
-// 初始化
 (async () => {
-    msg('載入 OCR 引擎 (Fra/Eng/Deu)...', true);
-    // 重要：載入法文(fra)語言包以支援重音符號
-    worker = await Tesseract.createWorker('eng+fra+deu+spa');
+    msg('載入 OCR 引擎 (多語言)...', true);
+    worker = await Tesseract.createWorker('eng+fra+deu+spa+rus');
     msg('系統就緒');
 })();
 
@@ -93,182 +144,153 @@ function setMode(m) {
 async function process(input) {
     if (!input.files[0]) return;
     const file = input.files[0];
-    msg('影像優化處理...', true);
+    msg('影像優化中...', true);
     
-    // 1. 影像二值化處理 (加強對比)
     const imgData = await preprocess(file);
     
-    msg('OCR 辨識與佈局分析...', true);
-    // 2. 執行 OCR
+    msg('OCR 識別中...', true);
     const { data } = await worker.recognize(imgData);
     document.getElementById('debug').textContent = data.text;
     
-    // 3. 執行分析
     await analyze(data);
     input.value = '';
 }
 
 async function analyze(data) {
     const text = data.text;
-    const lines = data.lines; // 取得行資訊
+    const lines = data.lines;
     
-    // ISBN 掃描
-    const cleanText = text.replace(/\s+/g, '').replace(/-/g, '');
-    const isbnMatch = cleanText.match(/(97[89]\d{10})|(\d{9}[\dX])/);
+    // 清洗 ISBN 雜訊 (O->0, I->1)
+    const clean = text.replace(/\|/g,'1').replace(/\bO(\d)/g,'0$1').replace(/[-\s]/g,'');
+    const isbnMatch = clean.match(/(97[89]\d{10})|(\d{9}[\dX])/);
     
-    let foundApi = false;
+    let found = false;
 
-    // --- 策略 A: API 查詢 (BnF 優先 -> Google -> OpenLibrary) ---
+    // --- 策略 A: API 查詢 (Google -> OpenLib -> BnF) ---
     if (isbnMatch) {
         const isbn = isbnMatch[0];
         fill('f020', `$a ${isbn}`);
-        msg(`偵測到 ISBN ${isbn}，查詢 BnF...`, true);
+        msg(`查 ISBN: ${isbn}...`, true);
 
-        // 1. 查法國國家圖書館 (BnF) - 對法文書最強
-        foundApi = await fetchBnF(isbn);
+        // 1. Google Books (優先)
+        found = await fetchGoogle(isbn);
         
-        // 2. 查 Google Books
-        if (!foundApi) {
-            msg('BnF 無資料，查 Google Books...', true);
-            foundApi = await fetchGoogle(isbn);
+        // 2. Open Library
+        if (!found) {
+            msg('Google 無資料，查 OpenLib...', true);
+            found = await fetchOpenLibrary(isbn);
         }
-        
-        // 3. 查 OpenLibrary
-        if (!foundApi) {
-            msg('Google 無資料，查 OpenLibrary...', true);
-            foundApi = await fetchOpenLibrary(isbn);
+
+        // 3. BnF (最後手段，專攻法文書)
+        if (!found) {
+            msg('OpenLib 無資料，查 BnF...', true);
+            found = await fetchBnF(isbn);
         }
     }
 
-    // --- 策略 B: OCR 智慧填入 (當 API 失敗時) ---
-    if (!foundApi) {
-        msg('API 無資料，啟動 OCR 智慧分析');
-        setSource('OCR 智慧分析', 'ocr');
+    // --- 策略 B: OCR 智慧填入 ---
+    if (!found) {
+        msg('API 無資料，使用 OCR 智慧分析');
+        setSrc('OCR', 'ocr');
         
         if (mode === 'cover') {
-            analyzeCoverSmartly(lines); // 呼叫新的縫合演算法
+            analyzeCover(lines);
         } else if (mode === 'copyright') {
             analyzeCopyright(text);
         } else if (mode === 'back') {
-            if(!val('f520')) fill('f520', '$a ' + text.replace(/\n/g, ' ').slice(0, 600));
+            analyzeBack(lines);
         }
     } else {
         msg('資料獲取成功');
     }
 }
 
-// --- 核心改進 1: 多行標題縫合演算法 (Title Stitching) ---
-function analyzeCoverSmartly(lines) {
-    if (!lines || lines.length === 0) return;
-
-    // 1. 過濾雜訊 (太短的行)
+// --- 核心：封面分析與姓名格式化 ---
+function analyzeCover(lines) {
+    if(!lines.length) return;
     const validLines = lines.filter(l => l.text.trim().length > 2);
     
-    // 2. 找出「最大字體」的高度
+    // 找最大字體 (書名)
     let maxH = 0;
-    validLines.forEach(l => {
-        const h = l.bbox.y1 - l.bbox.y0;
-        if(h > maxH) maxH = h;
-    });
-
-    // 3. 找出所有「大標題行」 (高度大於最大高度的 70%)
-    // 並依照 Y 軸座標排序 (由上而下)
-    const titleLines = validLines
-        .filter(l => (l.bbox.y1 - l.bbox.y0) > maxH * 0.7)
-        .sort((a,b) => a.bbox.y0 - b.bbox.y0);
-
-    // 4. 縫合標題 (這是解決 "de la pensée" 斷裂的關鍵)
-    if (titleLines.length > 0) {
-        // 將所有大字體行合併
-        const fullTitle = titleLines.map(l => l.text.trim()).join(' ');
-        if (!val('f245')) fill('f245', `$a ${fullTitle}`);
+    validLines.forEach(l => { const h = l.bbox.y1 - l.bbox.y0; if(h>maxH) maxH=h; });
+    
+    // 縫合標題
+    const titleLines = validLines.filter(l => (l.bbox.y1 - l.bbox.y0) > maxH * 0.7);
+    const title = titleLines.map(l => l.text.trim()).join(' ');
+    if(!val('f245')) fill('f245', `$a ${title}`);
+    
+    // 找作者 (標題上方)
+    if(!val('f100') && titleLines.length > 0) {
+        const topY = titleLines[0].bbox.y0;
+        const authorLines = validLines.filter(l => l.bbox.y1 < topY && !/\d/.test(l.text));
         
-        // 5. 找作者 (排除掉標題行，找剩下位於標題上方的行)
-        // 假設標題第一行的 Y 座標是 threshold
-        const titleTopY = titleLines[0].bbox.y0;
-        
-        // 找標題上方的行
-        const authorCand = validLines.filter(l => 
-            l.bbox.y1 < titleTopY && // 在標題上面
-            !/\d/.test(l.text) &&    // 沒有數字
-            l.text.length > 3
-        );
-        
-        if (authorCand.length > 0 && !val('f100')) {
-            // 取最接近標題的那一行 (通常是作者)
-            const author = authorCand[authorCand.length-1].text.trim();
-            fill('f100', `$a ${author}, $e author.`);
+        if(authorLines.length > 0) {
+            // 取最靠近標題的那一行
+            const rawName = authorLines[authorLines.length-1].text.trim();
+            // 格式化姓名 (轉換大小寫 + 反轉)
+            const fmtName = formatAuthorName(rawName);
+            fill('f100', `$a ${fmtName}, $e author.`);
         }
     }
+}
 
-    // 6. 找版次 (不分位置，全頁搜尋)
-    findEditionRobust(validLines.map(l=>l.text).join('\n'));
+// --- 核心：姓名處理邏輯 ---
+function formatAuthorName(name) {
+    // 1. 處理全大寫 (ASMA MHALLA -> Asma Mhalla)
+    // 檢測是否全為大寫字母 (忽略空格和符號)
+    const isAllCaps = /^[A-Z\s\.\-]+$/.test(name);
+    
+    let processedName = name;
+    if (isAllCaps) {
+        processedName = name.toLowerCase().replace(/(^|\s)\S/g, l => l.toUpperCase());
+    }
+    
+    // 2. 處理反轉 (Asma Mhalla -> Mhalla, Asma)
+    // 簡單邏輯：假設最後一個詞是姓氏
+    const parts = processedName.split(' ');
+    if (parts.length > 1) {
+        const lastName = parts.pop();
+        return `${lastName}, ${parts.join(' ')}`;
+    }
+    return processedName;
+}
+
+// --- 核心：封底摘要過濾 (去除亂碼) ---
+function analyzeBack(lines) {
+    if(val('f520')) return;
+    
+    // 過濾邏輯：
+    // 1. 去除太短的行
+    // 2. 去除包含 ISBN 的行
+    // 3. 去除「非字母字元」比例過高的行 (防止亂碼)
+    const cleanLines = lines.filter(l => {
+        const t = l.text.trim();
+        if(t.length < 15) return false; // 太短
+        if(t.includes('ISBN') || t.includes('978-')) return false; // 條碼
+        
+        // 計算非字母符號比例
+        const invalidChars = t.replace(/[a-zA-Z0-9\sàâäéèêëîïôöùûüçñ]/g, '').length;
+        if ((invalidChars / t.length) > 0.3) return false; // 超過 30% 是亂碼則丟棄
+        
+        return true;
+    });
+
+    const summary = cleanLines.map(l => l.text.trim()).join(' ');
+    if(summary.length > 20) {
+        fill('f520', `$a ${summary}`);
+    }
 }
 
 function analyzeCopyright(text) {
-    // 找年份
     const year = text.match(/\b(19|20)\d{2}\b/);
     if(year && !val('f264')) fill('f264', `$c ${year[0]}`);
-    findEditionRobust(text);
-}
-
-// --- 核心改進 2: 模糊版次偵測 (Fuzzy Edition) ---
-function findEditionRobust(text) {
-    if (val('f250')) return;
-
-    // 移除重音符號並轉小寫，解決 'édition' vs 'edition' 問題
-    const norm = text.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
     
-    // 建立關鍵字映射 (法/英/德)
-    const keyMap = {
-        'premiere': '1st', 'first': '1st',
-        'deuxieme': '2nd', 'second': '2nd',
-        'troisieme': '3rd', 'third': '3rd', '3e': '3rd',
-        'quatrieme': '4th', 'fourth': '4th'
-    };
-
-    // 搜尋 edition/auflage 關鍵字
-    // Regex 解釋：找 (數字+e/th) 或 (文字數字) 後面跟著 edit/aufl
-    const regex = /(\b\d+(e|th|rd|nd|st)\b|\bpremiere\b|\bdeuxieme\b|\btroisieme\b|\bquatrieme\b|\bfirst\b|\bsecond\b|\bthird\b).*?(edit|aufl)/i;
-    
-    const match = norm.match(regex);
-    if (match) {
-        // 如果找到，嘗試回頭去原始 text 抓那一行
-        // 這裡簡單處理：直接組構標準格式
-        let ver = match[1]; // 抓到的版本詞 (如 troisieme)
-        if(keyMap[ver]) ver = keyMap[ver]; // 轉成 3rd (可選)
-        
-        fill('f250', `$a ${match[0]} (Detected)`); // 填入偵測到的字串
-    }
+    // 找版次
+    const ed = text.match(/(\d+(st|nd|rd|th|e|eme)|Prem|Deux|Trois|First|Second)\s+(ed|aufl)/i);
+    if(ed && !val('f250')) fill('f250', `$a ${ed[0]}`);
 }
 
-// --- API: 法國國家圖書館 (BnF) SRU ---
-async function fetchBnF(isbn) {
-    try {
-        // BnF 的免費 SRU API
-        const url = `https://catalogue.bnf.fr/api/SRU?version=1.2&operation=searchRetrieve&query=bib.isbn%20adj%20%22${isbn}%22&recordSchema=dublincore`;
-        const res = await fetch(url);
-        const str = await res.text();
-        
-        // 簡單解析 XML
-        if (str.includes('<dc:title>')) {
-            const parser = new DOMParser();
-            const xml = parser.parseFromString(str, "text/xml");
-            
-            const title = xml.querySelector('title')?.textContent || '';
-            const creator = xml.querySelector('creator')?.textContent || '';
-            const date = xml.querySelector('date')?.textContent || '';
-            const publisher = xml.querySelector('publisher')?.textContent || '';
-            
-            setSource('BnF 法國國家圖書館', 'bnf');
-            fill('f245', `$a ${title}`);
-            if(creator) fill('f100', `$a ${creator}, $e author.`);
-            fill('f264', `$a [France] : $b ${publisher}, $c ${date}`);
-            return true;
-        }
-    } catch(e) { console.error(e); }
-    return false;
-}
+// --- API Functions (順序: Google -> OpenLib -> BnF) ---
 
 async function fetchGoogle(isbn) {
     try {
@@ -276,10 +298,11 @@ async function fetchGoogle(isbn) {
         const json = await res.json();
         if (json.totalItems > 0) {
             const i = json.items[0].volumeInfo;
-            setSource('Google Books', 'google');
+            setSrc('Google Books', 'google');
             fill('f245', `$a ${i.title}`);
-            if(i.authors) fill('f100', `$a ${i.authors[0]}, $e author.`);
+            if(i.authors) fill('f100', `$a ${formatAuthorName(i.authors[0])}, $e author.`);
             fill('f264', `$b ${i.publisher||''}, $c ${i.publishedDate?.slice(0,4)||''}`);
+            if(i.description) fill('f520', `$a ${i.description}`);
             return true;
         }
     } catch(e){}
@@ -293,9 +316,9 @@ async function fetchOpenLibrary(isbn) {
         const key = `ISBN:${isbn}`;
         if (json[key]) {
             const d = json[key].details;
-            setSource('Open Library', 'ocr');
+            setSrc('Open Library', 'ocr');
             fill('f245', `$a ${d.title}`);
-            if(d.authors) fill('f100', `$a ${d.authors[0].name}, $e author.`);
+            if(d.authors) fill('f100', `$a ${formatAuthorName(d.authors[0].name)}, $e author.`);
             fill('f264', `$c ${d.publish_date} : $b ${d.publishers?.[0]}`);
             return true;
         }
@@ -303,7 +326,46 @@ async function fetchOpenLibrary(isbn) {
     return false;
 }
 
-// Utils
+async function fetchBnF(isbn) {
+    try {
+        // BnF SRU API
+        const url = `https://catalogue.bnf.fr/api/SRU?version=1.2&operation=searchRetrieve&query=bib.isbn%20adj%20%22${isbn}%22&recordSchema=dublincore`;
+        const res = await fetch(url);
+        const str = await res.text();
+        if (str.includes('<dc:title>')) {
+            const parser = new DOMParser();
+            const xml = parser.parseFromString(str, "text/xml");
+            
+            const title = xml.querySelector('title')?.textContent || '';
+            let creator = xml.querySelector('creator')?.textContent || '';
+            const date = xml.querySelector('date')?.textContent || '';
+            const pub = xml.querySelector('publisher')?.textContent || '';
+            
+            // BnF 的名字通常已經是格式化好的，或者是 "Mhalla, Asma" 格式，這裡做個簡單檢查
+            if(creator && !creator.includes(',')) creator = formatAuthorName(creator);
+
+            setSrc('BnF (法)', 'bnf');
+            fill('f245', `$a ${title}`);
+            if(creator) fill('f100', `$a ${creator}, $e author.`);
+            fill('f264', `$a [France] : $b ${pub}, $c ${date}`);
+            return true;
+        }
+    } catch(e) {}
+    return false;
+}
+
+// --- Utilities ---
+function copy(id) {
+    const el = document.getElementById(id);
+    el.select();
+    navigator.clipboard.writeText(el.value).then(() => {
+        const btn = el.nextElementSibling;
+        const original = btn.textContent;
+        btn.textContent = '✅';
+        setTimeout(() => btn.textContent = original, 1000);
+    });
+}
+
 function preprocess(file) {
     return new Promise(r => {
         const img = new Image();
@@ -311,17 +373,14 @@ function preprocess(file) {
             const c = document.getElementById('cvs');
             const ctx = c.getContext('2d');
             let w = img.width, h = img.height;
-            if(w>1500) { let s=1500/w; w*=s; h*=s; } // Resize
+            if(w>1500) { let s=1500/w; w*=s; h*=s; }
             c.width=w; c.height=h;
             ctx.drawImage(img,0,0,w,h);
-            
-            // 簡單二值化
             const d = ctx.getImageData(0,0,w,h);
-            const data = d.data;
-            for(let i=0; i<data.length; i+=4) {
-                const avg = (data[i]+data[i+1]+data[i+2])/3;
-                const v = avg > 120 ? 255 : 0; // Threshold
-                data[i]=data[i+1]=data[i+2]=v;
+            for(let i=0;i<d.data.length;i+=4){
+                const avg = (d.data[i]+d.data[i+1]+d.data[i+2])/3;
+                const v = avg > 120 ? 255 : 0;
+                d.data[i]=d.data[i+1]=d.data[i+2]=v;
             }
             ctx.putImageData(d,0,0);
             r(c.toDataURL('image/jpeg'));
@@ -332,19 +391,15 @@ function preprocess(file) {
 
 function fill(id, val) { 
     const el = document.getElementById(id); 
-    el.value = val; 
-    el.classList.add('filled'); 
-    setTimeout(()=>el.classList.remove('filled'), 1000);
+    if(!el.value) { // 只有當欄位是空的時候才填入 (避免覆蓋手動修改)
+        el.value = val; 
+        el.classList.add('filled'); 
+        setTimeout(()=>el.classList.remove('filled'), 1000);
+    }
 }
 function val(id) { return document.getElementById(id).value; }
-function setSource(name, type) {
-    const el = document.getElementById('srcTag');
-    el.textContent = name;
-    el.className = `badge ${type}`;
-}
-function msg(t, l=false) { 
-    document.getElementById('status').textContent = t + (l?' ⏳':''); 
-}
+function setSrc(n, t) { const e=document.getElementById('srcTag'); e.textContent=n; e.className=`badge ${t}`; }
+function msg(t, l=false) { document.getElementById('status').textContent = t + (l?' ⏳':''); }
 </script>
 </body>
 </html>
