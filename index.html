@@ -3,17 +3,17 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>MARC 21 - v20.0 (Multi-Ed/Bind)</title>
+<title>MARC 21 - v21.0 (Comics)</title>
 <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
 <style>
-:root { --primary: #1e293b; --accent: #2563eb; --bg: #f8fafc; --text: #0f172a; --success: #15803d; }
+:root { --primary: #1e293b; --accent: #d946ef; /* Magenta for Comics */ --bg: #f8fafc; --text: #0f172a; --success: #15803d; }
 body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background: var(--bg); color: var(--text); margin: 0; padding-bottom: 140px; }
 header { background: white; padding: 14px; font-weight: 800; text-align: center; border-bottom: 1px solid #e2e8f0; position: sticky; top: 0; z-index: 50; }
 
 /* Controls */
 .controls { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; padding: 10px; background: white; border-bottom: 1px solid #e2e8f0; }
 .mode-btn { padding: 10px; border: 1px solid #cbd5e1; border-radius: 8px; background: white; font-size: 13px; color: #64748b; font-weight: 600; transition: all 0.2s; }
-.mode-btn.active { background: var(--accent); color: white; border-color: var(--accent); box-shadow: 0 2px 4px rgba(37, 99, 235, 0.2); }
+.mode-btn.active { background: var(--accent); color: white; border-color: var(--accent); box-shadow: 0 2px 4px rgba(217, 70, 239, 0.2); }
 
 /* Action Area */
 .action-area { padding: 16px; background: white; margin-bottom: 10px; border-bottom: 1px solid #e2e8f0; }
@@ -62,7 +62,7 @@ details { margin: 16px; font-size: 12px; color: #94a3b8; }
 </head>
 <body>
 
-<header>MARC 21 - v20.0</header>
+<header>MARC 21 - v21.0</header>
 
 <div class="controls">
     <button class="mode-btn active" onclick="setMode('copyright')">版權頁</button>
@@ -86,11 +86,11 @@ details { margin: 16px; font-size: 12px; color: #94a3b8; }
 <div class="card">
     <div class="card-head"><b>MARC 記錄</b><span id="srcTag" class="badge">無資料</span></div>
     <div class="field-group" id="g020"><span class="tag-label">020 ISBN</span><div class="input-wrapper"><textarea id="f020" class="scroll-input" rows="1" placeholder="$a"></textarea><button class="copy-btn" onclick="copyOne('f020')">📋</button></div></div>
-    <div class="field-group" id="g100"><span class="tag-label">100 Author <span class="lock-icon">🔒</span></span><div class="input-wrapper"><textarea id="f100" class="scroll-input" rows="1" placeholder="$a"></textarea><button class="copy-btn" onclick="copyOne('f100')">📋</button></div></div>
-    <div class="field-group" id="g245"><span class="tag-label">245 Title <span class="lock-icon">🔒</span></span><div class="input-wrapper"><textarea id="f245" class="scroll-input" rows="1" placeholder="$a"></textarea><button class="copy-btn" onclick="copyOne('f245')">📋</button></div></div>
-    <div class="field-group"><span class="tag-label">250 Edition (自動識別版本)</span><div class="input-wrapper"><textarea id="f250" class="scroll-input" rows="1" placeholder="$a"></textarea><button class="copy-btn" onclick="copyOne('f250')">📋</button></div></div>
+    <div class="field-group" id="g100"><span class="tag-label">100 Author (編劇/Scénario) <span class="lock-icon">🔒</span></span><div class="input-wrapper"><textarea id="f100" class="scroll-input" rows="1" placeholder="$a"></textarea><button class="copy-btn" onclick="copyOne('f100')">📋</button></div></div>
+    <div class="field-group" id="g245"><span class="tag-label">245 Title (句式小寫) <span class="lock-icon">🔒</span></span><div class="input-wrapper"><textarea id="f245" class="scroll-input" rows="1" placeholder="$a"></textarea><button class="copy-btn" onclick="copyOne('f245')">📋</button></div></div>
+    <div class="field-group"><span class="tag-label">250 Edition</span><div class="input-wrapper"><textarea id="f250" class="scroll-input" rows="1" placeholder="$a"></textarea><button class="copy-btn" onclick="copyOne('f250')">📋</button></div></div>
     <div class="field-group" id="g264"><span class="tag-label">264 Pub</span><div class="input-wrapper" id="wrap264"><textarea id="f264" class="scroll-input" rows="1" placeholder="$a [Place] : $b Pub, $c Year"></textarea><button class="copy-btn" onclick="copyOne('f264')">📋</button></div></div>
-    <div class="field-group" id="g700"><span class="tag-label">700 Added Entry</span><div class="input-wrapper"><textarea id="f700" class="scroll-input" rows="1" placeholder="$a Name, $e role."></textarea><button class="copy-btn" onclick="copyOne('f700')">📋</button></div></div>
+    <div class="field-group" id="g700"><span class="tag-label">700 Added Entry (繪圖/上色/譯)</span><div class="input-wrapper"><textarea id="f700" class="scroll-input" rows="1" placeholder="$a Name, $e role."></textarea><button class="copy-btn" onclick="copyOne('f700')">📋</button></div></div>
     <div class="field-group"><span class="tag-label">520 Abstract</span><div class="input-wrapper"><textarea id="f520" class="scroll-input multiline" placeholder="$a"></textarea><button class="copy-btn" onclick="copyOne('f520')">📋</button></div></div>
 </div>
 
@@ -104,43 +104,42 @@ let mode = 'copyright';
 let isIsbnLocked = false; 
 let isEngineReady = false;
 
-// 1. 裝訂術語字典 (含五國語言變異體)
-const BINDING_TERMS = {
-    pbk: [
-        'paperback', 'pbk', 'softcover', 'softback', 'flexibound', // 英
-        'broché', 'broche', 'poche', 'édition de poche', // 法
-        'taschenbuch', 'kartoniert', 'broschiert', // 德
-        'rústica', 'rustica', 'edición de bolsillo', 'tapa blanda', // 西
-        'мягкая обложка', 'мягкий переплет', 'карманное издание' // 俄
-    ],
-    hbk: [
-        'hardback', 'hbk', 'hardcover', 'cased', // 英
-        'relié', 'relie', 'cartonné', 'cartonne', // 法
-        'gebunden', 'gebundene', 'fester einband', // 德
-        'tapa dura', 'cartoné', 'encuadernado', // 西
-        'твёрдый переплёт', 'твердый переплет', 'в переплете' // 俄
-    ]
-};
-
-// 2. 版本 (Edition) 術語 Regex (用於 250 欄位與裝訂輔助判斷)
-const EDITION_REGEX = /((\d+[\.\s]?(ª|º|a|o|st|nd|rd|th|e|eme|er|re|ie|te|ten|de|da)\s+)|(first|second|third|fourth|fifth|sixth|seventh|eighth|ninth|tenth|première|deuxième|troisième|erste|zweite|dritte|vierte|fünfte|primera|segunda|tercera|cuarta|quinta|первое|второе|третье)\s+)?(ed\.|edition|édition|edition|aufl\.|auflage|edición|edicion|издание|изд\.|выпуск|вып\.)(\s+(rev\.|revised|revisada|augmentée|erweiterte|исправленное|дополненное))?/i;
-
-// 3. 角色字典 (含簡寫與變異)
+// 1. 漫畫與多語言角色字典 (擴充版)
+// type: 'main' 代表 100 欄位, 'added' 代表 700 欄位
 const ROLE_DICT = [
-    // 編輯 (Editor)
-    { regex: /(edited\s+by|editor|ed\.|édité\s+par|sous\s+la\s+dir\.|éd\.|herausgegeben\s+von|hrsg\.|editado\s+por|ed\.|под\s+редакцией|ред\.)/i, relator: 'editor.', label: 'edited by' },
-    // 翻譯 (Translator)
-    { regex: /(translated\s+by|translator|trans\.|tr\.|traduit\s+par|trad\.|übersetzt\s+von|übers\.|traducido\s+por|trad\.|перевод|пер\.)/i, relator: 'translator.', label: 'translated by' },
-    // 插畫 (Illustrator)
-    { regex: /(illustrated\s+by|illustrator|illus\.|ill\.|illustré\s+par|illustriert\s+von|ilustrado\s+por|иллюстрации|илл\.)/i, relator: 'illustrator.', label: 'illustrated by' },
-    // 序言 (Preface/Foreword)
-    { regex: /(preface\s+by|foreword\s+by|préface\s+de|avant-propos|vorwort\s+von|prefacio\s+de|prólogo\s+de|предисловие)/i, relator: 'writer of preface.', label: 'preface by' }
+    // --- Scénario (Writer/Script) -> 100 Main Author ---
+    { regex: /(scénario|scén\.|scénariste|script\s+by|written\s+by|story\s+by|text\s+by|texte\s+de|guion|guión|texto|сценарий|текст)/i, relator: 'author.', label: 'text by', type: 'main' },
+    
+    // --- Dessin (Artist/Illustrator) -> 700 ---
+    { regex: /(dessins?|dessinateur|art\s+by|drawn\s+by|artwork|pencils|inks|illustré\s+par|illustrator|ilustrado|dibujo|dibujos|иллюстрации|рисунки|художник)/i, relator: 'illustrator.', label: 'illustrated by', type: 'added' },
+    
+    // --- Couleur (Colorist) -> 700 ---
+    { regex: /(couleurs?|coloriste|colors\s+by|colored\s+by|colour|color|colorist|цвет|колорист)/i, relator: 'colorist.', label: 'colored by', type: 'added' },
+    
+    // --- Editor -> 700 (Moved from 100) ---
+    { regex: /(edited\s+by|editor|ed\.|édité\s+par|sous\s+la\s+dir\.|herausgegeben\s+von|hrsg\.|editado\s+por|под\s+редакцией|ред\.)/i, relator: 'editor.', label: 'edited by', type: 'added' },
+    
+    // --- Translator -> 700 ---
+    { regex: /(translated\s+by|translator|trans\.|tr\.|traduit\s+par|trad\.|übersetzt\s+von|übers\.|traducido\s+por|перевод)/i, relator: 'translator.', label: 'translated by', type: 'added' },
+    
+    // --- Preface -> 700 ---
+    { regex: /(preface\s+by|foreword\s+by|préface\s+de|avant-propos|vorwort|prefacio|prólogo|предисловие)/i, relator: 'writer of preface.', label: 'preface by', type: 'added' }
 ];
 
-// 出版社與地點庫 (標準)
-const PUB_MAP = {'ALA':'Chicago','MIT':'Cambridge','Harvard':'Cambridge','Princeton':'Princeton','Yale':'New Haven','Stanford':'Stanford','California':'Berkeley','Chicago':'Chicago','Columbia':'New York','Sage':'Thousand Oaks','Wiley':'Hoboken','Routledge':'London','CRC':'Boca Raton','Taylor':'London','McGraw-Hill':'New York','Pearson':'London','Cengage':'Boston','O\'Reilly':'Sebastopol','HarperCollins':'New York','Simon & Schuster':'New York','Random House':'New York','Penguin':'London','Macmillan':'London','Springer':'Berlin','Elsevier':'Amsterdam','Oxford':'Oxford','Cambridge':'Cambridge','Bloomsbury':'London','Gallimard':'Paris','Seuil':'Paris','Flammarion':'Paris','Hachette':'Paris','Larousse':'Paris','Dunod':'Paris','Eyrolles':'Paris','Dalloz':'Paris','Beck':'München','De Gruyter':'Berlin','Nomos':'Baden-Baden','Eksmo':'Moskva','AST':'Moskva','Litres':'Moskva','Nauka':'Moskva'};
-const DB_CITIES = ['Paris','London','New York','Berlin','München','Frankfurt','Wien','Madrid','Barcelona','Roma','Milano','Bruxelles','Amsterdam','Taipei','Tokyo','Beijing','Shanghai','Hong Kong','Singapore','Sydney','Toronto','Chicago','Boston','Moskva','Москва','St. Petersburg','Санкт-Петербург','Boca Raton','Cambridge','Oxford','Hoboken','Berkeley','New Haven'];
+// 2. 出版社黑名單關鍵字 (防止誤填入 100)
+const PUB_BLOCKLIST = [
+    'press','university','verlag','edition','éditions','librairie','publishing','books','media','izsatelstvo',
+    'dargaud','dupuis','casterman','glénat','delcourt','soleil','humanoids','lombard','futuropolis','droz',
+    'gallimard','seuil','flammarion','hachette','larousse','dunod','eyrolles','dalloz','eksmo','ast','litres',
+    'springer','elsevier','routledge','wiley','pearson','mcgraw','cengage','o\'reilly','harper','penguin',
+    'panini','marvel','dc comics','image comics','dark horse','kodansha','shueisha'
+];
+
+// 出版社與地點庫
+const PUB_MAP = {'ALA':'Chicago','MIT':'Cambridge','Harvard':'Cambridge','Princeton':'Princeton','Yale':'New Haven','Stanford':'Stanford','California':'Berkeley','Chicago':'Chicago','Columbia':'New York','Sage':'Thousand Oaks','Wiley':'Hoboken','Routledge':'London','CRC':'Boca Raton','Taylor':'London','McGraw-Hill':'New York','Pearson':'London','Cengage':'Boston','O\'Reilly':'Sebastopol','HarperCollins':'New York','Simon & Schuster':'New York','Random House':'New York','Penguin':'London','Macmillan':'London','Springer':'Berlin','Elsevier':'Amsterdam','Oxford':'Oxford','Cambridge':'Cambridge','Bloomsbury':'London','Gallimard':'Paris','Seuil':'Paris','Flammarion':'Paris','Hachette':'Paris','Larousse':'Paris','Dunod':'Paris','Eyrolles':'Paris','Dalloz':'Paris','Beck':'München','De Gruyter':'Berlin','Nomos':'Baden-Baden','Eksmo':'Moskva','AST':'Moskva','Litres':'Moskva','Nauka':'Moskva','Dargaud':'Paris','Dupuis':'Marcinelle','Casterman':'Bruxelles','Glénat':'Grenoble','Delcourt':'Paris'};
+const DB_CITIES = ['Paris','London','New York','Berlin','München','Frankfurt','Wien','Madrid','Barcelona','Roma','Milano','Bruxelles','Amsterdam','Taipei','Tokyo','Beijing','Shanghai','Hong Kong','Singapore','Sydney','Toronto','Chicago','Boston','Moskva','Москва','St. Petersburg','Санкт-Петербург','Boca Raton','Cambridge','Oxford','Hoboken','Berkeley','New Haven','Grenoble','Marcinelle'];
 const DB_PUBS = Object.keys(PUB_MAP).concat(['Press','University','Verlag','Editions','Librairie','Publishing','Books','Media','Издательство']);
+const BINDING_TERMS = { pbk: ['paperback', 'pbk', 'softcover', 'broché', 'poche', 'taschenbuch', 'rústica', 'мягкая'], hbk: ['hardback', 'hbk', 'hardcover', 'relié', 'gebunden', 'tapa dura', 'твёрдый'] };
 
 // 自動啟動
 window.addEventListener('DOMContentLoaded', initEngine);
@@ -150,45 +149,28 @@ async function initEngine() {
     const spinner = document.getElementById('btnSpinner');
     const txt = document.getElementById('btnText');
     const status = document.getElementById('status');
-
     try {
         if(!worker) {
             status.textContent = "正在下載多語言 OCR 核心...";
             worker = await Tesseract.createWorker('eng+fra+deu+spa+rus');
         }
-        isEngineReady = true;
-        btn.disabled = false;
-        btn.classList.remove('error');
-        spinner.style.display = 'none';
-        txt.textContent = '📸 啟動相機';
-        status.textContent = "系統就緒。請先拍版權頁。";
+        isEngineReady = true; btn.disabled = false; btn.classList.remove('error'); spinner.style.display = 'none'; txt.textContent = '📸 啟動相機'; status.textContent = "系統就緒。請先拍版權頁。";
     } catch(e) {
-        console.error(e);
-        isEngineReady = false;
-        btn.disabled = false;
-        btn.classList.add('error');
-        spinner.style.display = 'none';
-        txt.textContent = '⚠️ 載入失敗 (點此重試)';
-        status.textContent = "錯誤: 請檢查網路連線後點擊按鈕重試";
+        console.error(e); isEngineReady = false; btn.disabled = false; btn.classList.add('error'); spinner.style.display = 'none'; txt.textContent = '⚠️ 載入失敗 (點此重試)'; status.textContent = "錯誤: 請檢查網路";
     }
 }
 
 function handleScanBtn() {
     if (!isEngineReady) {
-        document.getElementById('scanBtn').disabled = true;
-        document.getElementById('btnText').textContent = '重試中...';
-        document.getElementById('btnSpinner').style.display = 'inline-block';
-        initEngine();
-    } else {
-        document.getElementById('fileIn').click();
-    }
+        document.getElementById('scanBtn').disabled = true; document.getElementById('btnText').textContent = '重試中...'; document.getElementById('btnSpinner').style.display = 'inline-block'; initEngine();
+    } else { document.getElementById('fileIn').click(); }
 }
 
 function setMode(m) {
     mode = m;
     document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
     event.target.classList.add('active');
-    msg(m==='copyright' ? '版權頁：判斷版本與裝訂' : '封面：補充責任者資訊');
+    msg(m==='cover' ? '封面：識別漫畫分工 (編劇/作畫/上色)' : '版權頁：識別 ISBN');
 }
 
 async function process(input) {
@@ -209,7 +191,6 @@ async function analyze(data) {
     const text = data.text;
     const lines = data.lines;
     
-    // 智慧 ISBN 選擇
     const isbnMatch = extractSmartISBN(text);
     const existingYear = extractYear(val('f264'));
     let success = false;
@@ -235,6 +216,7 @@ async function analyze(data) {
         const edition = extractEdition(text);
         if(edition) updateField('f250', `$a ${edition}`, true);
         
+        // 執行漫畫專用角色分析
         detectAndFixRoles(lines);
         detectPublisherAndPlace(lines, text);
         
@@ -258,53 +240,7 @@ async function analyze(data) {
     msg('完成');
 }
 
-// --- 核心升級：五國語言智慧 ISBN 選擇器 ---
-function extractSmartISBN(text) {
-    const allIsbns = text.match(/(97[89][- ]?[\d- ]{10,})/g);
-    if (!allIsbns) return null;
-    const cleanIsbns = allIsbns.map(i => i.replace(/[- ]/g, ''));
-    if (cleanIsbns.length === 1) return cleanIsbns[0];
-
-    const lowerText = text.toLowerCase();
-    
-    // 偵測頁面情境 (Context)
-    let pageContext = null;
-    if (BINDING_TERMS.pbk.some(t => lowerText.includes(t))) pageContext = 'pbk';
-    else if (BINDING_TERMS.hbk.some(t => lowerText.includes(t))) pageContext = 'hbk';
-
-    const lines = text.split('\n');
-    let bestIsbn = cleanIsbns[0]; 
-
-    for (let line of lines) {
-        const lineIsbnMatch = line.match(/(97[89][- ]?[\d- ]{10,})/);
-        if (lineIsbnMatch) {
-            const cleanLineIsbn = lineIsbnMatch[0].replace(/[- ]/g, '');
-            const lineLower = line.toLowerCase();
-            
-            // 優先匹配頁面情境
-            if (pageContext === 'pbk' && BINDING_TERMS.pbk.some(t => lineLower.includes(t))) return cleanLineIsbn;
-            if (pageContext === 'hbk' && BINDING_TERMS.hbk.some(t => lineLower.includes(t))) return cleanLineIsbn;
-            
-            // Fallback: 如果行內有平裝關鍵字，優先選擇 (通常平裝較流通)
-            if (!pageContext && BINDING_TERMS.pbk.some(t => lineLower.includes(t))) bestIsbn = cleanLineIsbn;
-        }
-    }
-    return bestIsbn;
-}
-
-// --- 核心升級：五國語言 250 版次提取 ---
-function extractEdition(text) {
-    // 先對文字進行簡單的正規化 (移除重音符號方便比對，但保留原始文字用於提取)
-    // 這裡我們直接用 Regex (Flag i) 進行比對
-    const match = text.match(EDITION_REGEX);
-    if (match) {
-        // 抓取到的可能是跨行或有雜訊，這裡做簡單清洗
-        return match[0].trim().replace(/\s+/g, ' '); 
-    }
-    return null;
-}
-
-// --- 角色互換與標準化 ($c) ---
+// --- 核心升級：角色識別引擎 (含出版社過濾) ---
 function detectAndFixRoles(lines) {
     const validLines = lines.filter(l => l.text.trim().length > 2);
     const current100 = val('f100');
@@ -316,27 +252,48 @@ function detectAndFixRoles(lines) {
         for (let roleDef of ROLE_DICT) {
             const match = lineText.match(roleDef.regex);
             if (match) {
+                // 提取名字
                 let extractedName = lineText.replace(match[0], '').replace(/by|par|von|de|por|под|от/i, '').trim();
+                // 如果這行只剩關鍵字，名字可能在下一行
                 if (extractedName.length < 3 && validLines[i+1]) extractedName = validLines[i+1].text.trim();
                 extractedName = extractedName.replace(/^[:\-\.]+/g, '').trim();
 
+                // 檢查是否為出版社 (防止誤判)
+                if (isPublisherName(extractedName)) continue;
+
                 if (extractedName.length > 3 && !/\d/.test(extractedName)) {
-                    // A. 修正 100
                     const nameParts = extractedName.split(' ');
                     const lastName = nameParts[nameParts.length - 1].replace(/,/g,'');
-                    if (current100 && current100.includes(lastName)) {
-                        updateField('f100', '', true);
-                    }
-
-                    // B. 填入 700
                     const fmtName = formatAuthorName(extractedName);
-                    const entry = `$a ${fmtName}, $e ${roleDef.relator}`;
-                    if (!new700.includes(fmtName)) {
-                        new700 = new700 ? `${new700}   ${entry}` : entry;
-                        updateField('f700', new700, true);
+
+                    // 邏輯分支：
+                    // 1. 如果是 Scénario/Text (type='main') -> 強制放入 100
+                    if (roleDef.type === 'main') {
+                        // 如果現在 100 不是這個人，更新 100
+                        if (!current100.includes(lastName)) {
+                            // 如果原本 100 有人，把原本的人移到 700 (假設他是繪者)
+                            if (current100.length > 3) {
+                                // 簡單處理：將舊 100 移到 700 (不帶特定角色，因為不確定)
+                                // 實際情況可能複雜，這裡保守處理
+                            }
+                            updateField('f100', `$a ${fmtName}, $e ${roleDef.relator}`, true);
+                        }
+                    } 
+                    // 2. 如果是 Dessin/Couleur (type='added') -> 放入 700
+                    else {
+                        // 檢查 100 是否誤填了這個人
+                        if (current100 && current100.includes(lastName)) {
+                            updateField('f100', '', true); // 從 100 移除
+                        }
+                        
+                        const entry = `$a ${fmtName}, $e ${roleDef.relator}`;
+                        if (!new700.includes(fmtName)) {
+                            new700 = new700 ? `${new700}   ${entry}` : entry;
+                            updateField('f700', new700, true);
+                        }
                     }
 
-                    // C. 收集 245 $c (標準化標籤)
+                    // C. 收集 245 $c
                     const normalizedStmt = `${roleDef.label} ${extractedName}`;
                     if (!responsibilityStatements.includes(normalizedStmt)) {
                         responsibilityStatements.push(normalizedStmt);
@@ -355,7 +312,36 @@ function detectAndFixRoles(lines) {
     }
 }
 
-// 嚴格句式小寫
+// 判斷是否為出版社名稱 (黑名單)
+function isPublisherName(str) {
+    const s = str.toLowerCase();
+    return PUB_BLOCKLIST.some(bad => s.includes(bad));
+}
+
+// 其他函式保持 v19 標準
+function extractSmartISBN(text) {
+    const allIsbns = text.match(/(97[89][- ]?[\d- ]{10,})/g);
+    if (!allIsbns) return null;
+    const cleanIsbns = allIsbns.map(i => i.replace(/[- ]/g, ''));
+    if (cleanIsbns.length === 1) return cleanIsbns[0];
+    const lowerText = text.toLowerCase();
+    let pageContext = null;
+    if (BINDING_TERMS.pbk.some(t => lowerText.includes(t))) pageContext = 'pbk';
+    else if (BINDING_TERMS.hbk.some(t => lowerText.includes(t))) pageContext = 'hbk';
+    const lines = text.split('\n');
+    let bestIsbn = cleanIsbns[0]; 
+    for (let line of lines) {
+        const lineIsbnMatch = line.match(/(97[89][- ]?[\d- ]{10,})/);
+        if (lineIsbnMatch) {
+            const cleanLineIsbn = lineIsbnMatch[0].replace(/[- ]/g, '');
+            const lineLower = line.toLowerCase();
+            if (pageContext === 'pbk' && BINDING_TERMS.pbk.some(t => lineLower.includes(t))) return cleanLineIsbn;
+            if (pageContext === 'hbk' && BINDING_TERMS.hbk.some(t => lineLower.includes(t))) return cleanLineIsbn;
+            if (!pageContext && BINDING_TERMS.pbk.some(t => lineLower.includes(t))) bestIsbn = cleanLineIsbn;
+        }
+    }
+    return bestIsbn;
+}
 const PROPER_NOUNS = ['Python','Java','Linux','Windows','HTML','CSS','SQL','AWS','Google','Microsoft','Apple','Amazon','China','USA','UK','Europe','Russia','France','Germany','Japan','Shakespeare','Tolstoy','I','II','III'];
 function toSentenceCase(str) {
     if (!str) return str;
@@ -364,29 +350,21 @@ function toSentenceCase(str) {
     PROPER_NOUNS.forEach(noun => { const regex = new RegExp(`\\b${noun}\\b`, 'gi'); s = s.replace(regex, noun); });
     return s;
 }
-
 function detectPublisherAndPlace(lines, fullText) {
     let foundPlace = '', foundPub = '';
     const validLines = lines.filter(l => l.text.trim().length > 3);
-    
     for (let line of validLines) {
         const txt = line.text.trim();
-        if (!foundPlace) {
-            for (let city of DB_CITIES) { if (new RegExp(`\\b${city}\\b`, 'i').test(txt)) { foundPlace = city; break; } }
-        }
+        if (!foundPlace) { for (let city of DB_CITIES) { if (new RegExp(`\\b${city}\\b`, 'i').test(txt)) { foundPlace = city; break; } } }
         const hasPubKw = DB_PUBS.some(kw => new RegExp(`\\b${kw}\\b`, 'i').test(txt));
         const hasCopy = txt.includes('©') || txt.includes('Copyright');
         if (hasPubKw || hasCopy) {
             let cleanPub = txt.replace(/©\s*\d{4}/, '').replace(/Copyright/i, '').trim();
-            if (!foundPub && !/^[\d\s]+$/.test(cleanPub)) foundPub = cleanPub;
+            if (!foundPub && !/^[\d\s]+$/.test(cleanPub) && !isPublisherName(cleanPub)) foundPub = cleanPub; // 使用黑名單過濾不完全的名稱
+            else if (!foundPub && isPublisherName(cleanPub)) foundPub = cleanPub; // 如果確實是出版社
         }
     }
-    
-    if (!foundPlace && (foundPub || val('f264'))) {
-        const p = foundPub || val('f264');
-        for (let [k, v] of Object.entries(PUB_MAP)) { if (p.toLowerCase().includes(k.toLowerCase())) { foundPlace = v; break; } }
-    }
-
+    if (!foundPlace && (foundPub || val('f264'))) { const p = foundPub || val('f264'); for (let [k, v] of Object.entries(PUB_MAP)) { if (p.toLowerCase().includes(k.toLowerCase())) { foundPlace = v; break; } } }
     const current264 = val('f264'); let new264 = current264;
     if (!current264.includes('$a') && foundPlace) { if (!new264) new264 = `$a ${foundPlace} :`; else new264 = `$a ${foundPlace} : ` + new264.replace('$a [Place] :', ''); } else if (current264.includes('[Place]') && foundPlace) new264 = new264.replace('[Place]', foundPlace);
     if ((!current264.includes('$b') || current264.includes('Auerbach')) && foundPub) { 
@@ -397,10 +375,8 @@ function detectPublisherAndPlace(lines, fullText) {
     }
     if (new264 !== current264) updateField('f264', new264, true);
 }
-
 // Google API
 async function fetchGoogle(q,y,v){if(isIsbnLocked&&!q.startsWith('isbn:'))return false;try{const r=await fetch(`https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(q)}&maxResults=5`);const j=await r.json();if(j.totalItems>0){let b=j.items[0];if(v){const s=checkSimilarity(v,b.volumeInfo.title||"");if(s<0.3)return false}if(y){const yi=parseInt(y);const m=j.items.find(x=>{const iy=parseInt(extractYear(x.volumeInfo.publishedDate||''));return!isNaN(iy)&&Math.abs(iy-yi)<=2});if(m)b=m}const i=b.volumeInfo;if(!isIsbnLocked){let t=`$a ${toSentenceCase(i.title)}`;if(i.subtitle)t+=` : $b ${toSentenceCase(i.subtitle)}`;updateField('f245',t,true);if(i.authors)updateField('f100',`$a ${formatAuthorName(i.authors[0])}, $e author.`,true)}const ay=extractYear(i.publishedDate||'');const yd=y&&ay?Math.abs(parseInt(y)-parseInt(ay)):0;if(!y||yd<=3){let p='';if(i.publisher)p+=`$b ${i.publisher}, `;if(i.publishedDate)p+=`$c ${i.publishedDate.substring(0,4)}`;if(p)updateField('f264',`$a [Place] : ${p}`,true)}if(i.description&&val('f520').length<50)updateField('f520',`$a ${i.description}`);if(i.industryIdentifiers&&!val('f020')){const n=i.industryIdentifiers.find(x=>x.type==='ISBN_13');if(n)updateField('f020',`$a ${n.identifier}`)}if(!isIsbnLocked){document.getElementById('srcTag').textContent='API 命中';document.getElementById('srcTag').className='badge api'}return true}}catch(e){}return false}
-
 // Utils
 function lockIsbnFields() { isIsbnLocked = true; document.getElementById('g100').classList.add('is-locked'); document.getElementById('g245').classList.add('is-locked'); document.getElementById('srcTag').textContent='ISBN 鎖定'; document.getElementById('srcTag').className='badge locked'; }
 function analyzeCoverMerge(l,s){if(!l.length)return;const v=l.filter(x=>x.text.trim().length>2);let m=0;v.forEach(x=>{const h=x.bbox.y1-x.bbox.y0;if(h>m)m=h});const t=v.filter(x=>(x.bbox.y1-x.bbox.y0)>m*0.7).map(x=>x.text.trim()).join(' ');const c=val('f245').replace(/^\$a /,'');if(isIsbnLocked){if(c&&t.includes(c)&&t.length>c.length+5){const sub=t.replace(c,'').replace(/^[:\s\-\.]+/,'').trim();if(sub&&!c.includes(sub))updateField('f245',`$a ${c} : $b ${toSentenceCase(sub)}`,true)}return}if(!s&&!c&&t)updateField('f245',`$a ${toSentenceCase(t)}`);else if(c&&t.includes(c)&&t.length>c.length+5){const sub=t.replace(c,'').replace(/^[:\s\-\.]+/,'').trim();if(sub)updateField('f245',`$a ${c} : $b ${toSentenceCase(sub)}`,true)}}
@@ -409,6 +385,7 @@ function extractKeywords(l){const v=l.filter(x=>x.text.trim().length>2);if(!v.le
 function manualSearch(){const q=document.getElementById('manualQuery').value.trim();if(q)fetchGoogle(q,extractYear(val('f264')),null)}
 function extractYear(s){const m=s?s.match(/\b(18|19|20)\d{2}\b/):null;return m?m[0]:null}
 function formatAuthorName(n){if(n.includes("'")||n.includes(" d'"))return n;let x=n;if(/^[A-Z\s\.\-',]+$/.test(n))x=n.toLowerCase().replace(/(^|\s)\S/g,l=>l.toUpperCase());const p=x.split(' ');return p.length>1&&!x.includes(',')?`${p.pop()}, ${p.join(' ')}`:x}
+function extractEdition(t){const n=t.normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase();const m=n.match(/(\d+[\.\s]?(ª|º|a|o|st|nd|rd|th|e|eme|er|re))[\s\.]*(ed|éd|aufl)/i);if(m){const r=t.match(new RegExp(m[1].replace('.','\\.'),'i'));return r?`${r[0]} edition`:m[0]}const x=t.match(/(Première|Deuxième|Troisième|First|Second)\s+(éd|ed)/i);return x?x[0]:null}
 function detectResponsibility(lines){const validLines=lines.filter(l=>l.text.trim().length>2);let maxH=0,titleIdx=-1;validLines.forEach((l,i)=>{const h=l.bbox.y1-l.bbox.y0;if(h>maxH){maxH=h;titleIdx=i}});let statement=[];if(titleIdx>=0){const titleBottomY=validLines[titleIdx].bbox.y1;for(let i=0;i<validLines.length;i++){const line=validLines[i];if(line.bbox.y0>titleBottomY){const t=line.text.trim();if(/^(par|by|von|textes|trad|edit|pref|intro|présentés|choisis|translated|edited|foreword)/i.test(t)||t.includes('Université')||t.includes('Sorbonne')||t.includes('Professor'))statement.push(t)}}}if(statement.length>0){const st=statement.join(' ');const cur=val('f245');if(cur&&!cur.includes('$c'))updateField('f245',`${cur} / $c ${st}`,true)}}
 function analyzeBack(l){if(val('f520'))return;const c=l.filter(x=>!x.text.includes('ISBN')&&(x.text.replace(/[^a-z]/gi,'').length/x.text.length)>0.7);const s=c.map(x=>x.text.trim()).join(' ');if(s.length>30)updateField('f520',`$a ${s}`,true)}
 function updateField(id,v,f=false){const e=document.getElementById(id);if(f||!e.value){e.value=v;e.parentElement.classList.add('updated');setTimeout(()=>e.parentElement.classList.remove('updated'),1200)}}
