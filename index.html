@@ -3,10 +3,10 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>MARC 21 - v13.0 (Final Stable)</title>
+<title>MARC 21 - v15.0 (Multi-Role)</title>
 <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
 <style>
-:root { --primary: #0f172a; --accent: #7c3aed; --bg: #f8fafc; --text: #334155; --success: #22c55e; --lock: #3b82f6; }
+:root { --primary: #0f172a; --accent: #db2777; /* Pink for Role Logic */ --bg: #f8fafc; --text: #334155; --success: #22c55e; }
 body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: var(--bg); color: var(--text); margin: 0; padding-bottom: 140px; }
 header { background: white; padding: 14px; font-weight: 800; text-align: center; border-bottom: 1px solid #e2e8f0; position: sticky; top: 0; z-index: 50; }
 
@@ -18,8 +18,6 @@ header { background: white; padding: 14px; font-weight: 800; text-align: center;
 /* Action Area */
 .action-area { padding: 12px; background: white; margin-bottom: 10px; border-bottom: 1px solid #e2e8f0; }
 #scanBtn { width: 100%; padding: 14px; background: var(--primary); color: white; border: none; border-radius: 10px; font-size: 16px; font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 8px; margin-bottom: 10px; transition: opacity 0.3s; }
-#scanBtn:disabled { background: #64748b; opacity: 0.7; cursor: not-allowed; }
-
 .search-box { display: flex; gap: 8px; }
 .search-input { flex: 1; padding: 8px 12px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 14px; }
 .search-btn { padding: 8px 16px; background: #f1f5f9; border: 1px solid #cbd5e1; border-radius: 8px; font-weight: 600; color: #475569; }
@@ -30,13 +28,12 @@ header { background: white; padding: 14px; font-weight: 800; text-align: center;
 .card-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
 .badge { font-size: 10px; padding: 3px 8px; border-radius: 4px; font-weight: bold; background: #f1f5f9; color: #64748b; }
 .badge.api { background: #dcfce7; color: #166534; }
-.badge.locked { background: #dbeafe; color: #1e40af; border: 1px solid #93c5fd; }
+.badge.role { background: #fce7f3; color: #be185d; border: 1px solid #fbcfe8; }
 
 .field-group { margin-bottom: 12px; position: relative; }
 .tag-label { font-family: monospace; font-size: 11px; font-weight: bold; color: #94a3b8; display: flex; justify-content: space-between; margin-bottom: 2px; }
-.lock-icon { display: none; color: var(--lock); font-size: 10px; margin-left: 5px; }
+.lock-icon { display: none; color: #3b82f6; font-size: 10px; margin-left: 5px; }
 
-/* Status Classes */
 .is-locked .lock-icon { display: inline; }
 .is-locked .input-wrapper { border-color: #93c5fd; background: #eff6ff; }
 .updated .input-wrapper { border-color: #22c55e; background: #f0fdf4; animation: flash 1s; }
@@ -50,7 +47,6 @@ header { background: white; padding: 14px; font-weight: 800; text-align: center;
 .copy-btn { width: 44px; background: #f8fafc; border-left: 1px solid #cbd5e1; cursor: pointer; font-size: 16px; display: flex; align-items: center; justify-content: center; }
 .copy-btn:active { background: #e2e8f0; }
 
-/* Loader Spinner */
 .spinner { width: 18px; height: 18px; border: 2px solid #fff; border-top-color: transparent; border-radius: 50%; animation: spin 0.8s linear infinite; display: none; }
 @keyframes spin { to { transform: rotate(360deg); } }
 @keyframes flash { 0% { background: #dcfce7; } 100% { background: #f0fdf4; } }
@@ -63,24 +59,24 @@ details { margin: 16px; font-size: 11px; color: #94a3b8; }
 </head>
 <body>
 
-<header>MARC 21 - v13.0 (Final)</header>
+<header>MARC 21 - v15.0 (Roles)</header>
 
 <div class="controls">
-    <button class="mode-btn active" onclick="setMode('copyright')">版權頁 (ISBN)</button>
-    <button class="mode-btn" onclick="setMode('cover')">封面 (補充)</button>
+    <button class="mode-btn active" onclick="setMode('copyright')">版權頁</button>
+    <button class="mode-btn" onclick="setMode('cover')">封面/扉頁</button>
     <button class="mode-btn" onclick="setMode('back')">封底摘要</button>
 </div>
 
 <div class="action-area">
-    <button id="scanBtn" onclick="document.getElementById('fileIn').click()" disabled>
+    <button id="scanBtn" onclick="initAndScan()">
         <div class="spinner" id="btnSpinner"></div>
-        <span id="btnText">⚡ 初始化引擎中...</span>
+        <span id="btnText">📸 啟動相機</span>
     </button>
     <div class="search-box">
-        <input type="text" id="manualQuery" class="search-input" placeholder="OCR 失敗時手動搜尋...">
+        <input type="text" id="manualQuery" class="search-input" placeholder="手動搜尋...">
         <button class="search-btn" onclick="manualSearch()">🔍</button>
     </div>
-    <div class="status" id="status">請稍候，載入多語言模組需約 10 秒...</div>
+    <div class="status" id="status">點擊相機初始化。支援多國語言責任者識別。</div>
     <input type="file" id="fileIn" accept="image/*" capture="environment" style="display:none" onchange="process(this)">
 </div>
 
@@ -89,13 +85,15 @@ details { margin: 16px; font-size: 11px; color: #94a3b8; }
     
     <div class="field-group" id="g020"><span class="tag-label">020 ISBN</span><div class="input-wrapper"><textarea id="f020" class="scroll-input" rows="1" placeholder="$a"></textarea><button class="copy-btn" onclick="copyOne('f020')">📋</button></div></div>
     
-    <div class="field-group" id="g100"><span class="tag-label">100 Author <span class="lock-icon">🔒(ISBN鎖定)</span></span><div class="input-wrapper"><textarea id="f100" class="scroll-input" rows="1" placeholder="$a"></textarea><button class="copy-btn" onclick="copyOne('f100')">📋</button></div></div>
+    <div class="field-group" id="g100"><span class="tag-label">100 Author <span class="lock-icon">🔒</span></span><div class="input-wrapper"><textarea id="f100" class="scroll-input" rows="1" placeholder="$a"></textarea><button class="copy-btn" onclick="copyOne('f100')">📋</button></div></div>
     
-    <div class="field-group" id="g245"><span class="tag-label">245 Title <span class="lock-icon">🔒(ISBN鎖定)</span></span><div class="input-wrapper"><textarea id="f245" class="scroll-input" rows="1" placeholder="$a"></textarea><button class="copy-btn" onclick="copyOne('f245')">📋</button></div></div>
+    <div class="field-group" id="g245"><span class="tag-label">245 Title <span class="lock-icon">🔒</span></span><div class="input-wrapper"><textarea id="f245" class="scroll-input" rows="1" placeholder="$a"></textarea><button class="copy-btn" onclick="copyOne('f245')">📋</button></div></div>
     
     <div class="field-group"><span class="tag-label">250 Edition</span><div class="input-wrapper"><textarea id="f250" class="scroll-input" rows="1" placeholder="$a"></textarea><button class="copy-btn" onclick="copyOne('f250')">📋</button></div></div>
     
-    <div class="field-group"><span class="tag-label">264 Pub ($a 地點 : $b 出版者)</span><div class="input-wrapper" id="wrap264"><textarea id="f264" class="scroll-input" rows="1" placeholder="$a [Place] : $b Pub, $c Year"></textarea><button class="copy-btn" onclick="copyOne('f264')">📋</button></div></div>
+    <div class="field-group" id="g264"><span class="tag-label">264 Pub</span><div class="input-wrapper" id="wrap264"><textarea id="f264" class="scroll-input" rows="1" placeholder="$a [Place] : $b Pub, $c Year"></textarea><button class="copy-btn" onclick="copyOne('f264')">📋</button></div></div>
+    
+    <div class="field-group" id="g700"><span class="tag-label">700 Added Entry (譯/編/繪/序)</span><div class="input-wrapper"><textarea id="f700" class="scroll-input" rows="1" placeholder="$a Name, $e role."></textarea><button class="copy-btn" onclick="copyOne('f700')">📋</button></div></div>
     
     <div class="field-group"><span class="tag-label">520 Abstract</span><div class="input-wrapper"><textarea id="f520" class="scroll-input multiline" placeholder="$a"></textarea><button class="copy-btn" onclick="copyOne('f520')">📋</button></div></div>
 </div>
@@ -105,83 +103,78 @@ details { margin: 16px; font-size: 11px; color: #94a3b8; }
 <div class="fab-container"><button class="copy-all-btn" onclick="copyAll()">📋 複製完整記錄</button></div>
 
 <script>
-let worker;
+let worker = null;
 let mode = 'copyright';
-let isIsbnLocked = false; // 核心：是否已進入 ISBN 鎖定模式
+let isIsbnLocked = false; 
 
-// 擴充城市庫 (含俄文/西里爾字母)
-const DB_CITIES = [
-    'Paris','London','New York','Berlin','München','Frankfurt','Wien','Madrid','Barcelona','Roma','Milano',
-    'Bruxelles','Amsterdam','Taipei','Tokyo','Beijing','Shanghai','Hong Kong','Singapore','Sydney','Toronto',
-    'Moskva','Москва','St. Petersburg','Санкт-Петербург','Kyiv','Киев','Minsk','Минск','Novosibirsk','Новосибирск'
+// --- 1. 多語言責任者字典 (Role Dictionary) ---
+// 格式: regex (識別關鍵字), role (MARC $e), type (內部標識)
+const ROLE_DICT = [
+    { 
+        // 編輯 (Editor)
+        regex: /(edited\s+by|editor|ed\.|édité\s+par|éd\.|sous\s+la\s+dir\.|herausgegeben\s+von|hrsg\.|editado\s+por|под\s+редакцией|ред\.)/i,
+        relator: 'editor.',
+        type: 'editor'
+    },
+    { 
+        // 翻譯 (Translator)
+        regex: /(translated\s+by|translator|trans\.|traduit\s+par|trad\.|übersetzt\s+von|übers\.|traducido\s+por|traducción|перевод|пер\.)/i,
+        relator: 'translator.',
+        type: 'translator'
+    },
+    { 
+        // 插畫 (Illustrator)
+        regex: /(illustrated\s+by|illustrator|illus\.|ill\.|illustré\s+par|illustriert\s+von|ilustrado\s+por|иллюстрации|илл\.)/i,
+        relator: 'illustrator.',
+        type: 'illustrator'
+    },
+    { 
+        // 序言/前言 (Preface/Foreword)
+        regex: /(preface\s+by|foreword\s+by|préface\s+de|avant-propos|vorwort\s+von|prefacio\s+de|prólogo\s+de|предисловие)/i,
+        relator: 'writer of preface.', // 或 writer of foreword，MARC 常用 writer of preface 概括
+        type: 'preface'
+    }
 ];
 
-// 擴充出版社庫 (含俄文)
-const DB_PUBS = [
-    'Press','University','Verlag','Editions','Éditions','Librairie','Gallimard','Penguin','Routledge','Springer',
-    'Wiley','Elsevier','Hachette','Seuil','PUF','Flammarion','Albin Michel','Fayard','Dunod','Larousse','Nathan',
-    'ЭКСМО','Eksmo','AST','АСТ','Litres','Издательство','Publishing','Books'
-];
+// 地點與出版社字典 (保持 v14)
+const PUB_MAP = {'ALA':'Chicago','American Library Association':'Chicago','MIT':'Cambridge','Harvard':'Cambridge','Oxford':'Oxford','Cambridge':'Cambridge','Princeton':'Princeton','Elsevier':'Amsterdam','Springer':'Berlin','Routledge':'London','Sage':'Thousand Oaks'};
+const DB_CITIES = ['Paris','London','New York','Berlin','München','Frankfurt','Wien','Madrid','Barcelona','Roma','Milano','Bruxelles','Amsterdam','Taipei','Tokyo','Beijing','Shanghai','Hong Kong','Singapore','Sydney','Toronto','Chicago','Boston','Moskva','Москва','St. Petersburg','Санкт-Петербург'];
+const DB_PUBS = ['Press','University','Verlag','Editions','Librairie','Gallimard','Penguin','Routledge','Springer','Wiley','Elsevier','Hachette','Larousse','ЭКСМО','Eksmo','AST','Litres','ALA','Association'];
 
-// 1. 解決啟動按三次的問題：頁面載入時初始化
-window.onload = async () => {
+// 啟動邏輯 (Lazy Load)
+async function initAndScan() {
     const btn = document.getElementById('scanBtn');
     const spinner = document.getElementById('btnSpinner');
     const txt = document.getElementById('btnText');
-    
-    spinner.style.display = 'inline-block';
-    
-    try {
-        msg('正在初始化 OCR 引擎 (英/法/德/西/俄)...');
-        // 一次性載入所有語言包
-        worker = await Tesseract.createWorker('eng+fra+deu+spa+rus'); 
-        
-        // 就緒狀態
-        btn.disabled = false;
-        spinner.style.display = 'none';
-        txt.textContent = '📸 啟動相機';
-        msg('系統就緒。建議先拍版權頁(條碼)。');
-    } catch(e) {
-        txt.textContent = '❌ 載入失敗';
-        msg('OCR 載入失敗，請刷新: ' + e.message);
+    if (!worker) {
+        btn.disabled = true; spinner.style.display = 'inline-block'; txt.textContent = '載入核心...';
+        try { worker = await Tesseract.createWorker('eng+fra+deu+spa+rus'); msg('核心載入完成'); } 
+        catch(e) { msg('載入失敗: '+e.message); btn.disabled = false; return; }
+        spinner.style.display = 'none'; txt.textContent = '📸 啟動相機'; btn.disabled = false;
     }
-};
+    document.getElementById('fileIn').click();
+}
 
 function setMode(m) {
     mode = m;
     document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
     event.target.classList.add('active');
-    
-    if(m==='cover' && isIsbnLocked) msg('封面模式 (已鎖定)：僅補充副題名與出版資訊');
-    else if(m==='cover') msg('封面模式：將嘗試反查書籍資料');
-    else msg('就緒');
+    if(m==='cover') msg('封面模式：將執行「多語言責任者分析」與「角色互換」');
+    else msg('請掃描');
 }
 
 async function process(input) {
     if (!input.files[0]) return;
     const file = input.files[0];
-    document.getElementById('manualQuery').value = '';
-    
-    // UI 反饋
     const btn = document.getElementById('scanBtn');
     const oldTxt = document.getElementById('btnText').textContent;
-    btn.disabled = true;
-    document.getElementById('btnText').textContent = '處理中...';
-
+    btn.disabled = true; document.getElementById('btnText').textContent = '處理中...';
     try {
-        msg('影像優化...', true);
-        const imgData = await preprocess(file);
-        msg('OCR 辨識中...', true);
-        const { data } = await worker.recognize(imgData);
+        msg('影像處理...', true); const imgData = await preprocess(file);
+        msg('OCR 辨識...', true); const { data } = await worker.recognize(imgData);
         document.getElementById('debug').textContent = data.text;
         await analyze(data);
-    } catch(e) {
-        msg('錯誤: ' + e.message);
-    } finally {
-        input.value = '';
-        btn.disabled = false;
-        document.getElementById('btnText').textContent = oldTxt;
-    }
+    } catch(e) { msg('錯誤: ' + e.message); } finally { input.value = ''; btn.disabled = false; document.getElementById('btnText').textContent = oldTxt; }
 }
 
 async function analyze(data) {
@@ -192,56 +185,47 @@ async function analyze(data) {
     const existingYear = extractYear(val('f264'));
     let success = false;
 
-    // A. API 流程 (最高權重)
     if (isbnMatch) {
         msg(`ISBN ${isbnMatch[0]} 命中`, true);
         success = await fetchGoogle(`isbn:${isbnMatch[0]}`, existingYear, null);
         if(!success) success = await fetchOpenLibrary(isbnMatch[0]);
-        
-        // 如果 ISBN 查到了，鎖定欄位！
         if(success) lockIsbnFields();
     }
 
-    // B. 反查流程 (僅在未鎖定時執行)
-    // 解決問題：防止封面 OCR 錯誤覆蓋正確的 ISBN 資料
-    if (!success && mode === 'cover') {
-        if (!isIsbnLocked) {
-            const extracted = extractKeywords(lines);
-            if (extracted.query.length > 3) {
-                document.getElementById('manualQuery').value = extracted.cleanTitle; 
-                msg(`反查: ${extracted.cleanTitle}...`, true);
-                success = await fetchGoogle(extracted.query, existingYear, extracted.cleanTitle); 
-            }
-        } else {
-            msg('跳過反查 (遵循 ISBN 資料)');
+    if (!success && mode === 'cover' && !isIsbnLocked) {
+        const extracted = extractKeywords(lines);
+        if (extracted.query.length > 3) {
+            document.getElementById('manualQuery').value = extracted.cleanTitle; 
+            msg(`反查: ${extracted.cleanTitle}...`, true);
+            success = await fetchGoogle(extracted.query, existingYear, extracted.cleanTitle); 
         }
     }
 
-    msg('整合 OCR 結果...');
+    msg('執行責任者分析...');
 
-    // 1. 版次
     if (mode !== 'back') {
         const edition = extractEdition(text);
         if(edition) updateField('f250', `$a ${edition}`, true);
+        
+        // C. 強力執行：角色矯正 & 地點推導
+        detectAndFixRoles(lines);      // <--- 核心升級
+        detectPublisherAndPlace(lines, text);
+        
+        // 偵測責任者敘述 $c (封面必填)
+        if (mode === 'cover') {
+            detectResponsibility(lines); // <--- 核心升級
+        }
     }
 
-    // 2. 模式邏輯
     if (mode === 'back') {
         analyzeBack(lines);
-    } else {
-        // 出版地/出版社偵測 (俄文邏輯已增強)
-        detectPublisherAndPlace(lines, text);
-
-        if (mode === 'cover') {
-            // 封面模式：執行副題名合併 (包含 "Роман" 偵測)
-            analyzeCoverMerge(lines, success); 
-            detectResponsibility(lines);
-        } else if (mode === 'copyright') {
-            const year = extractYear(text);
-            if (year && !val('f264').includes(year)) {
-                let current = val('f264') || '';
-                if(!current.includes('$c')) updateField('f264', `${current} $c ${year}`, true);
-            }
+    } else if (mode === 'cover') {
+        analyzeCoverMerge(lines, success); 
+    } else if (mode === 'copyright') {
+        const year = extractYear(text);
+        if (year && !val('f264').includes(year)) {
+            let current = val('f264') || '';
+            if(!current.includes('$c')) updateField('f264', `${current} $c ${year}`, true);
         }
     }
 
@@ -252,160 +236,145 @@ async function analyze(data) {
     msg('完成');
 }
 
-// --- 核心：鎖定機制 ---
-function lockIsbnFields() {
-    isIsbnLocked = true;
-    document.getElementById('g100').classList.add('is-locked');
-    document.getElementById('g245').classList.add('is-locked');
-    document.getElementById('srcTag').textContent = 'ISBN 鎖定保護';
-    document.getElementById('srcTag').className = 'badge locked';
-}
-
-// --- 核心：封面合併 (新增 Роман 偵測) ---
-function analyzeCoverMerge(lines, apiSuccess) {
-    if(!lines.length) return;
+// --- 核心新功能 1: 多語言角色矯正與新增 (100 -> 700) ---
+function detectAndFixRoles(lines) {
     const validLines = lines.filter(l => l.text.trim().length > 2);
-    
-    // 找最大字 (書名)
-    let maxH = 0, titleIdx = -1;
-    validLines.forEach((l, i) => { const h = l.bbox.y1 - l.bbox.y0; if(h>maxH) { maxH=h; titleIdx=i; }});
-    const ocrTitle = validLines.filter(l => (l.bbox.y1 - l.bbox.y0) > maxH * 0.7).map(l => l.text.trim()).join(' ');
+    const current100 = val('f100');
+    let new700 = val('f700') || '';
 
-    const currentTitle = val('f245').replace(/^\$a /, '');
-    
-    // 1. 特殊體裁/副題名偵測 (Roman/Novel)
-    // 檢查標題下方的行
-    if (titleIdx >= 0 && titleIdx < validLines.length - 1) {
-        for(let i = titleIdx + 1; i < validLines.length; i++) {
-            const t = validLines[i].text.trim();
-            // 檢查是否為體裁關鍵字 (新增 Роман, Повесть)
-            if (/^(Роман|Roman|Novel|Récit|Novella|Повесть)$/i.test(t)) {
-                // 如果目前標題還沒包含這個字，加入為 $b
-                if (!currentTitle.includes(t)) {
-                    // 如果已鎖定，我們只 append，不改 title
-                    const sep = currentTitle.includes(': $b') ? ', ' : ' : $b ';
-                    updateField('f245', `$a ${currentTitle}${sep}${t}`, true);
-                    msg(`已加入體裁: ${t}`, true);
-                }
-                break; // 找到一個就停
-            }
-        }
-    }
-
-    // 2. 常規副題名合併 (如果已鎖定，只做 Append 不做 Replace)
-    if (isIsbnLocked) {
-        if (currentTitle && ocrTitle.includes(currentTitle) && ocrTitle.length > currentTitle.length + 5) {
-            const sub = ocrTitle.replace(currentTitle, '').replace(/^[:\s\-\.]+/g, '').trim();
-            if (sub && !currentTitle.includes(sub)) {
-                updateField('f245', `$a ${currentTitle} : $b ${sub}`, true);
-            }
-        }
-        return;
-    }
-
-    // 未鎖定時的邏輯 (同前)
-    if (!apiSuccess && !currentTitle && ocrTitle) {
-        updateField('f245', `$a ${ocrTitle}`);
-    } else if (currentTitle && ocrTitle.includes(currentTitle) && ocrTitle.length > currentTitle.length + 5) {
-        const sub = ocrTitle.replace(currentTitle, '').replace(/^[:\s\-\.]+/g, '').trim();
-        if (sub) updateField('f245', `$a ${currentTitle} : $b ${sub}`, true);
-    }
-}
-
-// --- 核心：出版地/者偵測 (含頁尾強力偵測) ---
-function detectPublisherAndPlace(lines, fullText) {
-    let foundPlace = '', foundPub = '';
-    
-    // 1. 字典比對
-    for (let city of DB_CITIES) { 
-        if (new RegExp(`\\b${city}\\b`, 'i').test(fullText)) { foundPlace = city; break; } 
-    }
-    for (let line of lines) {
-        const txt = line.text.trim();
-        if (txt.length < 3) continue;
-        const hasPubKw = DB_PUBS.some(kw => new RegExp(`\\b${kw}\\b`, 'i').test(txt));
-        const hasCopy = txt.includes('©');
-        if ((hasPubKw || hasCopy) && !foundPub) {
-            let cleanPub = txt.replace(/©\s*\d{4}/, '').replace(/Copyright/i, '').trim();
-            if (!/^[\d\s]+$/.test(cleanPub) && cleanPub.length > 3) foundPub = cleanPub;
-        }
-    }
-
-    // 2. 頁尾強力偵測 (針對 Logo 在最下面的書，如 Eksmo)
-    if (mode === 'cover' && (!foundPub || !foundPlace)) {
-        const validLines = lines.filter(l => l.text.trim().length > 3);
-        if (validLines.length > 0) {
-            // 檢查最後三行 (範圍擴大一點)
-            const lastLines = validLines.slice(-3);
-            
-            lastLines.forEach(l => {
-                const t = l.text.trim();
-                // 邏輯：如果這行包含年份，或者是單獨的詞，且在字典裡
-                // 針對俄文 "Москва 2011"
-                const yearMatch = t.match(/\b(19|20)\d{2}\b/);
+    // 遍歷每一行，檢查是否包含角色關鍵字
+    for (let i = 0; i < validLines.length; i++) {
+        const lineText = validLines[i].text.trim();
+        
+        // 檢查此行是否匹配字典中的任何角色
+        for (let roleDef of ROLE_DICT) {
+            const match = lineText.match(roleDef.regex);
+            if (match) {
+                // 嘗試提取名字：通常在關鍵字後面，或是下一行
+                // 簡單策略：移除關鍵字後剩下的部分，如果太短則看下一行
+                let extractedName = lineText.replace(match[0], '').replace(/by|par|von|de|por/i, '').trim();
                 
-                if (yearMatch || DB_CITIES.some(c=>t.includes(c)) || DB_PUBS.some(p=>t.includes(p))) {
-                    // 嘗試分離地點和出版社
-                    let potential = t.replace(/\b(19|20)\d{2}\b/, '').replace(/[0-9]/g, '').trim();
-                    if (potential.length > 2) {
-                        // 檢查是否為地點
-                        const isCity = DB_CITIES.some(c => potential.includes(c));
-                        const isPub = DB_PUBS.some(p => potential.includes(p));
+                // 如果這行只剩下 "edited by"，名字可能在下一行
+                if (extractedName.length < 3 && validLines[i+1]) {
+                    extractedName = validLines[i+1].text.trim();
+                }
+
+                // 清洗名字 (移除多餘符號)
+                extractedName = extractedName.replace(/^[:\-\.]+/g, '').trim();
+
+                if (extractedName.length > 3 && !/\d/.test(extractedName)) {
+                    // 1. 檢查是否需要「互換」(100 是錯誤的編者)
+                    const nameParts = extractedName.split(' ');
+                    const lastName = nameParts[nameParts.length - 1].replace(/,/g,'');
+                    
+                    if (current100 && current100.includes(lastName)) {
+                        msg(`修正：將 ${roleDef.type} 從 100 移至 700`, true);
+                        updateField('f100', '', true); // 清空 100
+                    }
+
+                    // 2. 填入/追加 700
+                    // 格式化名字
+                    const fmtName = formatAuthorName(extractedName);
+                    const entry = `$a ${fmtName}, $e ${roleDef.relator}`;
+                    
+                    // 避免重複
+                    if (!new700.includes(fmtName)) {
+                        new700 = new700 ? `${new700}   ${entry}` : entry; // 用空格分隔多個 700
+                        updateField('f700', new700, true);
                         
-                        if (isCity && !foundPlace) foundPlace = potential;
-                        else if ((isPub || !foundPub) && !isCity) foundPub = potential;
+                        // 視覺回饋
+                        document.getElementById('srcTag').textContent = '角色識別';
+                        document.getElementById('srcTag').className = 'badge role';
                     }
                 }
-            });
+            }
+        }
+    }
+}
+
+// --- 核心新功能 2: 245 $c 責任者敘述自動捕獲 ---
+function detectResponsibility(lines) {
+    const validLines = lines.filter(l => l.text.trim().length > 2);
+    // 找標題下方區域
+    let maxH = 0, titleIdx = -1;
+    validLines.forEach((l, i) => { const h = l.bbox.y1 - l.bbox.y0; if(h>maxH) { maxH=h; titleIdx=i; }});
+    
+    let statementParts = [];
+    
+    if (titleIdx >= 0) {
+        const titleBottomY = validLines[titleIdx].bbox.y1;
+        
+        for (let i = 0; i < validLines.length; i++) {
+            const line = validLines[i];
+            // 必須在標題下方
+            if (line.bbox.y0 > titleBottomY) {
+                const t = line.text.trim();
+                
+                // 檢查是否包含字典中的關鍵字
+                const hasRole = ROLE_DICT.some(def => def.regex.test(t));
+                // 額外檢查大學/教授等關鍵字
+                const hasAcademic = /Université|University|Sorbonne|Professor|Prof\./i.test(t);
+
+                if (hasRole || hasAcademic) {
+                    statementParts.push(t);
+                }
+            }
         }
     }
 
-    // 3. 寫入
-    const current264 = val('f264');
-    let new264 = current264;
-    
-    if (!current264.includes('$a') && foundPlace) {
-        if (!new264) new264 = `$a ${foundPlace} :`;
-        else new264 = `$a ${foundPlace} : ` + new264.replace('$a [Place] :', '');
-    } else if (current264.includes('[Place]') && foundPlace) {
-         new264 = new264.replace('[Place]', foundPlace);
+    if (statementParts.length > 0) {
+        const fullStatement = statementParts.join(' ');
+        const current245 = val('f245');
+        
+        // 如果 245 還沒有 $c，且找到了敘述 -> 填入
+        if (current245 && !current245.includes('$c')) {
+            updateField('f245', `${current245} / $c ${fullStatement}`, true);
+        }
     }
+}
 
-    if (!current264.includes('$b') && foundPub) {
-        if (!new264) new264 = `: $b ${foundPub},`; 
-        else if (new264.includes(':')) new264 = new264.replace(':', `: $b ${foundPub},`);
-        else new264 += ` : $b ${foundPub},`;
+// --- 其他輔助功能 (同 v14) ---
+function detectPublisherAndPlace(lines, fullText) {
+    let foundPlace = '', foundPub = '';
+    for (let city of DB_CITIES) { if (new RegExp(`\\b${city}\\b`, 'i').test(fullText)) { foundPlace = city; break; } }
+    for (let line of lines) {
+        const txt = line.text.trim(); if (txt.length < 3) continue;
+        const hasPubKw = DB_PUBS.some(kw => new RegExp(`\\b${kw}\\b`, 'i').test(txt));
+        const hasCopy = txt.includes('©') || txt.includes('Copyright');
+        if ((hasPubKw || hasCopy) && !foundPub) {
+            let cleanPub = txt.replace(/©\s*\d{4}/, '').replace(/Copyright/i, '').trim();
+            if (!/^[\d\s]+$/.test(cleanPub) && cleanPub.length > 2) foundPub = cleanPub;
+        }
     }
-    
+    if (!foundPlace) {
+        const currentPub = foundPub || val('f264');
+        for (let [pubKey, city] of Object.entries(PUB_MAP)) {
+            if (currentPub.toLowerCase().includes(pubKey.toLowerCase())) { foundPlace = city; break; }
+        }
+    }
+    const current264 = val('f264'); let new264 = current264;
+    if (!current264.includes('$a') && foundPlace) { if (!new264) new264 = `$a ${foundPlace} :`; else new264 = `$a ${foundPlace} : ` + new264.replace('$a [Place] :', ''); } else if (current264.includes('[Place]') && foundPlace) new264 = new264.replace('[Place]', foundPlace);
+    if (!current264.includes('$b') && foundPub) { if (!new264) new264 = `: $b ${foundPub},`; else if (new264.includes(':')) new264 = new264.replace(':', `: $b ${foundPub},`); else new264 += ` : $b ${foundPub},`; }
     if (new264 !== current264) updateField('f264', new264, true);
 }
 
-// Google API (尊守鎖定)
-async function fetchGoogle(q,y,v){
-    if (isIsbnLocked && !q.startsWith('isbn:')) return false; 
-    try{const r=await fetch(`https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(q)}&maxResults=5`);const j=await r.json();if(j.totalItems>0){let b=j.items[0];if(v){const s=checkSimilarity(v,b.volumeInfo.title||"");if(s<0.3)return false}if(y){const yi=parseInt(y);const m=j.items.find(x=>{const iy=parseInt(extractYear(x.volumeInfo.publishedDate||''));return!isNaN(iy)&&Math.abs(iy-yi)<=2});if(m)b=m}const i=b.volumeInfo;
-    if (!isIsbnLocked) {
-        let t=`$a ${i.title}`;if(i.subtitle)t+=` : $b ${i.subtitle}`;updateField('f245',t,true);
-        if(i.authors)updateField('f100',`$a ${formatAuthorName(i.authors[0])}, $e author.`,true);
-    }
-    const ay=extractYear(i.publishedDate||'');const yd=y&&ay?Math.abs(parseInt(y)-parseInt(ay)):0;if(!y||yd<=3){let p='';if(i.publisher)p+=`$b ${i.publisher}, `;if(i.publishedDate)p+=`$c ${i.publishedDate.substring(0,4)}`;if(p)updateField('f264',`$a [Place] : ${p}`,true)}if(i.description&&val('f520').length<50)updateField('f520',`$a ${i.description}`);if(i.industryIdentifiers&&!val('f020')){const n=i.industryIdentifiers.find(x=>x.type==='ISBN_13');if(n)updateField('f020',`$a ${n.identifier}`)}
-    if(!isIsbnLocked) {document.getElementById('srcTag').textContent='API 命中';document.getElementById('srcTag').className='badge api';}
-    return true}}catch(e){}return false
-}
+// Google API
+async function fetchGoogle(q,y,v){if(isIsbnLocked&&!q.startsWith('isbn:'))return false;try{const r=await fetch(`https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(q)}&maxResults=5`);const j=await r.json();if(j.totalItems>0){let b=j.items[0];if(v){const s=checkSimilarity(v,b.volumeInfo.title||"");if(s<0.3)return false}if(y){const yi=parseInt(y);const m=j.items.find(x=>{const iy=parseInt(extractYear(x.volumeInfo.publishedDate||''));return!isNaN(iy)&&Math.abs(iy-yi)<=2});if(m)b=m}const i=b.volumeInfo;if(!isIsbnLocked){let t=`$a ${i.title}`;if(i.subtitle)t+=` : $b ${i.subtitle}`;updateField('f245',t,true);if(i.authors)updateField('f100',`$a ${formatAuthorName(i.authors[0])}, $e author.`,true)}const ay=extractYear(i.publishedDate||'');const yd=y&&ay?Math.abs(parseInt(y)-parseInt(ay)):0;if(!y||yd<=3){let p='';if(i.publisher)p+=`$b ${i.publisher}, `;if(i.publishedDate)p+=`$c ${i.publishedDate.substring(0,4)}`;if(p)updateField('f264',`$a [Place] : ${p}`,true)}if(i.description&&val('f520').length<50)updateField('f520',`$a ${i.description}`);if(i.industryIdentifiers&&!val('f020')){const n=i.industryIdentifiers.find(x=>x.type==='ISBN_13');if(n)updateField('f020',`$a ${n.identifier}`)}if(!isIsbnLocked){document.getElementById('srcTag').textContent='API 命中';document.getElementById('srcTag').className='badge api'}return true}}catch(e){}return false}
 
-// Utils
+// Utils (保持)
+function lockIsbnFields() { isIsbnLocked = true; document.getElementById('g100').classList.add('is-locked'); document.getElementById('g245').classList.add('is-locked'); document.getElementById('srcTag').textContent='ISBN 鎖定'; document.getElementById('srcTag').className='badge locked'; }
+function analyzeCoverMerge(l,s){if(!l.length)return;const v=l.filter(x=>x.text.trim().length>2);let m=0;v.forEach(x=>{const h=x.bbox.y1-x.bbox.y0;if(h>m)m=h});const t=v.filter(x=>(x.bbox.y1-x.bbox.y0)>m*0.7).map(x=>x.text.trim()).join(' ');const c=val('f245').replace(/^\$a /,'');if(isIsbnLocked){if(c&&t.includes(c)&&t.length>c.length+5){const sub=t.replace(c,'').replace(/^[:\s\-\.]+/,'').trim();if(sub&&!c.includes(sub))updateField('f245',`$a ${c} : $b ${sub}`,true)}return}if(!s&&!c&&t)updateField('f245',`$a ${t}`);else if(c&&t.includes(c)&&t.length>c.length+5){const sub=t.replace(c,'').replace(/^[:\s\-\.]+/,'').trim();if(sub)updateField('f245',`$a ${c} : $b ${sub}`,true)}}
 function checkSimilarity(s1,s2){if(!s1||!s2)return 0;const t=s=>s.toLowerCase().replace(/[^\w\s]/g,'').split(/\s+/).filter(w=>w.length>2);const a=new Set(t(s1)),b=new Set(t(s2));let i=0;a.forEach(w=>{if(b.has(w))i++});const m=Math.min(a.size,b.size);return m===0?0:i/m}
 function extractKeywords(l){const v=l.filter(x=>x.text.trim().length>2);if(!v.length)return{query:'',cleanTitle:''};let m=0,idx=-1;v.forEach((x,i)=>{const h=x.bbox.y1-x.bbox.y0;if(h>m){m=h;idx=i}});let q='',t='';if(idx>=0){t=v[idx].text.trim().replace(/[|\-_—]/g,' ').trim();q=`intitle:${t}`;for(let i=0;i<idx;i++){const x=v[i].text.trim();if(x.length>3&&!/\d/.test(x)&&!x.includes('Pline')){q+=`+inauthor:${x.split(' ')[0]}`;break}}}return{query:q,cleanTitle:t}}
 function manualSearch(){const q=document.getElementById('manualQuery').value.trim();if(q)fetchGoogle(q,extractYear(val('f264')),null)}
 function extractYear(s){const m=s?s.match(/\b(18|19|20)\d{2}\b/):null;return m?m[0]:null}
 function formatAuthorName(n){if(n.includes("'")||n.includes(" d'"))return n;let x=n;if(/^[A-Z\s\.\-',]+$/.test(n))x=n.toLowerCase().replace(/(^|\s)\S/g,l=>l.toUpperCase());const p=x.split(' ');return p.length>1&&!x.includes(',')?`${p.pop()}, ${p.join(' ')}`:x}
 function extractEdition(t){const n=t.normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase();const m=n.match(/(\d+[\.\s]?(ª|º|a|o|st|nd|rd|th|e|eme|er|re))[\s\.]*(ed|éd|aufl)/i);if(m){const r=t.match(new RegExp(m[1].replace('.','\\.'),'i'));return r?`${r[0]} edition`:m[0]}const x=t.match(/(Première|Deuxième|Troisième|First|Second)\s+(éd|ed)/i);return x?x[0]:null}
-function detectResponsibility(lines){const validLines=lines.filter(l=>l.text.trim().length>2);let maxH=0,titleIdx=-1;validLines.forEach((l,i)=>{const h=l.bbox.y1-l.bbox.y0;if(h>maxH){maxH=h;titleIdx=i}});let statement=[];if(titleIdx>=0){const titleBottomY=validLines[titleIdx].bbox.y1;for(let i=0;i<validLines.length;i++){const line=validLines[i];if(line.bbox.y0>titleBottomY){const t=line.text.trim();if(/^(par|by|von|textes|trad|edit|pref|intro|présentés|choisis|translated|edited|foreword)/i.test(t)||t.includes('Université')||t.includes('Sorbonne')||t.includes('Professor'))statement.push(t)}}}if(statement.length>0){const st=statement.join(' ');const cur=val('f245');if(cur&&!cur.includes('$c'))updateField('f245',`${cur} / $c ${st}`,true)}}
 function analyzeBack(l){if(val('f520'))return;const c=l.filter(x=>!x.text.includes('ISBN')&&(x.text.replace(/[^a-z]/gi,'').length/x.text.length)>0.7);const s=c.map(x=>x.text.trim()).join(' ');if(s.length>30)updateField('f520',`$a ${s}`,true)}
 function updateField(id,v,f=false){const e=document.getElementById(id);if(f||!e.value){e.value=v;e.parentElement.classList.add('updated');setTimeout(()=>e.parentElement.classList.remove('updated'),1200)}}
 function val(id){return document.getElementById(id).value}
 function copyOne(id){const e=document.getElementById(id);navigator.clipboard.writeText(e.value);const b=e.nextElementSibling;b.textContent='✅';setTimeout(()=>b.textContent='📋',1000)}
-function copyAll(){const f=['f020','f100','f245','f250','f264','f520'];const t=f.map(k=>{const v=val(k);return v?`${k.substring(1)} ## ${v}`:null}).filter(x=>x).join('\n');navigator.clipboard.writeText(t).then(()=>{const b=document.querySelector('.copy-all-btn');b.textContent='✅ 已複製';setTimeout(()=>b.textContent='📋 複製完整記錄',2000)})}
+function copyAll(){const f=['f020','f100','f245','f250','f264','f520','f700'];const t=f.map(k=>{const v=val(k);return v?`${k.substring(1)} ## ${v}`:null}).filter(x=>x).join('\n');navigator.clipboard.writeText(t).then(()=>{const b=document.querySelector('.copy-all-btn');b.textContent='✅ 已複製';setTimeout(()=>b.textContent='📋 複製完整記錄',2000)})}
 function msg(t,l){document.getElementById('status').textContent=t+(l?' ⏳':'')}
 async function fetchOpenLibrary(i){return false}
 async function preprocess(f){return new Promise(r=>{const i=new Image();i.onload=()=>{const c=document.getElementById('cvs'),x=c.getContext('2d');let w=i.width,h=i.height;if(w>1500){let s=1500/w;w*=s;h*=s}c.width=w;c.height=h;x.drawImage(i,0,0,w,h);const d=x.getImageData(0,0,w,h);for(let k=0;k<d.data.length;k+=4){const g=(d.data[k]+d.data[k+1]+d.data[k+2])/3;d.data[k]=d.data[k+1]=d.data[k+2]=g>100?255:0}x.putImageData(d,0,0);r(c.toDataURL('image/jpeg'))};i.src=URL.createObjectURL(f)})}
